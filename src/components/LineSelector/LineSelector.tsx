@@ -1,4 +1,5 @@
-import { Star, Check, Minus } from 'lucide-react';
+import { useState } from 'react';
+import { Star, Check, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import type { Opening, OpeningLine, LineProgress } from '../../types';
@@ -10,66 +11,83 @@ interface LineSelectorProps {
 export default function LineSelector({ opening }: LineSelectorProps) {
   const { selectedLine, selectLine, phase } = useTrainingStore();
   const { isSetupComplete, isLineUnlocked, getLineProgress } = useProgressStore();
+  const [expanded, setExpanded] = useState(false);
 
   const setupDone = isSetupComplete(opening.id);
   const isActive = phase === 'line-select' || phase === 'training' || phase === 'completed';
 
-  // Completion percentage
   const totalLines = opening.lines.length;
   const completedLines = opening.lines.filter((l) =>
     isLineUnlocked(opening.id, l.id),
   ).length;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header + completion % */}
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-          Lines
-        </h3>
-        {setupDone && totalLines > 0 && (
-          <span className="text-[10px] font-semibold text-slate-500">
-            <span className={completedLines > 0 ? 'text-emerald-400' : ''}>
-              {completedLines}
+    <div className="flex flex-col h-full min-h-0">
+      {/* Collapsible header button */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between rounded-lg px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors cursor-pointer flex-shrink-0 mb-2"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Lines</span>
+          {setupDone && totalLines > 0 && (
+            <span className="text-xs font-semibold text-slate-400">
+              <span className={completedLines > 0 ? 'text-emerald-400' : ''}>
+                {completedLines}
+              </span>
+              /{totalLines} done
             </span>
-            /{totalLines} done
-          </span>
-        )}
-      </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Mini progress bar */}
+          {setupDone && totalLines > 0 && (
+            <div className="w-16 bg-slate-700/60 rounded-full h-1">
+              <div
+                className="bg-emerald-500 h-1 rounded-full transition-all duration-500"
+                style={{ width: `${Math.round((completedLines / totalLines) * 100)}%` }}
+              />
+            </div>
+          )}
+          {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        </div>
+      </button>
 
-      {/* Completion bar */}
-      {setupDone && totalLines > 0 && (
-        <div className="w-full bg-slate-700/60 rounded-full h-1 mb-2.5">
-          <div
-            className="bg-emerald-500 h-1 rounded-full transition-all duration-500"
-            style={{ width: `${Math.round((completedLines / totalLines) * 100)}%` }}
-          />
+      {/* Currently selected line label */}
+      {!expanded && selectedLine && (
+        <div className="px-3 py-1.5 bg-brand-accent/10 border border-brand-accent/30 rounded-lg mb-2 flex-shrink-0">
+          <p className="text-xs text-brand-accent font-semibold truncate">{selectedLine.name}</p>
         </div>
       )}
 
-      {!setupDone && (
-        <p className="text-xs text-slate-500 italic">
-          Complete the opening setup to unlock lines.
-        </p>
+      {/* Expandable line list */}
+      {expanded && (
+        <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0 pr-1">
+          {!setupDone && (
+            <p className="text-xs text-slate-500 italic px-1">
+              Complete the opening setup to unlock lines.
+            </p>
+          )}
+          {opening.lines.map((line) => (
+            <LineRow
+              key={line.id}
+              line={line}
+              openingId={opening.id}
+              isSelected={selectedLine?.id === line.id}
+              isSetupDone={setupDone}
+              isActive={isActive}
+              isUnlocked={isLineUnlocked(opening.id, line.id)}
+              progress={getLineProgress(opening.id, line.id)}
+              onSelect={() => {
+                if (setupDone) {
+                  selectLine(line);
+                  setExpanded(false);
+                }
+              }}
+            />
+          ))}
+        </div>
       )}
-
-      <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0 pr-1">
-        {opening.lines.map((line) => (
-          <LineRow
-            key={line.id}
-            line={line}
-            openingId={opening.id}
-            isSelected={selectedLine?.id === line.id}
-            isSetupDone={setupDone}
-            isActive={isActive}
-            isUnlocked={isLineUnlocked(opening.id, line.id)}
-            progress={getLineProgress(opening.id, line.id)}
-            onSelect={() => {
-              if (setupDone) selectLine(line);
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -101,7 +119,7 @@ function LineRow({
   const favorite = isFavorite(openingId, line.id);
 
   function handleFavorite(e: React.MouseEvent) {
-    e.stopPropagation(); // don't trigger line selection
+    e.stopPropagation();
     toggleFavorite(openingId, line.id);
   }
 
@@ -122,7 +140,6 @@ function LineRow({
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          {/* Completion indicator: green check if unlocked, dim dash if not */}
           {isUnlocked ? (
             <span title="Completed" className="text-emerald-400 flex-shrink-0">
               <Check size={14} strokeWidth={3} />
@@ -136,7 +153,6 @@ function LineRow({
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Stats */}
           {progress && (
             <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
               {progress.attempts}×
@@ -145,8 +161,6 @@ function LineRow({
               )}
             </span>
           )}
-
-          {/* Favourite star — always shown, clickable */}
           {!locked && (
             <button
               onClick={handleFavorite}
@@ -160,12 +174,6 @@ function LineRow({
           )}
         </div>
       </div>
-
-      {line.description && (
-        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-          {line.description}
-        </p>
-      )}
     </button>
   );
 }

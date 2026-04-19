@@ -7,18 +7,25 @@ export default function ControlPanel() {
     postLine,
     isAwaitingUserMove,
     showingCorrectMove,
+    wrongMoveSan,
     selectedLine,
     streak,
+    hintSquare,
     showAnswer,
+    showHint,
     restart,
     backToLineSelect,
   } = useTrainingStore();
 
   const inSession = phase === 'training' || phase === 'setup';
-  const canShowAnswer = inSession && isAwaitingUserMove && !showingCorrectMove && !postLine;
+  const hideHint = mode === 'drill' || mode === 'time-trial';
   const canRestart = !!selectedLine || phase === 'training' || phase === 'completed';
   const canGoBack = phase === 'training' || phase === 'completed';
-  const hideShowAnswer = mode === 'drill' || mode === 'time-trial';
+
+  // Hint is available when awaiting move, no wrong move shown, no answer shown, not post-line
+  const canHint = inSession && isAwaitingUserMove && !wrongMoveSan && !showingCorrectMove && !postLine && !hideHint;
+  // Answer phase: hint square is shown, upgrade to full arrow
+  const canAnswer = canHint && !!hintSquare;
 
   return (
     <div className="space-y-2">
@@ -28,13 +35,22 @@ export default function ControlPanel() {
         )}
       </h3>
       <div className="flex flex-col gap-2">
-        {!hideShowAnswer && (
-          <ActionButton
-            label="Show Answer"
-            onClick={showAnswer}
-            disabled={!canShowAnswer}
-            variant="secondary"
-          />
+        {!hideHint && (
+          canAnswer ? (
+            <ActionButton
+              label="Answer"
+              onClick={showAnswer}
+              disabled={false}
+              variant="secondary"
+            />
+          ) : (
+            <ActionButton
+              label="Hint"
+              onClick={showHint}
+              disabled={!canHint}
+              variant="secondary"
+            />
+          )
         )}
         <ActionButton
           label="Restart Line"

@@ -35,12 +35,14 @@ interface SettingsState {
   /** Minimum average rating filter for Lichess explorer. 0 = all. */
   minRating: number;
   enableSRReminders: boolean;
+  showEvalBar: boolean;
 }
 
 interface SettingsActions {
   setRestartFrom(v: 'start' | 'setup'): void;
   setMinRating(v: number): void;
   setEnableSRReminders(v: boolean): void;
+  setShowEvalBar(v: boolean): void;
 }
 
 // ─── Store ──────────────────────────────────────────────────────────
@@ -51,9 +53,11 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       restartFrom: 'setup',
       minRating: 0,
       enableSRReminders: true,
+      showEvalBar: true,
       setRestartFrom: (v) => set({ restartFrom: v }),
       setMinRating: (v) => set({ minRating: v }),
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
+      setShowEvalBar: (v) => set({ showEvalBar: v }),
     }),
     { name: 'openingslab-settings-v1' },
   ),

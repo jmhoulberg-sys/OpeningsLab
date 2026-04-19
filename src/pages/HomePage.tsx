@@ -1,6 +1,9 @@
 import { Settings } from 'lucide-react';
+import { Chessboard } from 'react-chessboard';
 import type { Opening } from '../types';
 import { OPENINGS } from '../data/openings';
+import { fenAfterMoves } from '../engine/chessEngine';
+import { useProgressStore } from '../store/progressStore';
 
 interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
@@ -9,20 +12,109 @@ interface HomePageProps {
 
 const PLACEHOLDER_CARDS = [
   { name: "King's Indian Defense", id: 'kings-indian' },
-  { name: "Queen's Gambit Accepted", id: 'queens-gambit-accepted' },
+  { name: "French Defense", id: 'french-defense' },
 ];
 
-const COLOR_LABELS: Record<string, string> = {
-  white: 'White',
-  black: 'Black',
-};
+function PawnIcon({ color }: { color: 'white' | 'black' }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill={color === 'white' ? '#f1f5f9' : '#1e293b'}
+      stroke={color === 'white' ? '#64748b' : '#94a3b8'}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="5" r="3" />
+      <path d="M10 8l-2 6h8l-2-6z" />
+      <path d="M7 15l-1 3h12l-1-3z" />
+    </svg>
+  );
+}
+
+function OpeningCard({
+  opening,
+  onSelect,
+}: {
+  opening: Opening;
+  onSelect: () => void;
+}) {
+  const { isLineUnlocked } = useProgressStore();
+  const totalLines = opening.lines.length;
+  const completedLines = opening.lines.filter((l) =>
+    isLineUnlocked(opening.id, l.id),
+  ).length;
+  const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
+  const setupFen = fenAfterMoves(opening.setupMoves);
+
+  return (
+    <button
+      onClick={onSelect}
+      className="bg-brand-surface border border-slate-700/60 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
+    >
+      <div className="flex items-start gap-4">
+        {/* Mini board */}
+        <div
+          className="flex-shrink-0 rounded-lg overflow-hidden pointer-events-none"
+          style={{ width: 130, height: 130 }}
+        >
+          <Chessboard
+            position={setupFen}
+            boardWidth={130}
+            arePiecesDraggable={false}
+            customBoardStyle={{ borderRadius: '4px' }}
+            customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+            customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+            animationDuration={0}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            <h2 className="text-white font-bold text-base leading-tight group-hover:text-brand-accent transition-colors">
+              {opening.name}
+            </h2>
+            <span title={opening.playerColor === 'white' ? 'You play White' : 'You play Black'} className="flex-shrink-0 mt-0.5">
+              <PawnIcon color={opening.playerColor} />
+            </span>
+          </div>
+          <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mb-3">
+            {opening.description}
+          </p>
+          {/* Lines progress */}
+          {totalLines > 0 && (
+            <div>
+              <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                <span className="font-semibold">Lines learned</span>
+                <span>
+                  <span className={completedLines > 0 ? 'text-emerald-400 font-semibold' : ''}>
+                    {completedLines}
+                  </span>
+                  /{totalLines}
+                </span>
+              </div>
+              <div className="w-full bg-slate-700/60 rounded-full h-1.5">
+                <div
+                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageProps) {
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col items-center py-12 px-4">
       {/* Header */}
       <div className="text-center mb-10 relative w-full max-w-2xl">
-        {/* Settings gear — top-right of header */}
         <button
           onClick={onSettingsClick}
           title="Settings"
@@ -47,42 +139,32 @@ export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageP
 
       {/* Card grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl">
-        {/* Real openings from registry */}
         {OPENINGS.map((opening) => (
-          <button
+          <OpeningCard
             key={opening.id}
-            onClick={() => onSelectOpening(opening)}
-            className="bg-brand-surface border border-slate-700/60 rounded-2xl p-6 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <h2 className="text-white font-bold text-lg group-hover:text-brand-accent transition-colors">
-                {opening.name}
-              </h2>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 ml-2 shrink-0">
-                {COLOR_LABELS[opening.playerColor]}
-              </span>
-            </div>
-            <p className="text-slate-400 text-sm leading-relaxed line-clamp-3">
-              {opening.description}
-            </p>
-          </button>
+            opening={opening}
+            onSelect={() => onSelectOpening(opening)}
+          />
         ))}
 
         {/* Placeholder cards */}
         {PLACEHOLDER_CARDS.map((card) => (
           <div
             key={card.id}
-            className="bg-brand-surface border border-slate-700/40 rounded-2xl p-6 text-left opacity-50 cursor-not-allowed"
+            className="bg-brand-surface border border-slate-700/40 rounded-2xl p-4 text-left opacity-50 cursor-not-allowed"
           >
-            <div className="flex items-start justify-between mb-3">
-              <h2 className="text-slate-400 font-bold text-lg">{card.name}</h2>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-500 ml-2 shrink-0">
-                Coming Soon
-              </span>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 rounded-lg bg-slate-800/60 border border-slate-700/40" style={{ width: 130, height: 130 }} />
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h2 className="text-slate-400 font-bold text-base">{card.name}</h2>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-500 shrink-0">
+                    Coming Soon
+                  </span>
+                </div>
+                <p className="text-slate-600 text-xs">This opening is not yet available.</p>
+              </div>
             </div>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              This opening is not yet available.
-            </p>
           </div>
         ))}
       </div>

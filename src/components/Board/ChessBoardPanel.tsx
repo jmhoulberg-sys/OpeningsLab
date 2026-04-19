@@ -3,8 +3,10 @@ import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { useTrainingStore } from '../../store/trainingStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
 import AnalysisPanel from '../Analysis/AnalysisPanel';
+import EvalBar from './EvalBar';
 
 // Arrow colours
 const WRONG_ARROW_COLOR  = 'rgba(220, 50,  50,  0.90)';
@@ -21,6 +23,20 @@ function resolveArrow(fen: string, san: string): [Square, Square] | null {
   } catch {
     return null;
   }
+}
+
+/** Convert algebraic square to pixel {x, y} coordinates on the board. */
+function squareToXY(
+  square: string,
+  boardSize: number,
+  orientation: 'white' | 'black',
+): { x: number; y: number; size: number } {
+  const file = square.charCodeAt(0) - 'a'.charCodeAt(0); // 0–7
+  const rank = parseInt(square[1]) - 1;                  // 0–7
+  const size = boardSize / 8;
+  const x = orientation === 'white' ? file * size : (7 - file) * size;
+  const y = orientation === 'white' ? (7 - rank) * size : rank * size;
+  return { x, y, size };
 }
 
 export default function ChessBoardPanel() {
@@ -43,7 +59,11 @@ export default function ChessBoardPanel() {
     currentMoveIndex,
     streak,
     mistakes,
+    hintSquare,
+    wrongMoveSquare,
   } = useTrainingStore();
+
+  const { showEvalBar } = useSettingsStore();
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
@@ -134,6 +154,14 @@ export default function ChessBoardPanel() {
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (!isReviewing && selectedSquare) {
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
+  }
+
+  // Green outline for hint square
+  if (!isReviewing && hintSquare) {
+    customSquareStyles[hintSquare] = {
+      ...(customSquareStyles[hintSquare] ?? {}),
+      boxShadow: 'inset 0 0 0 4px rgba(34, 197, 94, 0.95)',
+    };
   }
 
   // ── Arrows ───────────────────────────────────────────────────────
@@ -268,27 +296,49 @@ export default function ChessBoardPanel() {
         ) : null}
       </div>
 
-      {/* Board */}
-      <div
-        key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
-        className={`rounded-lg overflow-hidden shadow-2xl shadow-black/60 ${boardFlashing ? 'board-flash-green' : ''} ${isReviewing ? 'opacity-90 ring-2 ring-amber-500/40' : ''}`}
-        style={{ width: 520, height: 520 }}
-      >
-        <Chessboard
-          id="training-board"
-          position={displayFen}
-          boardOrientation={boardOrientation}
-          onPieceDrop={onPieceDrop}
-          onSquareClick={onSquareClick}
-          arePiecesDraggable={isDraggable}
-          customSquareStyles={customSquareStyles}
-          customArrows={customArrows}
-          boardWidth={520}
-          customBoardStyle={{ borderRadius: '4px' }}
-          customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-          customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
-          animationDuration={isReviewing ? 0 : 200}
-        />
+      {/* Board + optional eval bar */}
+      <div className="flex items-center gap-2">
+        {showEvalBar && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
+          <EvalBar fen={displayFen} height={520} />
+        )}
+        <div
+          key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
+          className={`relative rounded-lg overflow-hidden shadow-2xl shadow-black/60 ${boardFlashing ? 'board-flash-green' : ''} ${isReviewing ? 'opacity-90 ring-2 ring-amber-500/40' : ''}`}
+          style={{ width: 520, height: 520 }}
+        >
+          <Chessboard
+            id="training-board"
+            position={displayFen}
+            boardOrientation={boardOrientation}
+            onPieceDrop={onPieceDrop}
+            onSquareClick={onSquareClick}
+            arePiecesDraggable={isDraggable}
+            customSquareStyles={customSquareStyles}
+            customArrows={customArrows}
+            boardWidth={520}
+            customBoardStyle={{ borderRadius: '4px' }}
+            customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+            customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+            animationDuration={isReviewing ? 0 : 200}
+          />
+          {/* Wrong-move X overlay */}
+          {wrongMoveSquare && !isReviewing && (() => {
+            const { x, y, size } = squareToXY(wrongMoveSquare, 520, boardOrientation);
+            return (
+              <div
+                className="absolute pointer-events-none flex items-center justify-center"
+                style={{ left: x, top: y, width: size, height: size }}
+              >
+                <div className="w-9 h-9 rounded-full bg-red-600/90 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-black/50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* History navigation bar */}

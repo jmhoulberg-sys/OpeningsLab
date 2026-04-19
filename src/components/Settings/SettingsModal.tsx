@@ -12,7 +12,7 @@ interface SettingsModalProps {
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { randomTopX, setRandomTopX } = useTrainingStore();
   const { reset } = useProgressStore();
-  const { restartFrom, setRestartFrom, minRating, setMinRating, enableSRReminders, setEnableSRReminders } = useSettingsStore();
+  const { restartFrom, setRestartFrom, minRating, setMinRating, enableSRReminders, setEnableSRReminders, showEvalBar, setShowEvalBar } = useSettingsStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -136,6 +136,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </option>
               ))}
             </select>
+          </section>
+
+          {/* Evaluation Bar */}
+          <section>
+            <label className="block text-white font-semibold text-sm mb-1">
+              Evaluation Bar
+            </label>
+            <p className="text-slate-400 text-xs mb-3">
+              Show position evaluation bar next to the board.
+            </p>
+            <button
+              onClick={() => setShowEvalBar(!showEvalBar)}
+              className={`w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
+                showEvalBar
+                  ? 'bg-brand-accent text-white border-brand-accent/50'
+                  : 'bg-slate-700/40 text-slate-400 border-slate-600/50 hover:text-slate-200'
+              }`}
+            >
+              {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
+            </button>
           </section>
 
           {/* Spaced Repetition Reminders */}

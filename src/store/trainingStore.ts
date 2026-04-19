@@ -48,6 +48,10 @@ interface TrainingState {
   isAwaitingUserMove: boolean;
   wrongMoveSan: string | null;
   showingCorrectMove: boolean;
+  /** Square the student tried to move TO on a wrong move (for X overlay). */
+  wrongMoveSquare: string | null;
+  /** FROM square of the expected move, highlighted when hint is active. */
+  hintSquare: string | null;
   mode: TrainingMode;
   opponentMode: OpponentMode;
   randomTopX: number;
@@ -73,6 +77,7 @@ interface TrainingActions {
   handleBoardMove(from: string, to: string, promotion?: string): 'correct' | 'wrong' | 'ignored';
   advanceOpponent(): Promise<void>;
   showAnswer(): void;
+  showHint(): void;
   restart(): void;
   backToLineSelect(): void;
   startPostLine(mode?: PostLineMode, showEval?: boolean, showTopMoves?: boolean): void;
@@ -104,6 +109,8 @@ function buildInitialState(): TrainingState {
     isAwaitingUserMove: false,
     wrongMoveSan: null,
     showingCorrectMove: false,
+    wrongMoveSquare: null,
+    hintSquare: null,
     mode: 'learn',
     opponentMode: 'forced',
     randomTopX: 3,
@@ -187,6 +194,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           viewMoveIndex: null,
           mistakes: 0,
           wrongMoveSan: null,
+          wrongMoveSquare: null,
+          hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
           postLineStartMoveCount: null,
@@ -213,6 +222,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           viewMoveIndex: null,
           mistakes: 0,
           wrongMoveSan: null,
+          wrongMoveSquare: null,
+          hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
           postLineStartMoveCount: null,
@@ -251,8 +262,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         const expectedSan = setupMoves[state.currentMoveIndex] ?? null;
 
         if (!expectedSan || normalise(san) !== normalise(expectedSan)) {
-          set({ wrongMoveSan: expectedSan, showingCorrectMove: false });
-          setTimeout(() => set({ wrongMoveSan: null }), 1800);
+          set({ wrongMoveSan: expectedSan, wrongMoveSquare: to, showingCorrectMove: false });
+          setTimeout(() => set({ wrongMoveSan: null, wrongMoveSquare: null }), 1800);
           return 'wrong';
         }
 
@@ -320,10 +331,12 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         set((s) => ({
           mistakes: s.mistakes + 1,
           wrongMoveSan: expected,
+          wrongMoveSquare: to,
           showingCorrectMove: false,
           streak: 0,
+          hintSquare: null,
         }));
-        setTimeout(() => set({ wrongMoveSan: null }), 1800);
+        setTimeout(() => set({ wrongMoveSan: null, wrongMoveSquare: null }), 1800);
         return 'wrong';
       }
 
@@ -341,6 +354,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         fenHistory: [...s.fenHistory, newFen],
         currentMoveIndex: newIdx,
         wrongMoveSan: null,
+        wrongMoveSquare: null,
+        hintSquare: null,
         showingCorrectMove: false,
         isAwaitingUserMove: false,
         streak: s.streak + 1,
@@ -373,6 +388,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   viewMoveIndex: null,
                   mistakes: 0,
                   wrongMoveSan: null,
+                  wrongMoveSquare: null,
+                  hintSquare: null,
                   showingCorrectMove: false,
                   postLine: false,
                   postLineStartMoveCount: null,
@@ -396,6 +413,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   viewMoveIndex: null,
                   mistakes: 0,
                   wrongMoveSan: null,
+                  wrongMoveSquare: null,
+                  hintSquare: null,
                   showingCorrectMove: false,
                   postLine: false,
                   postLineStartMoveCount: null,
@@ -577,7 +596,34 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         expected = state.selectedLine.moves[state.currentMoveIndex]?.san ?? null;
       }
 
-      set({ wrongMoveSan: expected, showingCorrectMove: true });
+      set({ wrongMoveSan: expected, showingCorrectMove: true, hintSquare: null });
+    },
+
+    // ── showHint ──────────────────────────────────────────────────
+    showHint() {
+      const state = get();
+      if (!state.isAwaitingUserMove) return;
+      if (state.mode === 'drill' || state.mode === 'time-trial') return;
+      if (state.viewMoveIndex !== null) set({ viewMoveIndex: null });
+
+      let expectedSan: string | null = null;
+      if (state.phase === 'setup' && state.opening) {
+        expectedSan = state.opening.setupMoves[state.currentMoveIndex] ?? null;
+      } else if (state.phase === 'training' && state.selectedLine) {
+        expectedSan = state.selectedLine.moves[state.currentMoveIndex]?.san ?? null;
+      }
+      if (!expectedSan) return;
+
+      try {
+        const chess = new Chess(state.currentFen);
+        const norm = (s: string) => s.replace(/[+#!?]/g, '').trim();
+        const found = chess.moves({ verbose: true }).find(
+          (m) => norm(m.san) === norm(expectedSan!),
+        );
+        if (found) {
+          set({ hintSquare: found.from });
+        }
+      } catch { /* ignore */ }
     },
 
     // ── restart ───────────────────────────────────────────────────
@@ -606,6 +652,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             viewMoveIndex: null,
             mistakes: 0,
             wrongMoveSan: null,
+            wrongMoveSquare: null,
+            hintSquare: null,
             showingCorrectMove: false,
             postLine: false,
             postLineStartMoveCount: null,
@@ -631,6 +679,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             viewMoveIndex: null,
             mistakes: 0,
             wrongMoveSan: null,
+            wrongMoveSquare: null,
+            hintSquare: null,
             showingCorrectMove: false,
             postLine: false,
             postLineStartMoveCount: null,
@@ -687,6 +737,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         viewMoveIndex: null,
         mistakes: 0,
         wrongMoveSan: null,
+        wrongMoveSquare: null,
+        hintSquare: null,
         showingCorrectMove: false,
         isAwaitingUserMove: false,
         postLine: false,
