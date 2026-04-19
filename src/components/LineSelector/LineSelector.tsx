@@ -1,3 +1,4 @@
+import { Star, Check, Minus } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import type { Opening, OpeningLine, LineProgress } from '../../types';
@@ -123,18 +124,12 @@ function LineRow({
         <div className="flex items-center gap-2 min-w-0">
           {/* Completion indicator: green check if unlocked, dim dash if not */}
           {isUnlocked ? (
-            <span
-              title="Completed"
-              className="text-emerald-400 text-sm leading-none flex-shrink-0 font-bold"
-            >
-              ✓
+            <span title="Completed" className="text-emerald-400 flex-shrink-0">
+              <Check size={14} strokeWidth={3} />
             </span>
           ) : (
-            <span
-              title="Not yet completed"
-              className="text-slate-600 text-sm leading-none flex-shrink-0"
-            >
-              –
+            <span title="Not yet completed" className="text-slate-600 flex-shrink-0">
+              <Minus size={14} />
             </span>
           )}
           <span className="font-semibold truncate">{line.name}</span>
@@ -143,10 +138,10 @@ function LineRow({
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Stats */}
           {progress && (
-            <span className="text-[10px] text-slate-500">
+            <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
               {progress.attempts}×
               {progress.bestMistakes < Infinity && (
-                <> · {progress.bestMistakes === 0 ? '✓' : `${progress.bestMistakes}✗`}</>
+                <> · {progress.bestMistakes === 0 ? <Check size={10} strokeWidth={3} className="text-emerald-400 inline" /> : `${progress.bestMistakes}✗`}</>
               )}
             </span>
           )}
@@ -156,11 +151,11 @@ function LineRow({
             <button
               onClick={handleFavorite}
               title={favorite ? 'Remove from favourites' : 'Add to favourites'}
-              className={`text-base leading-none transition-colors cursor-pointer ${
+              className={`leading-none transition-colors cursor-pointer ${
                 favorite ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-600 hover:text-slate-400'
               }`}
             >
-              {favorite ? '★' : '☆'}
+              <Star size={14} fill={favorite ? 'currentColor' : 'none'} />
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Timer } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 
 export default function TimerDisplay() {
@@ -18,7 +19,7 @@ export default function TimerDisplay() {
   return (
     <div className="px-4 py-2.5 bg-cyan-900/30 border-b border-cyan-800/40 flex-shrink-0">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-bold text-cyan-300 uppercase tracking-widest">⏱ Time Trial</span>
+        <span className="text-xs font-bold text-cyan-300 uppercase tracking-widest flex items-center gap-1"><Timer size={14} className="inline" /> Time Trial</span>
         <span className={`text-sm font-bold tabular-nums ${isUrgent ? 'text-red-400 animate-pulse' : 'text-cyan-200'}`}>
           {timeLeft}s
         </span>

@@ -1,3 +1,4 @@
+import { Settings } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 
 interface HeaderProps {
@@ -15,7 +16,11 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
         onClick={onHomeClick}
         className="flex items-center gap-3 cursor-pointer group"
       >
-        <span className="text-2xl select-none">♟</span>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent flex-shrink-0">
+          <circle cx="12" cy="5" r="3"/>
+          <path d="M10 8l-2 6h8l-2-6z"/>
+          <path d="M7 15l-1 3h12l-1-3z"/>
+        </svg>
         <span className="text-lg font-bold text-white tracking-tight group-hover:text-brand-accent transition-colors">
           OpeningsLab
         </span>
@@ -49,11 +54,11 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
         <PhaseBadge phase={phase} />
         <button
           onClick={onSettingsClick}
-          className="text-slate-400 hover:text-white transition-colors cursor-pointer text-lg leading-none"
+          className="text-slate-400 hover:text-white transition-colors cursor-pointer"
           title="Settings"
           aria-label="Open settings"
         >
-          ⚙
+          <Settings size={18} />
         </button>
       </div>
     </header>

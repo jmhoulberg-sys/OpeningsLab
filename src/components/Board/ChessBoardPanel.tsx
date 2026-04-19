@@ -78,7 +78,7 @@ export default function ChessBoardPanel() {
     if (streak > prevStreakRef.current) {
       const msgs = ['Nice!', 'Sharp!', 'Excellent!', "That's it!", 'On the money!', 'Perfect!'];
       setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'correct' });
-      const t = setTimeout(() => setFeedbackMsg(null), 1200);
+      const t = setTimeout(() => setFeedbackMsg(null), 2500);
       prevStreakRef.current = streak;
       return () => clearTimeout(t);
     }
@@ -89,7 +89,7 @@ export default function ChessBoardPanel() {
     if (mistakes > prevMistakesRef.current) {
       const msgs = ['Not quite!', 'Wrong move!', 'Remember the plan!', 'Stay on the line!'];
       setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'wrong' });
-      const t = setTimeout(() => setFeedbackMsg(null), 1400);
+      const t = setTimeout(() => setFeedbackMsg(null), 2500);
       prevMistakesRef.current = mistakes;
       return () => clearTimeout(t);
     }
@@ -209,61 +209,42 @@ export default function ChessBoardPanel() {
     !isReviewing && isAwaitingUserMove && (phase === 'training' || phase === 'setup');
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2">
       {/* Status */}
       <div className={`text-sm font-semibold tracking-wide h-5 ${statusColor}`}>
         {statusText}
       </div>
 
-      {/* Feedback toast / move hint row */}
-      {feedbackMsg ? (
-        <div className={`text-sm font-bold px-4 py-1 rounded-full transition-all ${
-          feedbackMsg.type === 'correct'
-            ? 'bg-emerald-600/90 text-white'
-            : 'bg-red-600/90 text-white'
-        }`}>
-          {feedbackMsg.text}
+      {/* Drill progress bar — always in layout, invisible when not applicable */}
+      <div className={`w-full max-w-[520px] ${showDrillBar ? 'visible' : 'invisible'}`}>
+        <div className="flex justify-between text-xs text-amber-300 font-semibold mb-1">
+          <span>Step-by-step drill</span>
+          <span>{drillDone} / {drillTotal} moves learned</span>
         </div>
-      ) : showDrillBar ? (
-        <div className="w-full max-w-[520px] space-y-1">
-          <div className="flex justify-between text-xs text-amber-300 font-semibold">
-            <span>Step-by-step drill</span>
-            <span>{drillDone} / {drillTotal} moves learned</span>
-          </div>
-          <div className="w-full bg-slate-700/60 rounded-full h-2">
-            <div
-              className="bg-amber-400 h-2 rounded-full transition-all duration-500"
-              style={{ width: drillTotal > 0 ? `${Math.round((drillDone / drillTotal) * 100)}%` : '0%' }}
-            />
-          </div>
+        <div className="w-full bg-slate-700/60 rounded-full h-2">
+          <div
+            className="bg-amber-400 h-2 rounded-full transition-all duration-500"
+            style={{ width: drillTotal > 0 ? `${Math.round((drillDone / drillTotal) * 100)}%` : '0%' }}
+          />
         </div>
-      ) : (
-        <>
-          {wrongMoveSan && !showingCorrectMove && (
-            <div className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Wrong move — follow the arrow
-            </div>
-          )}
-          {wrongMoveSan && showingCorrectMove && (
-            <div className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Follow the arrow — now play it
-            </div>
-          )}
-          {!wrongMoveSan && <div className="h-6" />}
-        </>
-      )}
-      {/* When drill bar is shown but feedback is not, still show wrong-move hint below bar */}
-      {!feedbackMsg && showDrillBar && wrongMoveSan && !showingCorrectMove && (
-        <div className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-          Wrong move — follow the arrow
-        </div>
-      )}
-      {!feedbackMsg && showDrillBar && wrongMoveSan && showingCorrectMove && (
-        <div className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-          Follow the arrow — now play it
-        </div>
-      )}
-      {!feedbackMsg && showDrillBar && !wrongMoveSan && <div className="h-6" />}
+      </div>
+
+      {/* Feedback row — always h-7, never collapses */}
+      <div className="h-7 flex items-center justify-center">
+        {feedbackMsg ? (
+          <span className={`text-xs font-bold px-4 py-1 rounded-full ${
+            feedbackMsg.type === 'correct' ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
+          }`}>{feedbackMsg.text}</span>
+        ) : wrongMoveSan && !showingCorrectMove ? (
+          <span className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
+            Wrong move — follow the arrow
+          </span>
+        ) : wrongMoveSan && showingCorrectMove ? (
+          <span className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
+            Follow the arrow — now play it
+          </span>
+        ) : null}
+      </div>
 
       {/* Board */}
       <div

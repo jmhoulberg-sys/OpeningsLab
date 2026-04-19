@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { BookOpen, Layers, Zap, Timer, CalendarClock } from 'lucide-react';
 import type { TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
+import { useSettingsStore } from '../../store/settingsStore';
 
 export default function TrainingSetupModal() {
   const { phase, opening, selectLine, setMode } = useTrainingStore();
   const { isLineUnlocked, isFavorite, toggleFavorite, isDue } = useProgressStore();
+  const { enableSRReminders } = useSettingsStore();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [chosenMode, setChosenMode] = useState<TrainingMode>('learn');
@@ -86,8 +89,10 @@ export default function TrainingSetupModal() {
                 onClick={() => handleModeSelect('learn')}
                 className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-blue-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="text-lg mb-1 select-none">📖</div>
-                <div className="text-white font-bold text-sm mb-1">Learn</div>
+                <div className="flex items-center gap-2 mb-1 text-blue-400">
+                  <BookOpen size={20} />
+                  <div className="text-white font-bold text-sm">Learn</div>
+                </div>
                 <div className="text-slate-400 text-xs">
                   Play the full line with hints available
                 </div>
@@ -97,8 +102,10 @@ export default function TrainingSetupModal() {
                 onClick={() => handleModeSelect('step-by-step')}
                 className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-amber-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="text-lg mb-1 select-none">🔄</div>
-                <div className="text-white font-bold text-sm mb-1">Step by Step</div>
+                <div className="flex items-center gap-2 mb-1 text-amber-400">
+                  <Layers size={20} />
+                  <div className="text-white font-bold text-sm">Step by Step</div>
+                </div>
                 <div className="text-slate-400 text-xs">
                   Build up move by move — master one move at a time
                 </div>
@@ -108,8 +115,10 @@ export default function TrainingSetupModal() {
                 onClick={() => handleModeSelect('drill')}
                 className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-red-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="text-lg mb-1 select-none">⚡</div>
-                <div className="text-white font-bold text-sm mb-1">Drill</div>
+                <div className="flex items-center gap-2 mb-1 text-red-400">
+                  <Zap size={20} />
+                  <div className="text-white font-bold text-sm">Drill</div>
+                </div>
                 <div className="text-slate-400 text-xs">
                   No hints. No mercy. Pure recall under pressure.
                 </div>
@@ -119,8 +128,10 @@ export default function TrainingSetupModal() {
                 onClick={() => handleModeSelect('time-trial')}
                 className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-cyan-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="text-lg mb-1 select-none">⏱</div>
-                <div className="text-white font-bold text-sm mb-1">Time Trial</div>
+                <div className="flex items-center gap-2 mb-1 text-cyan-400">
+                  <Timer size={20} />
+                  <div className="text-white font-bold text-sm">Time Trial</div>
+                </div>
                 <div className="text-slate-400 text-xs">
                   60 seconds. Each correct move adds time. Beat the clock.
                 </div>
@@ -165,6 +176,7 @@ export default function TrainingSetupModal() {
                       const unlocked = isLineUnlocked(opening.id, line.id);
                       const fav = isFavorite(opening.id, line.id);
                       const due = isDue(opening.id, line.id);
+                      const showDueBadge = fav && due && enableSRReminders;
                       return (
                         <div key={line.id} className="flex items-center">
                           <button
@@ -173,17 +185,20 @@ export default function TrainingSetupModal() {
                           >
                             {/* Completion check */}
                             <span
-                              className={`text-sm font-bold leading-none flex-shrink-0 ${
+                              className={`flex-shrink-0 ${
                                 unlocked ? 'text-emerald-400' : 'text-slate-600'
                               }`}
                               title={unlocked ? 'Completed' : 'Not completed'}
                             >
-                              {unlocked ? '✓' : '–'}
+                              {unlocked
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              }
                             </span>
                             <span className="text-slate-200 text-sm">{line.name}</span>
-                            {due && (
+                            {showDueBadge && (
                               <span className="ml-auto flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-cyan-300 bg-cyan-900/40 border border-cyan-700/40 rounded px-1.5 py-0.5">
-                                📅 Due
+                                <CalendarClock size={12} /> Due
                               </span>
                             )}
                           </button>
@@ -194,11 +209,13 @@ export default function TrainingSetupModal() {
                               toggleFavorite(opening.id, line.id);
                             }}
                             title={fav ? 'Remove from favourites' : 'Add to favourites'}
-                            className={`px-3 py-3 text-base transition-colors cursor-pointer ${
+                            className={`px-3 py-3 transition-colors cursor-pointer ${
                               fav ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-600 hover:text-slate-400'
                             }`}
                           >
-                            {fav ? '★' : '☆'}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
                           </button>
                         </div>
                       );

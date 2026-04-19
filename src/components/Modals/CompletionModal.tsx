@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Star, CheckCircle } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { isGameOver } from '../../engine/chessEngine';
@@ -47,8 +48,11 @@ export default function CompletionModal() {
         <div className="bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-md w-full mx-4 text-center">
 
           {/* Icon */}
-          <div className="text-5xl mb-3 select-none">
-            {perfect ? '★' : '✓'}
+          <div className="mb-3">
+            {perfect
+              ? <Star size={48} className="text-yellow-400 mx-auto" fill="currentColor" />
+              : <CheckCircle size={48} className="text-emerald-400 mx-auto" />
+            }
           </div>
 
           {/* Headline */}
@@ -70,7 +74,7 @@ export default function CompletionModal() {
             {streak >= 3 && (
               <StatRow
                 label="Best streak"
-                value={`${streak} moves 🔥`}
+                value={`${streak} moves`}
                 good={true}
               />
             )}
@@ -80,8 +84,8 @@ export default function CompletionModal() {
               good={perfect}
             />
             {perfect ? (
-              <p className="text-yellow-400 text-sm font-semibold">
-                Line unlocked! ★
+              <p className="text-yellow-400 text-sm font-semibold flex items-center justify-center gap-1">
+                Line unlocked! <Star size={14} fill="currentColor" />
               </p>
             ) : (
               <p className="text-slate-400 text-xs">

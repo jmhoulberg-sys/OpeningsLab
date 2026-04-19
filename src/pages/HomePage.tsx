@@ -1,3 +1,4 @@
+import { Settings } from 'lucide-react';
 import type { Opening } from '../types';
 import { OPENINGS } from '../data/openings';
 
@@ -25,13 +26,19 @@ export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageP
         <button
           onClick={onSettingsClick}
           title="Settings"
-          className="absolute right-0 top-0 text-slate-400 hover:text-white text-2xl leading-none transition-colors cursor-pointer select-none"
+          className="absolute right-0 top-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
           aria-label="Open settings"
         >
-          ⚙
+          <Settings size={24} />
         </button>
 
-        <div className="text-5xl mb-3 select-none">♟</div>
+        <div className="mb-3 flex justify-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent">
+            <circle cx="12" cy="5" r="3"/>
+            <path d="M10 8l-2 6h8l-2-6z"/>
+            <path d="M7 15l-1 3h12l-1-3z"/>
+          </svg>
+        </div>
         <h1 className="text-4xl font-extrabold text-white tracking-tight">
           OpeningsLab
         </h1>

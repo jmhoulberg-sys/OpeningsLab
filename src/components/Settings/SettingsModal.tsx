@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore, RATING_OPTIONS } from '../../store/settingsStore';
@@ -11,7 +12,7 @@ interface SettingsModalProps {
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { randomTopX, setRandomTopX } = useTrainingStore();
   const { reset } = useProgressStore();
-  const { restartFrom, setRestartFrom, minRating, setMinRating } = useSettingsStore();
+  const { restartFrom, setRestartFrom, minRating, setMinRating, enableSRReminders, setEnableSRReminders } = useSettingsStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -51,10 +52,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <h2 className="text-white font-bold text-lg">Settings</h2>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white text-lg leading-none transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white transition-colors cursor-pointer"
             aria-label="Close settings"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -135,6 +136,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </option>
               ))}
             </select>
+          </section>
+
+          {/* Spaced Repetition Reminders */}
+          <section>
+            <label className="block text-white font-semibold text-sm mb-1">
+              Spaced Repetition
+            </label>
+            <p className="text-slate-400 text-xs mb-3">
+              Show review reminders on favourited lines.
+            </p>
+            <button
+              onClick={() => setEnableSRReminders(!enableSRReminders)}
+              className={`w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
+                enableSRReminders
+                  ? 'bg-brand-accent text-white border-brand-accent/50'
+                  : 'bg-slate-700/40 text-slate-400 border-slate-600/50 hover:text-slate-200'
+              }`}
+            >
+              {enableSRReminders ? 'Reminders On' : 'Reminders Off'}
+            </button>
           </section>
 
           {/* Reset Progress */}

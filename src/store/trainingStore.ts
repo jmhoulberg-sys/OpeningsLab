@@ -20,7 +20,7 @@ import {
   repetitionTarget,
   getSetupFen,
 } from '../engine/chessEngine';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore, buildRatingsParam } from './settingsStore';
 
 // ─── State shape ────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ interface TrainingActions {
   startOpening(opening: Opening): void;
   selectLine(line: OpeningLine): void;
   handleBoardMove(from: string, to: string, promotion?: string): 'correct' | 'wrong' | 'ignored';
-  advanceOpponent(): void;
+  advanceOpponent(): Promise<void>;
   showAnswer(): void;
   restart(): void;
   backToLineSelect(): void;
@@ -389,7 +389,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     },
 
     // ── advanceOpponent ───────────────────────────────────────────
-    advanceOpponent() {
+    async advanceOpponent() {
       const state = get();
       if (!state.opening) return;
       if (state.isAwaitingUserMove) return;
@@ -439,12 +439,34 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
       // ── POST-LINE free play ─────────────────────────────────────
       if (state.postLine) {
-        const randomSan = getRandomLegalMove(state.currentFen);
-        if (!randomSan) {
+        let opponentSan: string | null = null;
+
+        if (state.postLineMode === 'top-moves') {
+          // Try to get most popular Lichess move
+          try {
+            const enc = encodeURIComponent(state.currentFen);
+            const { minRating } = useSettingsStore.getState();
+            const ratingsParam = buildRatingsParam(minRating);
+            const res = await fetch(
+              `https://explorer.lichess.ovh/lichess?variant=standard${ratingsParam}&topGames=0&recentGames=0&moves=5&fen=${enc}`
+            );
+            if (res.ok) {
+              const data = await res.json() as { moves?: Array<{ san: string; white: number; draws: number; black: number }> };
+              const topMove = data.moves?.[0];
+              if (topMove) opponentSan = topMove.san;
+            }
+          } catch { /* fall through to random */ }
+        }
+
+        // Fallback to random legal move
+        if (!opponentSan) opponentSan = getRandomLegalMove(state.currentFen);
+
+        if (!opponentSan) {
           set({ phase: 'line-select' as TrainingPhase, postLine: false });
           return;
         }
-        const newFen = applyMove(state.currentFen, randomSan);
+
+        const newFen = applyMove(state.currentFen, opponentSan);
         if (!newFen) return;
 
         const newIdx = state.currentMoveIndex + 1;
@@ -452,7 +474,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
         set({
           currentFen: newFen,
-          playedMoves: [...state.playedMoves, randomSan],
+          playedMoves: [...state.playedMoves, opponentSan],
           fenHistory: [...state.fenHistory, newFen],
           currentMoveIndex: newIdx,
           ...(gameEnded

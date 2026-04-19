@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Flame } from 'lucide-react';
 import Header from './components/Header/Header';
 import ChessBoardPanel from './components/Board/ChessBoardPanel';
 import MoveList from './components/MoveList/MoveList';
@@ -94,7 +95,9 @@ export default function App() {
               {/* Streak banner */}
               {streak >= 3 && phase === 'training' && !postLine && (
                 <div className="px-4 py-1.5 bg-amber-900/20 border-b border-amber-800/30 flex-shrink-0">
-                  <p className="text-xs text-amber-300 font-semibold">🔥 {streak} move streak!</p>
+                  <p className="text-xs text-amber-300 font-semibold flex items-center gap-1">
+                    <Flame size={14} className="text-amber-400" /> {streak} move streak!
+                  </p>
                 </div>
               )}
 
