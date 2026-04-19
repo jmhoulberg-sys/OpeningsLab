@@ -40,6 +40,7 @@ export default function ChessBoardPanel() {
     handleBoardMove,
     navigateToMove,
     playedMoves,
+    currentMoveIndex,
     streak,
     mistakes,
   } = useTrainingStore();
@@ -96,17 +97,38 @@ export default function ChessBoardPanel() {
     prevMistakesRef.current = mistakes;
   }, [mistakes]);
 
-  // ── Drill progress bar ───────────────────────────────────────────
-  let drillTotal = 0;
-  let drillDone = 0;
-  if (mode === 'step-by-step' && !postLine && opening && selectedLine && phase === 'training') {
+  // ── Progress bar (all training modes) ───────────────────────────
+  let progressLabel = '';
+  let progressDone = 0;
+  let progressTotal = 0;
+  let progressColor = 'bg-brand-accent';
+
+  if (!postLine && opening && selectedLine && phase === 'training') {
     const setupLen = opening.setupMoves.length;
-    drillTotal = selectedLine.moves
+    // Total student moves in this line (after setup)
+    const studentTotal = selectedLine.moves
       .slice(setupLen)
       .filter((_, i) => isStudentMove(opening, setupLen + i)).length;
-    drillDone = Math.min(repetitionBlock - 1, drillTotal);
+
+    if (mode === 'step-by-step') {
+      progressLabel = 'Step-by-step';
+      progressTotal = studentTotal;
+      progressDone = Math.min(repetitionBlock - 1, studentTotal);
+      progressColor = 'bg-amber-400';
+    } else {
+      // learn / drill / time-trial — count student moves already played
+      let done = 0;
+      for (let i = setupLen; i < currentMoveIndex; i++) {
+        if (isStudentMove(opening, i)) done++;
+      }
+      progressTotal = studentTotal;
+      progressDone = done;
+      if (mode === 'learn')       { progressLabel = 'Line progress'; progressColor = 'bg-blue-400'; }
+      else if (mode === 'drill')  { progressLabel = 'Drill';         progressColor = 'bg-red-400'; }
+      else                        { progressLabel = 'Time Trial';    progressColor = 'bg-cyan-400'; }
+    }
   }
-  const showDrillBar = drillTotal > 0;
+  const showProgressBar = progressTotal > 0;
 
   // ── Custom square styles ─────────────────────────────────────────
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -215,16 +237,16 @@ export default function ChessBoardPanel() {
         {statusText}
       </div>
 
-      {/* Drill progress bar — always in layout, invisible when not applicable */}
-      <div className={`w-full max-w-[520px] ${showDrillBar ? 'visible' : 'invisible'}`}>
-        <div className="flex justify-between text-xs text-amber-300 font-semibold mb-1">
-          <span>Step-by-step drill</span>
-          <span>{drillDone} / {drillTotal} moves learned</span>
+      {/* Progress bar — always in layout, invisible when not applicable */}
+      <div className={`w-full max-w-[520px] ${showProgressBar ? 'visible' : 'invisible'}`}>
+        <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
+          <span>{progressLabel}</span>
+          <span>{progressDone} / {progressTotal} moves</span>
         </div>
         <div className="w-full bg-slate-700/60 rounded-full h-2">
           <div
-            className="bg-amber-400 h-2 rounded-full transition-all duration-500"
-            style={{ width: drillTotal > 0 ? `${Math.round((drillDone / drillTotal) * 100)}%` : '0%' }}
+            className={`${progressColor} h-2 rounded-full transition-all duration-300`}
+            style={{ width: progressTotal > 0 ? `${Math.round((progressDone / progressTotal) * 100)}%` : '0%' }}
           />
         </div>
       </div>

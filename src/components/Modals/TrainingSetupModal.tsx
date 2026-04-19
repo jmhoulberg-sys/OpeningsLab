@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Layers, Zap, Timer, CalendarClock } from 'lucide-react';
+import { BookOpen, Layers, Zap, Timer, CalendarClock, X } from 'lucide-react';
 import type { TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
@@ -15,7 +15,38 @@ export default function TrainingSetupModal() {
   const [lineExpanded, setLineExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  if (phase !== 'line-select' || !opening || dismissed) return null;
+  if (phase !== 'line-select' || !opening) return null;
+
+  // When dismissed the modal hides but the backdrop-click re-opens it
+  function handleBackdropClick() {
+    if (dismissed) {
+      // Re-open at step 1
+      setDismissed(false);
+      setStep(1);
+      setLineExpanded(false);
+    } else if (step === 2) {
+      // Go back to mode selection
+      setStep(1);
+      setLineExpanded(false);
+    }
+    // step 1 + not dismissed → do nothing (stay open)
+  }
+
+  if (dismissed) {
+    // Show a small "Choose training" prompt so user can reopen
+    return (
+      <div
+        className="fixed inset-0 z-40 flex items-end justify-center pb-8 pointer-events-none"
+      >
+        <button
+          onClick={() => { setDismissed(false); setStep(1); }}
+          className="pointer-events-auto animate-pulse bg-brand-accent/90 hover:bg-brand-accent text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-lg shadow-black/40 transition-colors cursor-pointer"
+        >
+          Choose training mode →
+        </button>
+      </div>
+    );
+  }
 
   function handleModeSelect(mode: TrainingMode) {
     setChosenMode(mode);
@@ -51,7 +82,7 @@ export default function TrainingSetupModal() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={() => setDismissed(true)}
+      onClick={handleBackdropClick}
     >
       <div
         className="bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-md w-full mx-4"
@@ -60,10 +91,19 @@ export default function TrainingSetupModal() {
 
         {step === 1 && (
           <>
-            <h2 className="text-xl font-bold text-white mb-1 text-center">
-              How do you want to train?
-            </h2>
-            <p className="text-slate-400 text-sm text-center mb-1">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-white">
+                How do you want to train?
+              </h2>
+              <button
+                onClick={() => setDismissed(true)}
+                className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer ml-2"
+                title="Dismiss"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-1">
               {opening.name}
             </p>
             {/* Completion indicator */}
