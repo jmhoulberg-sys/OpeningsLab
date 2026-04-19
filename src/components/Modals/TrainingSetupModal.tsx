@@ -5,10 +5,10 @@ import { useProgressStore } from '../../store/progressStore';
 
 export default function TrainingSetupModal() {
   const { phase, opening, selectLine, setMode } = useTrainingStore();
-  const { isLineUnlocked, isFavorite, toggleFavorite } = useProgressStore();
+  const { isLineUnlocked, isFavorite, toggleFavorite, isDue } = useProgressStore();
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [chosenMode, setChosenMode] = useState<TrainingMode>('forced');
+  const [chosenMode, setChosenMode] = useState<TrainingMode>('learn');
   const [lineExpanded, setLineExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -81,24 +81,48 @@ export default function TrainingSetupModal() {
               </div>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => handleModeSelect('forced')}
-                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-brand-accent/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+                onClick={() => handleModeSelect('learn')}
+                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-blue-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="text-white font-bold text-sm mb-1">Full Line</div>
+                <div className="text-lg mb-1 select-none">📖</div>
+                <div className="text-white font-bold text-sm mb-1">Learn</div>
                 <div className="text-slate-400 text-xs">
-                  Play the complete line from start to finish
+                  Play the full line with hints available
                 </div>
               </button>
 
               <button
-                onClick={() => handleModeSelect('repetition')}
-                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-brand-accent/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+                onClick={() => handleModeSelect('step-by-step')}
+                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-amber-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
+                <div className="text-lg mb-1 select-none">🔄</div>
                 <div className="text-white font-bold text-sm mb-1">Step by Step</div>
                 <div className="text-slate-400 text-xs">
                   Build up move by move — master one move at a time
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleModeSelect('drill')}
+                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-red-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+              >
+                <div className="text-lg mb-1 select-none">⚡</div>
+                <div className="text-white font-bold text-sm mb-1">Drill</div>
+                <div className="text-slate-400 text-xs">
+                  No hints. No mercy. Pure recall under pressure.
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleModeSelect('time-trial')}
+                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-cyan-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+              >
+                <div className="text-lg mb-1 select-none">⏱</div>
+                <div className="text-white font-bold text-sm mb-1">Time Trial</div>
+                <div className="text-slate-400 text-xs">
+                  60 seconds. Each correct move adds time. Beat the clock.
                 </div>
               </button>
             </div>
@@ -140,6 +164,7 @@ export default function TrainingSetupModal() {
                     {opening.lines.map((line) => {
                       const unlocked = isLineUnlocked(opening.id, line.id);
                       const fav = isFavorite(opening.id, line.id);
+                      const due = isDue(opening.id, line.id);
                       return (
                         <div key={line.id} className="flex items-center">
                           <button
@@ -156,6 +181,11 @@ export default function TrainingSetupModal() {
                               {unlocked ? '✓' : '–'}
                             </span>
                             <span className="text-slate-200 text-sm">{line.name}</span>
+                            {due && (
+                              <span className="ml-auto flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-cyan-300 bg-cyan-900/40 border border-cyan-700/40 rounded px-1.5 py-0.5">
+                                📅 Due
+                              </span>
+                            )}
                           </button>
                           {/* Favourite star */}
                           <button

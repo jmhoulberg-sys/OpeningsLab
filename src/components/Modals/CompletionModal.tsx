@@ -11,17 +11,21 @@ export default function CompletionModal() {
     selectedLine,
     mistakes,
     currentFen,
+    streak,
     restart,
     backToLineSelect,
+    stopTimer,
   } = useTrainingStore();
 
-  const { recordLineAttempt } = useProgressStore();
+  const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
   const [showPlayOn, setShowPlayOn] = useState(false);
 
   // Record progress once when the modal first appears
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
+      stopTimer();
       recordLineAttempt(opening.id, selectedLine.id, mistakes);
+      recordSpacedRepetition(opening.id, selectedLine.id, mistakes === 0);
     }
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -31,6 +35,11 @@ export default function CompletionModal() {
 
   const perfect = mistakes === 0;
   const canContinue = !isGameOver(currentFen);
+
+  // Compute SR display (what will be scheduled after recording)
+  const existingProgress = getLineProgress(opening.id, selectedLine.id);
+  const existingInterval = existingProgress?.srInterval ?? 0;
+  const nextInterval = perfect ? Math.max(1, existingInterval * 2) : 1;
 
   return (
     <>
@@ -57,6 +66,18 @@ export default function CompletionModal() {
               label="Mistakes"
               value={mistakes === 0 ? 'None ✓' : `${mistakes}`}
               good={mistakes === 0}
+            />
+            {streak >= 3 && (
+              <StatRow
+                label="Best streak"
+                value={`${streak} moves 🔥`}
+                good={true}
+              />
+            )}
+            <StatRow
+              label="Next review"
+              value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'} ✓` : 'Tomorrow'}
+              good={perfect}
             />
             {perfect ? (
               <p className="text-yellow-400 text-sm font-semibold">

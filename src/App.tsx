@@ -7,13 +7,14 @@ import ControlPanel from './components/Controls/ControlPanel';
 import CompletionModal from './components/Modals/CompletionModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
 import SettingsModal from './components/Settings/SettingsModal';
+import TimerDisplay from './components/Timer/TimerDisplay';
 import HomePage from './pages/HomePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import type { Opening } from './types';
 
 export default function App() {
-  const { opening, phase, postLine, startOpening } = useTrainingStore();
+  const { opening, phase, postLine, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
@@ -67,7 +68,7 @@ export default function App() {
         </div>
 
         {/* ── Right: Sidebar ───────────────────────────────────────── */}
-        <aside className="w-80 flex-shrink-0 border-l border-slate-700/50 flex flex-col bg-brand-surface/60 backdrop-blur-sm overflow-hidden">
+        <aside className={`w-80 flex-shrink-0 border-l border-slate-700/50 flex flex-col bg-brand-surface/60 backdrop-blur-sm overflow-hidden ${mode === 'drill' ? 'ring-1 ring-red-900/40' : ''}`}>
           {opening && (
             <>
               {/* Opening info + completion percentage */}
@@ -84,6 +85,16 @@ export default function App() {
                   <p className="text-xs text-emerald-300 font-semibold">
                     Free play — any legal move accepted
                   </p>
+                </div>
+              )}
+
+              {/* Timer display (time-trial mode) */}
+              {mode === 'time-trial' && <TimerDisplay />}
+
+              {/* Streak banner */}
+              {streak >= 3 && phase === 'training' && !postLine && (
+                <div className="px-4 py-1.5 bg-amber-900/20 border-b border-amber-800/30 flex-shrink-0">
+                  <p className="text-xs text-amber-300 font-semibold">🔥 {streak} move streak!</p>
                 </div>
               )}
 

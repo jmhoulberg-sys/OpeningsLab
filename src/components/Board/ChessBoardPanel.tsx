@@ -40,12 +40,17 @@ export default function ChessBoardPanel() {
     handleBoardMove,
     navigateToMove,
     playedMoves,
+    streak,
+    mistakes,
   } = useTrainingStore();
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
   const prevBlockRef = useRef(repetitionBlock);
   const flashKeyRef = useRef(0);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(null);
+  const prevStreakRef = useRef(streak);
+  const prevMistakesRef = useRef(mistakes);
 
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
   const showAnalysis = postLine;
@@ -68,10 +73,33 @@ export default function ChessBoardPanel() {
     prevBlockRef.current = repetitionBlock;
   }, [repetitionBlock]);
 
+  // ── Feedback toast on streak/mistakes changes ─────────────────
+  useEffect(() => {
+    if (streak > prevStreakRef.current) {
+      const msgs = ['Nice!', 'Sharp!', 'Excellent!', "That's it!", 'On the money!', 'Perfect!'];
+      setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'correct' });
+      const t = setTimeout(() => setFeedbackMsg(null), 1200);
+      prevStreakRef.current = streak;
+      return () => clearTimeout(t);
+    }
+    prevStreakRef.current = streak;
+  }, [streak]);
+
+  useEffect(() => {
+    if (mistakes > prevMistakesRef.current) {
+      const msgs = ['Not quite!', 'Wrong move!', 'Remember the plan!', 'Stay on the line!'];
+      setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'wrong' });
+      const t = setTimeout(() => setFeedbackMsg(null), 1400);
+      prevMistakesRef.current = mistakes;
+      return () => clearTimeout(t);
+    }
+    prevMistakesRef.current = mistakes;
+  }, [mistakes]);
+
   // ── Drill progress bar ───────────────────────────────────────────
   let drillTotal = 0;
   let drillDone = 0;
-  if (mode === 'repetition' && !postLine && opening && selectedLine && phase === 'training') {
+  if (mode === 'step-by-step' && !postLine && opening && selectedLine && phase === 'training') {
     const setupLen = opening.setupMoves.length;
     drillTotal = selectedLine.moves
       .slice(setupLen)
@@ -187,8 +215,16 @@ export default function ChessBoardPanel() {
         {statusText}
       </div>
 
-      {/* Drill progress bar */}
-      {showDrillBar ? (
+      {/* Feedback toast / move hint row */}
+      {feedbackMsg ? (
+        <div className={`text-sm font-bold px-4 py-1 rounded-full transition-all ${
+          feedbackMsg.type === 'correct'
+            ? 'bg-emerald-600/90 text-white'
+            : 'bg-red-600/90 text-white'
+        }`}>
+          {feedbackMsg.text}
+        </div>
+      ) : showDrillBar ? (
         <div className="w-full max-w-[520px] space-y-1">
           <div className="flex justify-between text-xs text-amber-300 font-semibold">
             <span>Step-by-step drill</span>
@@ -216,17 +252,18 @@ export default function ChessBoardPanel() {
           {!wrongMoveSan && <div className="h-6" />}
         </>
       )}
-      {showDrillBar && wrongMoveSan && !showingCorrectMove && (
+      {/* When drill bar is shown but feedback is not, still show wrong-move hint below bar */}
+      {!feedbackMsg && showDrillBar && wrongMoveSan && !showingCorrectMove && (
         <div className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
           Wrong move — follow the arrow
         </div>
       )}
-      {showDrillBar && wrongMoveSan && showingCorrectMove && (
+      {!feedbackMsg && showDrillBar && wrongMoveSan && showingCorrectMove && (
         <div className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
           Follow the arrow — now play it
         </div>
       )}
-      {showDrillBar && !wrongMoveSan && <div className="h-6" />}
+      {!feedbackMsg && showDrillBar && !wrongMoveSan && <div className="h-6" />}
 
       {/* Board */}
       <div

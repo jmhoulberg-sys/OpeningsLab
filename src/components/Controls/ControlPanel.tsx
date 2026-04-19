@@ -3,10 +3,12 @@ import { useTrainingStore } from '../../store/trainingStore';
 export default function ControlPanel() {
   const {
     phase,
+    mode,
     postLine,
     isAwaitingUserMove,
     showingCorrectMove,
     selectedLine,
+    streak,
     showAnswer,
     restart,
     backToLineSelect,
@@ -16,19 +18,24 @@ export default function ControlPanel() {
   const canShowAnswer = inSession && isAwaitingUserMove && !showingCorrectMove && !postLine;
   const canRestart = !!selectedLine || phase === 'training' || phase === 'completed';
   const canGoBack = phase === 'training' || phase === 'completed';
+  const hideShowAnswer = mode === 'drill' || mode === 'time-trial';
 
   return (
     <div className="space-y-2">
       <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-        Actions
+        Actions {streak >= 2 && phase === 'training' && !postLine && (
+          <span className="text-amber-400 font-bold normal-case tracking-normal">🔥 {streak}</span>
+        )}
       </h3>
       <div className="flex flex-col gap-2">
-        <ActionButton
-          label="Show Answer"
-          onClick={showAnswer}
-          disabled={!canShowAnswer}
-          variant="secondary"
-        />
+        {!hideShowAnswer && (
+          <ActionButton
+            label="Show Answer"
+            onClick={showAnswer}
+            disabled={!canShowAnswer}
+            variant="secondary"
+          />
+        )}
         <ActionButton
           label="Restart Line"
           onClick={restart}

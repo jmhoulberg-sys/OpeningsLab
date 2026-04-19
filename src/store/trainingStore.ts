@@ -60,6 +60,9 @@ interface TrainingState {
   /** Show top-3 Lichess moves panel during free play. */
   showTopMoves: boolean;
   repetitionBlock: number;
+  streak: number;
+  timeLeft: number;
+  timerRunning: boolean;
 }
 
 // ─── Action shape ───────────────────────────────────────────────────
@@ -80,6 +83,9 @@ interface TrainingActions {
   toggleShowTopMoves(): void;
   /** Navigate to a historical position. Pass null to return to live. */
   navigateToMove(idx: number | null): void;
+  tickTimer(): void;
+  addTimerBonus(): void;
+  stopTimer(): void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -98,7 +104,7 @@ function buildInitialState(): TrainingState {
     isAwaitingUserMove: false,
     wrongMoveSan: null,
     showingCorrectMove: false,
-    mode: 'forced',
+    mode: 'learn',
     opponentMode: 'forced',
     randomTopX: 3,
     postLine: false,
@@ -107,6 +113,9 @@ function buildInitialState(): TrainingState {
     showEval: false,
     showTopMoves: true,
     repetitionBlock: 1,
+    streak: 0,
+    timeLeft: -1,
+    timerRunning: false,
   };
 }
 
@@ -154,10 +163,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
     // ── selectLine ────────────────────────────────────────────────
     selectLine(line) {
-      const { opening } = get();
+      const { opening, mode } = get();
       if (!opening) return;
 
       const { restartFrom } = useSettingsStore.getState();
+      const isTimeTrial = mode === 'time-trial';
 
       if (restartFrom === 'setup') {
         // Start from the setup position
@@ -182,6 +192,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
+          streak: 0,
+          ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
         });
 
         if (isStudentMove(opening, setupLen)) {
@@ -206,6 +218,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
+          streak: 0,
+          ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
         });
 
         if (isStudentMove(opening, 0)) {
@@ -307,6 +321,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           mistakes: s.mistakes + 1,
           wrongMoveSan: expected,
           showingCorrectMove: false,
+          streak: 0,
         }));
         setTimeout(() => set({ wrongMoveSan: null }), 1800);
         return 'wrong';
@@ -320,19 +335,24 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
       const newIdx = state.currentMoveIndex + 1;
       const lineComplete = newIdx >= line.moves.length;
 
-      set({
+      set((s) => ({
         currentFen: newFen,
         playedMoves: newPlayed,
-        fenHistory: [...state.fenHistory, newFen],
+        fenHistory: [...s.fenHistory, newFen],
         currentMoveIndex: newIdx,
         wrongMoveSan: null,
         showingCorrectMove: false,
         isAwaitingUserMove: false,
+        streak: s.streak + 1,
         ...(lineComplete ? { phase: 'completed' as TrainingPhase } : {}),
-      });
+      }));
+
+      if (state.mode === 'time-trial') {
+        get().addTimerBonus();
+      }
 
       if (!lineComplete) {
-        if (state.mode === 'repetition') {
+        if (state.mode === 'step-by-step') {
           const target = repetitionTarget(state.opening, line, state.repetitionBlock);
           if (target < line.moves.length && justPlayedIndex >= target) {
             const opening = state.opening;
@@ -493,6 +513,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     showAnswer() {
       const state = get();
       if (!state.isAwaitingUserMove) return;
+      if (state.mode === 'drill' || state.mode === 'time-trial') return;
       // Exit review mode first
       if (state.viewMoveIndex !== null) set({ viewMoveIndex: null });
 
@@ -513,6 +534,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
       if (!state.opening) return;
 
       const { restartFrom } = useSettingsStore.getState();
+      const isTimeTrial = state.mode === 'time-trial';
 
       if (state.selectedLine) {
         const line = state.selectedLine;
@@ -538,6 +560,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             isAwaitingUserMove: false,
             selectedLine: line,
             repetitionBlock: 1,
+            streak: 0,
+            ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
           });
 
           if (isStudentMove(opening, setupLen)) {
@@ -561,6 +585,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             isAwaitingUserMove: false,
             selectedLine: line,
             repetitionBlock: 1,
+            streak: 0,
+            ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
           });
 
           if (isStudentMove(opening, 0)) {
@@ -614,6 +640,9 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLine: false,
         postLineStartMoveCount: null,
         repetitionBlock: 1,
+        streak: 0,
+        timeLeft: -1,
+        timerRunning: false,
       });
     },
 
@@ -637,5 +666,22 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     setRandomTopX(x) { set({ randomTopX: Math.min(10, Math.max(1, x)) }); },
     toggleShowEval() { set((s) => ({ showEval: !s.showEval })); },
     toggleShowTopMoves() { set((s) => ({ showTopMoves: !s.showTopMoves })); },
+
+    tickTimer() {
+      set((s) => {
+        if (s.timeLeft <= 1) {
+          return { timeLeft: 0, timerRunning: false, phase: 'completed' as TrainingPhase };
+        }
+        return { timeLeft: s.timeLeft - 1 };
+      });
+    },
+
+    addTimerBonus() {
+      set((s) => ({ timeLeft: s.timeLeft + 5 }));
+    },
+
+    stopTimer() {
+      set({ timerRunning: false });
+    },
   }),
 );

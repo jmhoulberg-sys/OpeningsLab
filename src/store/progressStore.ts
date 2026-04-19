@@ -5,6 +5,8 @@ import type { ProgressState, OpeningProgress, LineProgress } from '../types';
 interface ProgressActions {
   markSetupComplete(openingId: string): void;
   recordLineAttempt(openingId: string, lineId: string, mistakes: number): void;
+  recordSpacedRepetition(openingId: string, lineId: string, perfect: boolean): void;
+  isDue(openingId: string, lineId: string): boolean;
   isSetupComplete(openingId: string): boolean;
   isLineUnlocked(openingId: string, lineId: string): boolean;
   getLineProgress(openingId: string, lineId: string): LineProgress | undefined;
@@ -29,6 +31,8 @@ const defaultLineProgress = (lineId: string): LineProgress => ({
   unlocked: false,
   bestMistakes: Infinity,
   attempts: 0,
+  srInterval: 0,
+  nextReviewDate: null,
 });
 
 export const useProgressStore = create<FullProgressState & ProgressActions>()(
@@ -80,6 +84,51 @@ export const useProgressStore = create<FullProgressState & ProgressActions>()(
             },
           };
         });
+      },
+
+      recordSpacedRepetition(openingId, lineId, perfect) {
+        set((state) => {
+          const opening = state.openings[openingId] ?? defaultOpeningProgress(openingId);
+          const existing = opening.lines[lineId] ?? defaultLineProgress(lineId);
+
+          const today = new Date();
+          let newInterval: number;
+          let nextDate: string;
+
+          if (perfect) {
+            newInterval = Math.max(1, existing.srInterval * 2);
+          } else {
+            newInterval = 1;
+          }
+
+          const next = new Date(today);
+          next.setDate(today.getDate() + newInterval);
+          nextDate = next.toISOString().split('T')[0];
+
+          return {
+            openings: {
+              ...state.openings,
+              [openingId]: {
+                ...opening,
+                lines: {
+                  ...opening.lines,
+                  [lineId]: {
+                    ...existing,
+                    srInterval: newInterval,
+                    nextReviewDate: nextDate,
+                  },
+                },
+              },
+            },
+          };
+        });
+      },
+
+      isDue(openingId, lineId) {
+        const progress = get().openings[openingId]?.lines[lineId];
+        if (!progress?.nextReviewDate) return true;
+        const today = new Date().toISOString().split('T')[0];
+        return progress.nextReviewDate <= today;
       },
 
       isSetupComplete(openingId) {

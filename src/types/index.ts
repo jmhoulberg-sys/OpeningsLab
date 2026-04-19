@@ -2,7 +2,7 @@
 
 export type Color = 'white' | 'black';
 
-export type TrainingMode = 'forced' | 'repetition';
+export type TrainingMode = 'learn' | 'step-by-step' | 'drill' | 'time-trial';
 
 export type PostLineMode = 'computer-beginner' | 'computer-advanced' | 'computer-pro' | 'top-moves';
 
@@ -106,6 +106,10 @@ export interface LineProgress {
   bestMistakes: number;
   /** Total attempts. */
   attempts: number;
+  /** Spaced repetition interval in days (0 = due immediately). */
+  srInterval: number;
+  /** ISO date string for next scheduled review, or null if never reviewed. */
+  nextReviewDate: string | null;
 }
 
 export interface OpeningProgress {
