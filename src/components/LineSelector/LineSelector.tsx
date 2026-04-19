@@ -138,21 +138,30 @@ function LineRow({
         }
       `}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          {isUnlocked ? (
-            <span title="Completed" className="text-emerald-400 flex-shrink-0">
-              <Check size={14} strokeWidth={3} />
-            </span>
-          ) : (
-            <span title="Not yet completed" className="text-slate-600 flex-shrink-0">
-              <Minus size={14} />
-            </span>
-          )}
-          <span className="font-semibold truncate">{line.name}</span>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="mt-0.5 flex-shrink-0">
+            {isUnlocked ? (
+              <span title="Completed" className="text-emerald-400">
+                <Check size={14} strokeWidth={3} />
+              </span>
+            ) : (
+              <span title="Not yet completed" className="text-slate-600">
+                <Minus size={14} />
+              </span>
+            )}
+          </span>
+          <div className="min-w-0">
+            <span className="font-semibold block leading-snug">{line.name}</span>
+            {line.description && (
+              <span className="text-[11px] text-slate-400 leading-relaxed mt-1 block">
+                {line.description}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
           {progress && (
             <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
               {progress.attempts}×

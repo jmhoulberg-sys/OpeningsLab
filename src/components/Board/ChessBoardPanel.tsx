@@ -152,6 +152,21 @@ export default function ChessBoardPanel() {
 
   // ── Custom square styles ─────────────────────────────────────────
   const customSquareStyles: Record<string, React.CSSProperties> = {};
+
+  // Yellow highlight for last computer move
+  if (!isReviewing && isAwaitingUserMove && !postLine && opening && playedMoves.length > 0 && currentMoveIndex > 0) {
+    const lastMoveIsComputer = !isStudentMove(opening, currentMoveIndex - 1);
+    if (lastMoveIsComputer && fenHistory.length >= 2) {
+      const prevFen = fenHistory[fenHistory.length - 2];
+      const lastSan = playedMoves[playedMoves.length - 1];
+      const arrow = resolveArrow(prevFen, lastSan);
+      if (arrow) {
+        customSquareStyles[arrow[0]] = { backgroundColor: 'rgba(255, 200, 0, 0.35)' };
+        customSquareStyles[arrow[1]] = { backgroundColor: 'rgba(255, 200, 0, 0.55)' };
+      }
+    }
+  }
+
   if (!isReviewing && selectedSquare) {
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
   }
@@ -299,7 +314,7 @@ export default function ChessBoardPanel() {
       {/* Board + optional eval bar */}
       <div className="flex items-center gap-2">
         {showEvalBar && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
-          <EvalBar fen={displayFen} height={520} />
+          <EvalBar fen={displayFen} height={520} playerColor={opening?.playerColor ?? 'white'} />
         )}
         <div
           key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}

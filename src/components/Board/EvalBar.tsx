@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 interface EvalBarProps {
   fen: string;
   height: number;
+  playerColor?: 'white' | 'black';
 }
 
-export default function EvalBar({ fen, height }: EvalBarProps) {
+export default function EvalBar({ fen, height, playerColor = 'white' }: EvalBarProps) {
   const [evalScore, setEvalScore] = useState<number | null>(null);
   const [isMate, setIsMate] = useState(false);
 
@@ -53,6 +54,11 @@ export default function EvalBar({ fen, height }: EvalBarProps) {
     ? '0.0'
     : `${Math.abs(evalScore).toFixed(1)}`;
 
+  // When player is black, flip the bar so black is at the bottom
+  const flipped = playerColor === 'black';
+  const topSection   = flipped ? { color: 'bg-slate-100', pct: whitePercent } : { color: 'bg-slate-900', pct: blackPercent };
+  const bottomSection = flipped ? { color: 'bg-slate-900', pct: blackPercent } : { color: 'bg-slate-100', pct: whitePercent };
+
   return (
     <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: 14 }}>
       {/* The bar */}
@@ -60,17 +66,17 @@ export default function EvalBar({ fen, height }: EvalBarProps) {
         className="relative w-full rounded overflow-hidden flex flex-col"
         style={{ height: height - 20 }}
       >
-        {/* Black section (top) */}
+        {/* Top section */}
         <div
-          className="w-full bg-slate-900 transition-all duration-500"
-          style={{ height: `${blackPercent}%` }}
+          className={`w-full ${topSection.color} transition-all duration-500`}
+          style={{ height: `${topSection.pct}%` }}
         />
         {/* Divider */}
         <div className="w-full h-px bg-slate-500 flex-shrink-0" />
-        {/* White section (bottom) */}
+        {/* Bottom section */}
         <div
-          className="w-full bg-slate-100 transition-all duration-500"
-          style={{ height: `${whitePercent}%` }}
+          className={`w-full ${bottomSection.color} transition-all duration-500`}
+          style={{ height: `${bottomSection.pct}%` }}
         />
       </div>
       {/* Eval text */}

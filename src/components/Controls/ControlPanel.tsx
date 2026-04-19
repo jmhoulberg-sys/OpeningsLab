@@ -41,14 +41,14 @@ export default function ControlPanel() {
               label="Answer"
               onClick={showAnswer}
               disabled={false}
-              variant="secondary"
+              variant="hint"
             />
           ) : (
             <ActionButton
               label="Hint"
               onClick={showHint}
               disabled={!canHint}
-              variant="secondary"
+              variant="hint"
             />
           )
         )}
@@ -78,7 +78,7 @@ function ActionButton({
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  variant: 'primary' | 'secondary' | 'ghost';
+  variant: 'primary' | 'secondary' | 'ghost' | 'hint';
 }) {
   const base = 'w-full py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-150 text-left';
   const variants = {
@@ -88,6 +88,8 @@ function ActionButton({
       'bg-slate-700/60 text-slate-200 hover:bg-slate-600/60 disabled:opacity-40 border border-slate-600/40',
     ghost:
       'bg-transparent text-slate-500 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed',
+    hint:
+      'bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-40 border border-emerald-500/60 shadow-lg shadow-emerald-500/40 disabled:shadow-none',
   };
 
   return (

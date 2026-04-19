@@ -21,11 +21,8 @@ function PawnIcon({ color }: { color: 'white' | 'black' }) {
       width="18"
       height="18"
       viewBox="0 0 24 24"
-      fill={color === 'white' ? '#f1f5f9' : '#1e293b'}
-      stroke={color === 'white' ? '#64748b' : '#94a3b8'}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill={color === 'white' ? '#f1f5f9' : '#1e1e1e'}
+      stroke="none"
     >
       <circle cx="12" cy="5" r="3" />
       <path d="M10 8l-2 6h8l-2-6z" />
@@ -52,7 +49,7 @@ function OpeningCard({
   return (
     <button
       onClick={onSelect}
-      className="bg-brand-surface border border-slate-700/60 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
+      className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
     >
       <div className="flex items-start gap-4">
         {/* Mini board */}
@@ -63,6 +60,7 @@ function OpeningCard({
           <Chessboard
             position={setupFen}
             boardWidth={130}
+            boardOrientation={opening.playerColor}
             arePiecesDraggable={false}
             customBoardStyle={{ borderRadius: '4px' }}
             customDarkSquareStyle={{ backgroundColor: '#b58863' }}
@@ -151,7 +149,7 @@ export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageP
         {PLACEHOLDER_CARDS.map((card) => (
           <div
             key={card.id}
-            className="bg-brand-surface border border-slate-700/40 rounded-2xl p-4 text-left opacity-50 cursor-not-allowed"
+            className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left opacity-40 cursor-not-allowed"
           >
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 rounded-lg bg-slate-800/60 border border-slate-700/40" style={{ width: 130, height: 130 }} />
