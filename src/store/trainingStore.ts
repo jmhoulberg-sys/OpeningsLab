@@ -357,27 +357,57 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           if (target < line.moves.length && justPlayedIndex >= target) {
             const opening = state.opening;
             const nextBlock = state.repetitionBlock + 1;
+            const { restartFrom } = useSettingsStore.getState();
             setTimeout(() => {
-              set({
-                phase: 'training',
-                currentMoveIndex: 0,
-                currentFen: STARTING_FEN,
-                playedMoves: [],
-                fenHistory: [STARTING_FEN],
-                viewMoveIndex: null,
-                mistakes: 0,
-                wrongMoveSan: null,
-                showingCorrectMove: false,
-                postLine: false,
-                postLineStartMoveCount: null,
-                isAwaitingUserMove: false,
-                selectedLine: line,
-                repetitionBlock: nextBlock,
-              });
-              if (isStudentMove(opening, 0)) {
-                set({ isAwaitingUserMove: true });
+              if (restartFrom === 'setup') {
+                // Restart from setup position (skip replaying the shared opening moves)
+                const setupFen = getSetupFen(opening);
+                const setupLen = opening.setupMoves.length;
+                const setupFenHistory = buildFenHistory(STARTING_FEN, opening.setupMoves);
+                set({
+                  phase: 'training',
+                  currentMoveIndex: setupLen,
+                  currentFen: setupFen,
+                  playedMoves: [...opening.setupMoves],
+                  fenHistory: setupFenHistory,
+                  viewMoveIndex: null,
+                  mistakes: 0,
+                  wrongMoveSan: null,
+                  showingCorrectMove: false,
+                  postLine: false,
+                  postLineStartMoveCount: null,
+                  isAwaitingUserMove: false,
+                  selectedLine: line,
+                  repetitionBlock: nextBlock,
+                });
+                if (isStudentMove(opening, setupLen)) {
+                  set({ isAwaitingUserMove: true });
+                } else {
+                  setTimeout(() => get().advanceOpponent(), 400);
+                }
               } else {
-                setTimeout(() => get().advanceOpponent(), 400);
+                // Restart from the very beginning
+                set({
+                  phase: 'training',
+                  currentMoveIndex: 0,
+                  currentFen: STARTING_FEN,
+                  playedMoves: [],
+                  fenHistory: [STARTING_FEN],
+                  viewMoveIndex: null,
+                  mistakes: 0,
+                  wrongMoveSan: null,
+                  showingCorrectMove: false,
+                  postLine: false,
+                  postLineStartMoveCount: null,
+                  isAwaitingUserMove: false,
+                  selectedLine: line,
+                  repetitionBlock: nextBlock,
+                });
+                if (isStudentMove(opening, 0)) {
+                  set({ isAwaitingUserMove: true });
+                } else {
+                  setTimeout(() => get().advanceOpponent(), 400);
+                }
               }
             }, 1200);
             return 'correct';
