@@ -14,51 +14,57 @@ import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import type { Opening } from './types';
 
+// Layout constants — module-level so they never change reference
+const SIDEBAR_W = 320;           // sidebar width in px
+const MIN_BOARD_WITH_SIDEBAR = 280; // minimum board size to keep sidebar inline
+const CHROME_H = 130;            // board-panel chrome (status + bars + nav)
+const BOARD_PAD = 32;            // combined padding inside the board container
+
 export default function App() {
   const { opening, phase, postLine, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [boardSize, setBoardSize] = useState(480);
+  // sidebarOpen is only meaningful when isSmallScreen (drawer mode)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth < 800);
+  const [boardSize, setBoardSize] = useState(() =>
+    Math.max(240, Math.min(480, window.innerWidth - BOARD_PAD)),
+  );
 
   const mainRef = useRef<HTMLDivElement>(null);
-  const boardContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-collapse / auto-expand sidebar based on available width.
-  // 320px sidebar + 480px minimum board = 800px threshold.
+  // Single ResizeObserver on mainRef — computes board size AND sidebar mode
+  // together in one pass, breaking the circular dependency that arises when
+  // observing the board container (whose width changes with sidebar state).
   const handleMainResize = useCallback((entries: ResizeObserverEntry[]) => {
-    const w = entries[0].contentRect.width;
-    setSidebarOpen(w >= 800);
-  }, []);
+    const { width: W, height: H } = entries[0].contentRect;
 
-  // Compute board size from available container space.
-  // contentRect already excludes padding, so we only subtract the
-  // ChessBoardPanel chrome (status + progress + feedback + nav ≈ 160px).
-  const handleBoardContainerResize = useCallback((entries: ResizeObserverEntry[]) => {
-    const { width, height } = entries[0].contentRect;
-    const maxW = width - 24;   // room for eval bar (14px) + gap (8px) + breathing
-    const maxH = height - 160; // status(20) + progress(36) + feedback(28) + nav(36) + gaps(40)
-    const size = Math.min(720, Math.max(240, Math.min(maxW, maxH)));
-    setBoardSize(Math.floor(size));
+    // Would the board be big enough if the sidebar were shown inline?
+    const boardIfSidebarShown = Math.min(
+      W - SIDEBAR_W - BOARD_PAD,
+      H - CHROME_H - BOARD_PAD,
+    );
+    const sidebarFits = boardIfSidebarShown >= MIN_BOARD_WITH_SIDEBAR;
+
+    if (sidebarFits) {
+      setIsSmallScreen(false);
+      setBoardSize(Math.floor(Math.min(800, Math.max(MIN_BOARD_WITH_SIDEBAR, boardIfSidebarShown))));
+    } else {
+      setIsSmallScreen(true);
+      const boardFull = Math.min(W - BOARD_PAD, H - CHROME_H - BOARD_PAD);
+      setBoardSize(Math.floor(Math.min(800, Math.max(240, boardFull))));
+    }
   }, []);
 
   useEffect(() => {
     const mainEl = mainRef.current;
-    const boardEl = boardContainerRef.current;
-    if (!mainEl || !boardEl) return;
-
-    const roMain = new ResizeObserver(handleMainResize);
-    const roBoard = new ResizeObserver(handleBoardContainerResize);
-    roMain.observe(mainEl);
-    roBoard.observe(boardEl);
-
-    return () => {
-      roMain.disconnect();
-      roBoard.disconnect();
-    };
-  }, [handleMainResize, handleBoardContainerResize]);
+    if (!mainEl) return;
+    const ro = new ResizeObserver(handleMainResize);
+    ro.observe(mainEl);
+    return () => ro.disconnect();
+  }, [handleMainResize]);
 
   // Mark setup complete the first time we reach line-select.
   useEffect(() => {
@@ -103,15 +109,12 @@ export default function App() {
 
       <main ref={mainRef} className="flex-1 flex overflow-hidden min-h-0 relative">
         {/* ── Board area ──────────────────────────────────────── */}
-        <div
-          ref={boardContainerRef}
-          className="flex-1 flex items-center justify-center p-4 sm:p-6 min-w-0 overflow-hidden"
-        >
+        <div className="flex-1 flex items-center justify-center p-2 sm:p-4 min-w-0 overflow-hidden">
           <ChessBoardPanel boardSize={boardSize} />
         </div>
 
-        {/* Open-sidebar button — visible when sidebar is closed */}
-        {!sidebarOpen && (
+        {/* Open-sidebar button — only on small screens when sidebar is closed */}
+        {isSmallScreen && !sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
             className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-brand-surface/95 border border-slate-600/50 rounded-lg px-3 py-2 text-slate-300 hover:text-white hover:border-slate-500 text-sm font-semibold transition-colors cursor-pointer shadow-xl shadow-black/40"
@@ -122,10 +125,10 @@ export default function App() {
           </button>
         )}
 
-        {/* Mobile backdrop */}
-        {sidebarOpen && (
+        {/* Mobile backdrop — only when small screen sidebar is open */}
+        {isSmallScreen && sidebarOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black/60 z-30"
+            className="fixed inset-0 bg-black/60 z-30"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -137,27 +140,30 @@ export default function App() {
         */}
         <aside
           className={[
-            // shared
-            'flex flex-col bg-brand-surface border-l border-slate-700/50 overflow-hidden transition-all duration-300',
-            // desktop — inline, width collapses
-            'lg:relative lg:flex-shrink-0',
-            sidebarOpen ? 'lg:w-80' : 'lg:w-0',
-            // mobile — fixed drawer
-            'fixed inset-y-0 right-0 w-80 z-40 shadow-2xl shadow-black/60',
-            sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
+            'flex flex-col bg-brand-surface border-l border-slate-700/50 overflow-hidden transition-transform duration-300',
+            // large screen — always visible, inline in flex row
+            !isSmallScreen
+              ? 'relative flex-shrink-0 w-80'
+              : '',
+            // small screen — fixed right drawer, toggle via translate
+            isSmallScreen
+              ? `fixed inset-y-0 right-0 w-80 z-40 shadow-2xl shadow-black/60 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
+              : '',
             mode === 'drill' ? 'ring-1 ring-red-900/40' : '',
           ].join(' ')}
         >
           {/* Inner wrapper — fixed width so content never wraps during transition */}
           <div className="relative flex flex-col h-full w-80 overflow-hidden">
-            {/* Close button */}
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-3 right-3 z-10 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
-              title="Close panel"
-            >
-              <X size={16} />
-            </button>
+            {/* Close button — only on small screens */}
+            {isSmallScreen && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-3 right-3 z-10 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+                title="Close panel"
+              >
+                <X size={16} />
+              </button>
+            )}
 
             {opening && (
               <>

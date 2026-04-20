@@ -170,12 +170,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
   }
 
-  // Green outline + glow + slight rounding for hint square
+  // Subtle green background for hint square (like last-move yellow)
   if (!isReviewing && hintSquare) {
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
-      borderRadius: '8px',
-      boxShadow: 'inset 0 0 0 4px rgba(34, 197, 94, 1), 0 0 18px rgba(34, 197, 94, 0.85), 0 0 36px rgba(34, 197, 94, 0.4)',
+      backgroundColor: 'rgba(34, 197, 94, 0.4)',
     };
   }
 

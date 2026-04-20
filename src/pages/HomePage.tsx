@@ -72,8 +72,8 @@ function OpeningCard({
           />
         </div>
 
-        {/* Right column: flex-col so description grows and progress pins to bottom */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: BOARD_H }}>
+        {/* Right column: fixed height = board height so progress always aligns */}
+        <div className="flex-1 min-w-0 flex flex-col" style={{ height: BOARD_H }}>
           {/* Title + pawn */}
           <div className="flex items-start justify-between gap-2 mb-1">
             <h2 className="text-white font-bold text-base leading-tight group-hover:text-brand-accent transition-colors">
@@ -87,21 +87,18 @@ function OpeningCard({
             </span>
           </div>
 
-          {/* Description — takes all remaining space, clipped if too long */}
-          <p className="text-slate-300 text-xs leading-relaxed flex-1 overflow-hidden">
+          {/* Description — clipped with ellipsis, never pushes progress bar down */}
+          <p className="text-slate-300 text-xs leading-relaxed flex-1 overflow-hidden line-clamp-3">
             {opening.description}
           </p>
 
           {/* Progress — pinned to the bottom, aligns with the mini board bottom */}
           {totalLines > 0 && (
-            <div className="mt-2 pt-1.5 border-t border-white/10">
+            <div className="mt-auto pt-1.5 border-t border-white/10 flex-shrink-0">
               <div className="flex items-center justify-between text-[10px] mb-1">
                 <span className="text-slate-400 font-semibold">Lines completed</span>
-                <span>
-                  <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-                    {completedLines}
-                  </span>
-                  <span className="text-slate-500">/{totalLines}</span>
+                <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                  {completedLines}/{totalLines}
                 </span>
               </div>
               <div className="w-full bg-slate-600/40 rounded-full h-1.5">
