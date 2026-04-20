@@ -10,13 +10,12 @@ interface PlayOnModalProps {
 export default function PlayOnModal({ isOpen, onClose }: PlayOnModalProps) {
   const { startPostLine } = useTrainingStore();
   const [computerExpanded, setComputerExpanded] = useState(false);
-  const [evalOn, setEvalOn] = useState(false);
   const [topMovesOn, setTopMovesOn] = useState(true);
 
   if (!isOpen) return null;
 
   function go(mode: PostLineMode) {
-    startPostLine(mode, evalOn, topMovesOn);
+    startPostLine(mode, false, topMovesOn);
     onClose();
   }
 
@@ -47,14 +46,8 @@ export default function PlayOnModal({ isOpen, onClose }: PlayOnModalProps) {
             Show during play
           </p>
           <Toggle
-            label="Position evaluation"
-            description="Centipawn score from Lichess cloud eval"
-            value={evalOn}
-            onChange={setEvalOn}
-          />
-          <Toggle
-            label="Top 3 master moves"
-            description="Win/draw/loss % from Lichess masters database"
+            label="Top 3 database moves"
+            description="Win/draw/loss % from Lichess game database"
             value={topMovesOn}
             onChange={setTopMovesOn}
           />

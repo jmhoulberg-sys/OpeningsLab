@@ -5,6 +5,7 @@ import ChessBoardPanel from './components/Board/ChessBoardPanel';
 import MoveList from './components/MoveList/MoveList';
 import LineSelector from './components/LineSelector/LineSelector';
 import ControlPanel from './components/Controls/ControlPanel';
+import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import CompletionModal from './components/Modals/CompletionModal';
 import FreePlayEndModal from './components/Modals/FreePlayEndModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
@@ -223,6 +224,9 @@ export default function App() {
                 <div className="px-4 pt-3 pb-4 flex-shrink-0">
                   <ControlPanel />
                 </div>
+
+                {/* Analysis panel — only during free play */}
+                {postLine && <AnalysisPanel />}
               </>
             )}
           </div>

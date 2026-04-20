@@ -145,14 +145,17 @@ function StarRating({ mistakes, filledCount }: { mistakes: number; filledCount: 
   }, [mistakes]);
 
   return (
-    <div className="flex gap-2 justify-center mb-3">
+    <div className="flex gap-3 justify-center mb-3">
       {[1, 2, 3].map((star) => (
         <div
-          key={star}
-          className={`transition-all duration-300 ${shown >= star ? 'scale-110' : 'scale-100 opacity-50'}`}
+          key={`${star}-${shown}`}
+          className="inline-flex"
+          style={shown >= star
+            ? { animation: 'starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }
+            : { opacity: 0.2, transform: 'scale(0.8)' }}
         >
           <Star
-            size={40}
+            size={52}
             className={star <= filledCount ? 'text-yellow-400' : 'text-slate-600'}
             fill={star <= filledCount && shown >= star ? 'currentColor' : 'none'}
             strokeWidth={star <= filledCount ? 1.5 : 2}

@@ -664,7 +664,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           (m) => norm(m.san) === norm(expectedSan!),
         );
         if (found) {
-          set({ hintSquare: found.from, wrongMoveSan: expectedSan, showingCorrectMove: true });
+          set({ hintSquare: found.from });
         }
       } catch { /* ignore */ }
     },

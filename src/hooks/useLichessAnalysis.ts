@@ -64,13 +64,19 @@ export function useLichessAnalysis(
         const enc = encodeURIComponent(fen);
         const ratingsParam = buildRatingsParam(minRating);
 
-        // All speeds, all time controls — maximum coverage
-        const explorerUrl =
+        // Lichess game database — all speeds for maximum coverage
+        const lichessUrl =
           `https://explorer.lichess.ovh/lichess?variant=standard` +
-          `${ratingsParam}&topGames=0&recentGames=0&moves=3&fen=${enc}`;
+          `&speeds=bullet,blitz,rapid,classical` +
+          `${ratingsParam}&topGames=0&recentGames=0&moves=5&fen=${enc}`;
 
-        const [explorerResult, evalResult] = await Promise.allSettled([
-          fetch(explorerUrl),
+        // Masters database — great fallback for deeply-studied openings
+        const mastersUrl =
+          `https://explorer.lichess.ovh/masters?topGames=0&moves=5&fen=${enc}`;
+
+        const [lichessResult, mastersResult, evalResult] = await Promise.allSettled([
+          fetch(lichessUrl),
+          fetch(mastersUrl),
           fetch(`https://lichess.org/api/cloud-eval?fen=${enc}&multiPv=1`),
         ]);
 
@@ -78,26 +84,37 @@ export function useLichessAnalysis(
         let evalCp: number | null = null;
         let evalMate: number | null = null;
 
-        // ── Opening explorer ──────────────────────────────────────
-        if (explorerResult.status === 'fulfilled' && explorerResult.value.ok) {
-          const data = await explorerResult.value.json();
-          moves = ((data.moves ?? []) as Array<{
-            san: string; white: number; draws: number; black: number;
-          }>)
-            .slice(0, 3)
-            .map((m) => {
-              const total = m.white + m.draws + m.black;
-              return {
-                san: m.san,
-                white: m.white,
-                draws: m.draws,
-                black: m.black,
-                total,
-                whitePct: total ? Math.round((m.white / total) * 100) : 0,
-                drawPct:  total ? Math.round((m.draws / total) * 100) : 0,
-                blackPct: total ? Math.round((m.black / total) * 100) : 0,
-              };
-            });
+        // ── Helper: parse move list from explorer response ────────
+        function parseMoves(raw: Array<{ san: string; white: number; draws: number; black: number }>): LichessMove[] {
+          return raw.slice(0, 3).map((m) => {
+            const total = m.white + m.draws + m.black;
+            return {
+              san: m.san,
+              white: m.white,
+              draws: m.draws,
+              black: m.black,
+              total,
+              whitePct: total ? Math.round((m.white / total) * 100) : 0,
+              drawPct:  total ? Math.round((m.draws / total) * 100) : 0,
+              blackPct: total ? Math.round((m.black / total) * 100) : 0,
+            };
+          });
+        }
+
+        // ── Lichess DB ────────────────────────────────────────────
+        if (lichessResult.status === 'fulfilled' && lichessResult.value.ok) {
+          const data = await lichessResult.value.json();
+          const raw = (data.moves ?? []) as Array<{ san: string; white: number; draws: number; black: number }>;
+          if (raw.length > 0) {
+            moves = parseMoves(raw);
+          }
+        }
+
+        // ── Masters fallback (when Lichess DB has no data) ────────
+        if (moves.length === 0 && mastersResult.status === 'fulfilled' && mastersResult.value.ok) {
+          const data = await mastersResult.value.json();
+          const raw = (data.moves ?? []) as Array<{ san: string; white: number; draws: number; black: number }>;
+          moves = parseMoves(raw);
         }
 
         // ── Cloud eval ───────────────────────────────────────────

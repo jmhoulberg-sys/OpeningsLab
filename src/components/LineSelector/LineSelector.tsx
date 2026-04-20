@@ -55,7 +55,7 @@ export default function LineSelector({ opening }: LineSelectorProps) {
 
       {/* Expandable line list — absolute popup */}
       {expanded && (
-        <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-brand-surface border border-slate-600/40 rounded-xl shadow-2xl p-2 overflow-y-auto max-h-72">
+        <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-brand-surface border border-slate-600/40 rounded-xl shadow-2xl p-2 overflow-y-auto max-h-[28rem]">
           {!setupDone && (
             <p className="text-xs text-slate-500 italic px-1 py-1">
               Complete the opening setup to unlock lines.

@@ -5,7 +5,6 @@ import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
-import AnalysisPanel from '../Analysis/AnalysisPanel';
 import EvalBar from './EvalBar';
 
 // Arrow colours
@@ -42,18 +41,20 @@ function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
   }
   const cornerC = center(cornerSq);
 
+  // Match react-chessboard arrow proportions
+  const sw = sqSize * 0.14;   // stroke width proportional to square size
+  const aw = sqSize * 0.18;   // arrowhead half-width
+  const al = sqSize * 0.25;   // arrowhead length
+
   const dx = toC.x - cornerC.x;
   const dy = toC.y - cornerC.y;
   const len = Math.sqrt(dx * dx + dy * dy);
   const ux = dx / len, uy = dy / len;
-  const aw = 8, al = 14;
   const arrowTip = { x: toC.x, y: toC.y };
   const arrowBase = { x: toC.x - ux * al, y: toC.y - uy * al };
   const perp = { x: -uy, y: ux };
   const p1 = { x: arrowBase.x + perp.x * aw, y: arrowBase.y + perp.y * aw };
   const p2 = { x: arrowBase.x - perp.x * aw, y: arrowBase.y - perp.y * aw };
-  const lineToX = arrowBase.x;
-  const lineToY = arrowBase.y;
 
   return (
     <svg
@@ -65,16 +66,16 @@ function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
       <line
         x1={fromC.x} y1={fromC.y}
         x2={cornerC.x} y2={cornerC.y}
-        stroke={color} strokeWidth="5" strokeLinecap="round" opacity="0.9"
+        stroke={color} strokeWidth={sw} strokeLinecap="round" opacity="0.85"
       />
       <line
         x1={cornerC.x} y1={cornerC.y}
-        x2={lineToX} y2={lineToY}
-        stroke={color} strokeWidth="5" strokeLinecap="round" opacity="0.9"
+        x2={arrowBase.x} y2={arrowBase.y}
+        stroke={color} strokeWidth={sw} strokeLinecap="round" opacity="0.85"
       />
       <polygon
         points={`${arrowTip.x},${arrowTip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
-        fill={color} opacity="0.9"
+        fill={color} opacity="0.85"
       />
     </svg>
   );
@@ -144,7 +145,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const prevMistakesRef = useRef(mistakes);
 
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
-  const showAnalysis = postLine;
 
   // FEN shown on the board — wrong move position → historical → live
   const isReviewing = viewMoveIndex !== null;
@@ -243,7 +243,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   if (!isReviewing && hintSquare) {
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
-      backgroundColor: 'rgba(34, 197, 94, 0.4)',
+      backgroundColor: 'rgba(5, 150, 105, 0.55)',
     };
   }
 
@@ -490,8 +490,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         />
       )}
 
-      {/* Analysis panel — only during free play */}
-      {showAnalysis && <AnalysisPanel />}
+      {/* Analysis panel moved to sidebar */}
     </div>
   );
 }
@@ -513,7 +512,7 @@ function BoardNavRow({
   mode: string;
   postLine: boolean;
 }) {
-  const { viewMoveIndex, playedMoves, navigateToMove, mistakes, isAwaitingUserMove, showHint } = useTrainingStore();
+  const { viewMoveIndex, playedMoves, navigateToMove, mistakes, isAwaitingUserMove, showHint, showAnswer, hintSquare, showingCorrectMove } = useTrainingStore();
 
   const isLive = viewMoveIndex === null;
   const currentIdx = isLive ? playedMoves.length - 1 : viewMoveIndex;
@@ -541,10 +540,14 @@ function BoardNavRow({
   const hideHint = mode === 'drill' || mode === 'time-trial';
   const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
 
+  const sqPx = boardSize / 8;
+  const showHintBtn = canHint && !hintSquare && !showingCorrectMove;
+  const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
+
   return (
     <div className="flex items-center justify-between gap-2" style={{ width: boardSize }}>
       {/* Left: mistake counter */}
-      <div className="w-16 flex-shrink-0">
+      <div style={{ width: sqPx }} className="flex-shrink-0">
         {mistakes > 0 && (
           <span className="text-xs font-bold text-red-400">✗ {mistakes}</span>
         )}
@@ -568,16 +571,26 @@ function BoardNavRow({
         )}
       </div>
 
-      {/* Right: hint button */}
-      <div className="w-16 flex-shrink-0 flex justify-end">
-        {!hideHint && (
+      {/* Right: hint / answer button */}
+      <div style={{ width: sqPx }} className="flex-shrink-0 flex justify-end">
+        {!hideHint && showHintBtn && (
           <button
             onClick={showHint}
-            disabled={!canHint}
             title="Hint"
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            style={{ width: sqPx, height: 32 }}
+            className="rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 cursor-pointer transition-colors"
           >
-            💡 Hint
+            Hint
+          </button>
+        )}
+        {!hideHint && showAnswerBtn && (
+          <button
+            onClick={showAnswer}
+            title="Show answer"
+            style={{ width: sqPx, height: 32 }}
+            className="rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-400 cursor-pointer transition-colors"
+          >
+            Answer
           </button>
         )}
       </div>
