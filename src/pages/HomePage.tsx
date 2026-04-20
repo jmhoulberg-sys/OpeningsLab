@@ -31,6 +31,8 @@ function PawnIcon({ color }: { color: 'white' | 'black' }) {
   );
 }
 
+const BOARD_H = 130; // mini board height — used to pin the right column
+
 function OpeningCard({
   opening,
   onSelect,
@@ -51,15 +53,16 @@ function OpeningCard({
       onClick={onSelect}
       className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
     >
-      <div className="flex items-start gap-4">
-        {/* Mini board */}
+      {/* items-stretch so the right column fills the mini-board height */}
+      <div className="flex items-stretch gap-4">
+        {/* Mini board — fixed size, oriented for the player */}
         <div
           className="flex-shrink-0 rounded-lg overflow-hidden pointer-events-none"
-          style={{ width: 130, height: 130 }}
+          style={{ width: BOARD_H, height: BOARD_H }}
         >
           <Chessboard
             position={setupFen}
-            boardWidth={130}
+            boardWidth={BOARD_H}
             boardOrientation={opening.playerColor}
             arePiecesDraggable={false}
             customBoardStyle={{ borderRadius: '4px' }}
@@ -69,32 +72,39 @@ function OpeningCard({
           />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1.5">
+        {/* Right column: flex-col so description grows and progress pins to bottom */}
+        <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: BOARD_H }}>
+          {/* Title + pawn */}
+          <div className="flex items-start justify-between gap-2 mb-1">
             <h2 className="text-white font-bold text-base leading-tight group-hover:text-brand-accent transition-colors">
               {opening.name}
             </h2>
-            <span title={opening.playerColor === 'white' ? 'You play White' : 'You play Black'} className="flex-shrink-0 mt-0.5">
+            <span
+              title={opening.playerColor === 'white' ? 'You play White' : 'You play Black'}
+              className="flex-shrink-0 mt-0.5"
+            >
               <PawnIcon color={opening.playerColor} />
             </span>
           </div>
-          <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mb-3">
+
+          {/* Description — takes all remaining space, clipped if too long */}
+          <p className="text-slate-300 text-xs leading-relaxed flex-1 overflow-hidden">
             {opening.description}
           </p>
-          {/* Lines progress */}
+
+          {/* Progress — pinned to the bottom, aligns with the mini board bottom */}
           {totalLines > 0 && (
-            <div>
-              <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                <span className="font-semibold">Lines learned</span>
+            <div className="mt-2 pt-1.5 border-t border-white/10">
+              <div className="flex items-center justify-between text-[10px] mb-1">
+                <span className="text-slate-400 font-semibold">Lines completed</span>
                 <span>
-                  <span className={completedLines > 0 ? 'text-emerald-400 font-semibold' : ''}>
+                  <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
                     {completedLines}
                   </span>
-                  /{totalLines}
+                  <span className="text-slate-500">/{totalLines}</span>
                 </span>
               </div>
-              <div className="w-full bg-slate-700/60 rounded-full h-1.5">
+              <div className="w-full bg-slate-600/40 rounded-full h-1.5">
                 <div
                   className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
                   style={{ width: `${pct}%` }}

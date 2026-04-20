@@ -48,8 +48,10 @@ interface TrainingState {
   isAwaitingUserMove: boolean;
   wrongMoveSan: string | null;
   showingCorrectMove: boolean;
-  /** Square the student tried to move TO on a wrong move (for X overlay). */
+  /** Square the student tried to move TO on a wrong move (for X badge). */
   wrongMoveSquare: string | null;
+  /** FEN after the wrong move was played — used to show the piece on the wrong square. */
+  wrongMoveFen: string | null;
   /** FROM square of the expected move, highlighted when hint is active. */
   hintSquare: string | null;
   mode: TrainingMode;
@@ -80,6 +82,8 @@ interface TrainingActions {
   showHint(): void;
   restart(): void;
   backToLineSelect(): void;
+  /** Clear the wrong-move overlay and return to the correct position. */
+  clearWrongMove(): void;
   startPostLine(mode?: PostLineMode, showEval?: boolean, showTopMoves?: boolean): void;
   setMode(mode: TrainingMode): void;
   setOpponentMode(mode: OpponentMode): void;
@@ -110,6 +114,7 @@ function buildInitialState(): TrainingState {
     wrongMoveSan: null,
     showingCorrectMove: false,
     wrongMoveSquare: null,
+    wrongMoveFen: null,
     hintSquare: null,
     mode: 'learn',
     opponentMode: 'forced',
@@ -195,6 +200,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           mistakes: 0,
           wrongMoveSan: null,
           wrongMoveSquare: null,
+          wrongMoveFen: null,
           hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
@@ -223,6 +229,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           mistakes: 0,
           wrongMoveSan: null,
           wrongMoveSquare: null,
+          wrongMoveFen: null,
           hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
@@ -262,8 +269,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         const expectedSan = setupMoves[state.currentMoveIndex] ?? null;
 
         if (!expectedSan || normalise(san) !== normalise(expectedSan)) {
-          set({ wrongMoveSan: expectedSan, wrongMoveSquare: to, showingCorrectMove: false });
-          setTimeout(() => set({ wrongMoveSan: null, wrongMoveSquare: null }), 1800);
+          const wrongMoveFen = applyMove(state.currentFen, san) ?? null;
+          set({ wrongMoveSan: expectedSan, wrongMoveSquare: to, wrongMoveFen, showingCorrectMove: false });
           return 'wrong';
         }
 
@@ -279,6 +286,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           fenHistory: [...state.fenHistory, newFen],
           currentMoveIndex: newIdx,
           wrongMoveSan: null,
+          wrongMoveSquare: null,
+          wrongMoveFen: null,
           showingCorrectMove: false,
           isAwaitingUserMove: false,
           ...(done ? { phase: 'line-select' as TrainingPhase } : {}),
@@ -328,15 +337,16 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
       if (!correct) {
         const expected = line.moves[state.playedMoves.length]?.san ?? null;
+        const wrongMoveFen = applyMove(state.currentFen, san) ?? null;
         set((s) => ({
           mistakes: s.mistakes + 1,
           wrongMoveSan: expected,
           wrongMoveSquare: to,
+          wrongMoveFen,
           showingCorrectMove: false,
           streak: 0,
           hintSquare: null,
         }));
-        setTimeout(() => set({ wrongMoveSan: null, wrongMoveSquare: null }), 1800);
         return 'wrong';
       }
 
@@ -355,6 +365,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         currentMoveIndex: newIdx,
         wrongMoveSan: null,
         wrongMoveSquare: null,
+        wrongMoveFen: null,
         hintSquare: null,
         showingCorrectMove: false,
         isAwaitingUserMove: false,
@@ -738,6 +749,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         mistakes: 0,
         wrongMoveSan: null,
         wrongMoveSquare: null,
+        wrongMoveFen: null,
         hintSquare: null,
         showingCorrectMove: false,
         isAwaitingUserMove: false,
@@ -748,6 +760,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         timeLeft: -1,
         timerRunning: false,
       });
+    },
+
+    // ── clearWrongMove ────────────────────────────────────────────
+    clearWrongMove() {
+      set({ wrongMoveFen: null, wrongMoveSquare: null, wrongMoveSan: null, showingCorrectMove: false });
     },
 
     // ── navigateToMove ────────────────────────────────────────────

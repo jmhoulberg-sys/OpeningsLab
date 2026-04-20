@@ -9,7 +9,6 @@ import AnalysisPanel from '../Analysis/AnalysisPanel';
 import EvalBar from './EvalBar';
 
 // Arrow colours
-const WRONG_ARROW_COLOR  = 'rgba(220, 50,  50,  0.90)';
 const ANSWER_ARROW_COLOR = 'rgba(0,   240, 100, 1.00)';
 const SELECTED_HIGHLIGHT = 'rgba(255, 255, 0,   0.4)';
 
@@ -49,18 +48,20 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     viewMoveIndex,
     isAwaitingUserMove,
     wrongMoveSan,
+    wrongMoveFen,
+    wrongMoveSquare,
     showingCorrectMove,
     postLine,
     repetitionBlock,
     selectedLine,
     handleBoardMove,
     navigateToMove,
+    clearWrongMove,
     playedMoves,
     currentMoveIndex,
     streak,
     mistakes,
     hintSquare,
-    wrongMoveSquare,
   } = useTrainingStore();
 
   const { showEvalBar } = useSettingsStore();
@@ -76,11 +77,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
   const showAnalysis = postLine;
 
-  // FEN shown on the board — historical when in review mode, otherwise live
+  // FEN shown on the board — wrong move position → historical → live
   const isReviewing = viewMoveIndex !== null;
   const displayFen = isReviewing
-    ? (fenHistory[viewMoveIndex + 1] ?? currentFen) // viewMoveIndex=0 → after 1st move
-    : currentFen;
+    ? (fenHistory[viewMoveIndex + 1] ?? currentFen)
+    : (wrongMoveFen ?? currentFen);
 
   // ── Green flash when repetition block increments ─────────────────
   useEffect(() => {
@@ -125,7 +126,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   if (!postLine && opening && selectedLine && phase === 'training') {
     const setupLen = opening.setupMoves.length;
-    // Total student moves in this line (after setup)
     const studentTotal = selectedLine.moves
       .slice(setupLen)
       .filter((_, i) => isStudentMove(opening, setupLen + i)).length;
@@ -136,7 +136,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       progressDone = Math.min(repetitionBlock - 1, studentTotal);
       progressColor = 'bg-amber-400';
     } else {
-      // learn / drill / time-trial — count student moves already played
       let done = 0;
       for (let i = setupLen; i < currentMoveIndex; i++) {
         if (isStudentMove(opening, i)) done++;
@@ -153,8 +152,8 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   // ── Custom square styles ─────────────────────────────────────────
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
-  // Yellow highlight for last computer move
-  if (!isReviewing && isAwaitingUserMove && !postLine && opening && playedMoves.length > 0 && currentMoveIndex > 0) {
+  // Yellow highlight for last computer move (only when live, not reviewing, no wrong move)
+  if (!isReviewing && !wrongMoveFen && isAwaitingUserMove && !postLine && opening && playedMoves.length > 0 && currentMoveIndex > 0) {
     const lastMoveIsComputer = !isStudentMove(opening, currentMoveIndex - 1);
     if (lastMoveIsComputer && fenHistory.length >= 2) {
       const prevFen = fenHistory[fenHistory.length - 2];
@@ -171,10 +170,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
   }
 
-  // Green outline + glow for hint square
+  // Green outline + glow + slight rounding for hint square
   if (!isReviewing && hintSquare) {
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
+      borderRadius: '8px',
       boxShadow: 'inset 0 0 0 4px rgba(34, 197, 94, 1), 0 0 18px rgba(34, 197, 94, 0.85), 0 0 36px rgba(34, 197, 94, 0.4)',
     };
   }
@@ -182,45 +182,37 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   // ── Arrows ───────────────────────────────────────────────────────
   const customArrows: [Square, Square, string][] = [];
 
-  if (!isReviewing && wrongMoveSan) {
+  // Only show the answer arrow when explicitly requested (showingCorrectMove),
+  // not when just a wrong move is on screen
+  if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
-    if (arrow) {
-      const color = showingCorrectMove ? ANSWER_ARROW_COLOR : WRONG_ARROW_COLOR;
-      customArrows.push([arrow[0], arrow[1], color]);
-    }
+    if (arrow) customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
   }
 
   // ── Click-click moves ────────────────────────────────────────────
   const onSquareClick = useCallback(
     (square: Square) => {
-      // If reviewing history, clicking the board returns to live
-      if (isReviewing) {
-        navigateToMove(null);
-        return;
-      }
+      if (isReviewing) { navigateToMove(null); return; }
+      if (wrongMoveFen) return; // must undo wrong move first
       if (!isAwaitingUserMove) return;
 
       if (selectedSquare) {
-        if (selectedSquare === square) {
-          setSelectedSquare(null);
-          return;
-        }
+        if (selectedSquare === square) { setSelectedSquare(null); return; }
         const result = handleBoardMove(selectedSquare, square);
         setSelectedSquare(null);
-        if (result === 'ignored') {
-          setSelectedSquare(square);
-        }
+        if (result === 'ignored') setSelectedSquare(square);
       } else {
         setSelectedSquare(square);
       }
     },
-    [isAwaitingUserMove, selectedSquare, handleBoardMove, isReviewing, navigateToMove],
+    [isAwaitingUserMove, wrongMoveFen, selectedSquare, handleBoardMove, isReviewing, navigateToMove],
   );
 
   // ── Drag-and-drop ────────────────────────────────────────────────
   const onPieceDrop = useCallback(
     (from: Square, to: Square, piece: string): boolean => {
       if (isReviewing) { navigateToMove(null); return false; }
+      if (wrongMoveFen) return false; // must undo wrong move first
       if (!isAwaitingUserMove) return false;
       setSelectedSquare(null);
 
@@ -229,9 +221,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         ((piece[0] === 'w' && to[1] === '8') || (piece[0] === 'b' && to[1] === '1'));
 
       const result = handleBoardMove(from, to, isPromotion ? 'q' : undefined);
-      return result === 'correct';
+      // Return true for both correct AND wrong — piece stays at destination;
+      // for wrong moves the board shows wrongMoveFen, for correct it shows the new position.
+      return result === 'correct' || result === 'wrong';
     },
-    [isAwaitingUserMove, handleBoardMove, isReviewing, navigateToMove],
+    [isAwaitingUserMove, wrongMoveFen, handleBoardMove, isReviewing, navigateToMove],
   );
 
   // ── Status text ──────────────────────────────────────────────────
@@ -243,6 +237,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     const side = viewMoveIndex % 2 === 0 ? 'W' : 'B';
     statusText = `Reviewing move ${moveNum}${side} — click board to return`;
     statusColor = 'text-amber-400';
+  } else if (wrongMoveFen) {
+    statusText = 'Wrong move — click ◀ to undo';
+    statusColor = 'text-red-400';
   } else if (phase === 'setup') {
     if (isAwaitingUserMove) {
       statusText = 'Your turn — play the next setup move';
@@ -271,7 +268,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const isDraggable =
-    !isReviewing && isAwaitingUserMove && (phase === 'training' || phase === 'setup');
+    !isReviewing && !wrongMoveFen && isAwaitingUserMove && (phase === 'training' || phase === 'setup');
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -300,9 +297,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           <span className={`text-xs font-bold px-4 py-1 rounded-full ${
             feedbackMsg.type === 'correct' ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
           }`}>{feedbackMsg.text}</span>
-        ) : wrongMoveSan && !showingCorrectMove ? (
+        ) : wrongMoveFen && !showingCorrectMove ? (
           <span className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            Wrong move — follow the arrow
+            Wrong move — click ◀ to undo
           </span>
         ) : wrongMoveSan && showingCorrectMove ? (
           <span className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -336,18 +333,33 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
             animationDuration={isReviewing ? 0 : 200}
           />
-          {/* Wrong-move X overlay */}
+
+          {/* Wrong-move X badge — top-right corner of the destination square */}
           {wrongMoveSquare && !isReviewing && (() => {
             const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
+            const badge = Math.max(22, Math.min(34, size * 0.42));
             return (
               <div
-                className="absolute pointer-events-none flex items-center justify-center"
-                style={{ left: x, top: y, width: size, height: size }}
+                className="absolute pointer-events-none"
+                style={{
+                  left: x + size - badge * 0.65,
+                  top: y - badge * 0.35,
+                  width: badge,
+                  height: badge,
+                }}
               >
-                <div className="w-9 h-9 rounded-full bg-red-600/90 border-2 border-red-400 flex items-center justify-center shadow-lg shadow-black/50">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
+                <div className="w-full h-full rounded-full bg-slate-900 border-[3px] border-red-500 flex items-center justify-center shadow-xl shadow-black/60">
+                  <svg
+                    width="52%"
+                    height="52%"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                 </div>
               </div>
@@ -356,9 +368,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      {/* History navigation bar */}
-      {(phase === 'training' || phase === 'completed') && playedMoves.length > 0 && (
-        <HistoryNav />
+      {/* History navigation — always visible during active phases */}
+      {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
+        <HistoryNav wrongMoveFen={wrongMoveFen} clearWrongMove={clearWrongMove} />
       )}
 
       {/* Analysis panel — only during free play */}
@@ -369,14 +381,21 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
 // ─── History navigation bar ──────────────────────────────────────────
 
-function HistoryNav() {
+function HistoryNav({
+  wrongMoveFen,
+  clearWrongMove,
+}: {
+  wrongMoveFen: string | null;
+  clearWrongMove: () => void;
+}) {
   const { viewMoveIndex, playedMoves, navigateToMove } = useTrainingStore();
 
   const isLive = viewMoveIndex === null;
-  // Current position in history: null → playedMoves.length (latest)
   const currentIdx = isLive ? playedMoves.length - 1 : viewMoveIndex;
 
   function goBack() {
+    // If a wrong move is shown, undo it first
+    if (wrongMoveFen) { clearWrongMove(); return; }
     const prev = currentIdx - 1;
     if (prev < 0) return;
     navigateToMove(prev);
@@ -385,24 +404,24 @@ function HistoryNav() {
   function goForward() {
     const next = currentIdx + 1;
     if (next >= playedMoves.length) {
-      navigateToMove(null); // return to live
+      navigateToMove(null);
     } else {
       navigateToMove(next);
     }
   }
 
-  const canBack = currentIdx > 0;
-  const canForward = currentIdx < playedMoves.length - 1 || !isLive;
+  const canBack = wrongMoveFen != null || currentIdx > 0;
+  const canForward = !wrongMoveFen && (currentIdx < playedMoves.length - 1 || !isLive);
 
   return (
     <div className="flex items-center gap-2">
-      <NavButton onClick={goBack} disabled={!canBack} title="Previous move">
+      <NavButton onClick={goBack} disabled={!canBack} title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}>
         ◀
       </NavButton>
       <NavButton onClick={goForward} disabled={!canForward} title="Next move">
         ▶
       </NavButton>
-      {!isLive && (
+      {!isLive && !wrongMoveFen && (
         <button
           onClick={() => navigateToMove(null)}
           className="text-xs text-amber-400 hover:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-600/40 hover:border-amber-500/60 transition-colors cursor-pointer"

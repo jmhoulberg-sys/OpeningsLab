@@ -26,19 +26,20 @@ export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const boardContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-collapse sidebar when the window is too narrow
+  // Auto-collapse / auto-expand sidebar based on available width.
+  // 320px sidebar + 480px minimum board = 800px threshold.
   const handleMainResize = useCallback((entries: ResizeObserverEntry[]) => {
     const w = entries[0].contentRect.width;
-    if (w < 900) setSidebarOpen(false);
+    setSidebarOpen(w >= 800);
   }, []);
 
-  // Compute board size from available container space
+  // Compute board size from available container space.
+  // contentRect already excludes padding, so we only subtract the
+  // ChessBoardPanel chrome (status + progress + feedback + nav ≈ 160px).
   const handleBoardContainerResize = useCallback((entries: ResizeObserverEntry[]) => {
     const { width, height } = entries[0].contentRect;
-    // Subtract padding (p-4 sm:p-6 = 32–48px each side) and vertical chrome
-    // (status ~20px, progress ~44px, feedback ~28px, gaps ~32px, nav ~32px ≈ 180px total)
-    const maxW = width - 40;
-    const maxH = height - 200;
+    const maxW = width - 24;   // room for eval bar (14px) + gap (8px) + breathing
+    const maxH = height - 160; // status(20) + progress(36) + feedback(28) + nav(36) + gaps(40)
     const size = Math.min(720, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
   }, []);
