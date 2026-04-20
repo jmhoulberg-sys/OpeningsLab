@@ -14,11 +14,13 @@ import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import type { Opening } from './types';
 
-// Layout constants — module-level so they never change reference
-const SIDEBAR_W = 320;           // sidebar width in px
-const MIN_BOARD_WITH_SIDEBAR = 280; // minimum board size to keep sidebar inline
-const CHROME_H = 130;            // board-panel chrome (status + bars + nav)
-const BOARD_PAD = 32;            // combined padding inside the board container
+// Width at which the sidebar collapses from inline → fixed drawer.
+// 650 = 320 (sidebar) + ~300 (usable board) + padding
+const SIDEBAR_BREAK = 650;
+// Board-panel chrome height: status bar + progress + feedback + nav + gaps
+const BOARD_CHROME_H = 130;
+// Extra horizontal space consumed by the eval bar + gap inside the board area
+const EVAL_BAR_W = 24;
 
 export default function App() {
   const { opening, phase, postLine, mode, streak, startOpening } = useTrainingStore();
@@ -26,45 +28,52 @@ export default function App() {
 
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  // sidebarOpen is only meaningful when isSmallScreen (drawer mode)
+  // sidebarOpen only matters in drawer (small-screen) mode
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth < 800);
+  const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth < SIDEBAR_BREAK);
   const [boardSize, setBoardSize] = useState(() =>
-    Math.max(240, Math.min(480, window.innerWidth - BOARD_PAD)),
+    // Safe initial guess before ResizeObserver fires
+    Math.max(240, Math.min(520, window.innerWidth - 40)),
   );
 
   const mainRef = useRef<HTMLDivElement>(null);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
 
-  // Single ResizeObserver on mainRef — computes board size AND sidebar mode
-  // together in one pass, breaking the circular dependency that arises when
-  // observing the board container (whose width changes with sidebar state).
+  // Observer 1: main element width → decide if sidebar is inline or drawer.
+  // No board-size logic here, so no circular dependency.
   const handleMainResize = useCallback((entries: ResizeObserverEntry[]) => {
-    const { width: W, height: H } = entries[0].contentRect;
+    const W = entries[0].contentRect.width;
+    setIsSmallScreen(W < SIDEBAR_BREAK);
+  }, []);
 
-    // Would the board be big enough if the sidebar were shown inline?
-    const boardIfSidebarShown = Math.min(
-      W - SIDEBAR_W - BOARD_PAD,
-      H - CHROME_H - BOARD_PAD,
-    );
-    const sidebarFits = boardIfSidebarShown >= MIN_BOARD_WITH_SIDEBAR;
-
-    if (sidebarFits) {
-      setIsSmallScreen(false);
-      setBoardSize(Math.floor(Math.min(800, Math.max(MIN_BOARD_WITH_SIDEBAR, boardIfSidebarShown))));
-    } else {
-      setIsSmallScreen(true);
-      const boardFull = Math.min(W - BOARD_PAD, H - CHROME_H - BOARD_PAD);
-      setBoardSize(Math.floor(Math.min(800, Math.max(240, boardFull))));
-    }
+  // Observer 2: board container (flex-1 div) → compute board size.
+  // contentRect already excludes padding, so we only subtract chrome.
+  // When sidebar is inline its width is naturally excluded from contentRect.width.
+  // When sidebar is a drawer (fixed) it's out of flow, so contentRect.width = full area.
+  // Either way, this gives the correct available space — no circularity.
+  const handleBoardContainerResize = useCallback((entries: ResizeObserverEntry[]) => {
+    const { width, height } = entries[0].contentRect;
+    const maxW = width - EVAL_BAR_W;
+    const maxH = height - BOARD_CHROME_H;
+    const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
+    setBoardSize(Math.floor(size));
   }, []);
 
   useEffect(() => {
     const mainEl = mainRef.current;
-    if (!mainEl) return;
-    const ro = new ResizeObserver(handleMainResize);
-    ro.observe(mainEl);
-    return () => ro.disconnect();
-  }, [handleMainResize]);
+    const boardEl = boardContainerRef.current;
+    if (!mainEl || !boardEl) return;
+
+    const roMain = new ResizeObserver(handleMainResize);
+    const roBoard = new ResizeObserver(handleBoardContainerResize);
+    roMain.observe(mainEl);
+    roBoard.observe(boardEl);
+
+    return () => {
+      roMain.disconnect();
+      roBoard.disconnect();
+    };
+  }, [handleMainResize, handleBoardContainerResize]);
 
   // Mark setup complete the first time we reach line-select.
   useEffect(() => {
@@ -109,7 +118,10 @@ export default function App() {
 
       <main ref={mainRef} className="flex-1 flex overflow-hidden min-h-0 relative">
         {/* ── Board area ──────────────────────────────────────── */}
-        <div className="flex-1 flex items-center justify-center p-2 sm:p-4 min-w-0 overflow-hidden">
+        <div
+          ref={boardContainerRef}
+          className="flex-1 flex items-center justify-center p-2 sm:p-3 min-w-0 overflow-hidden"
+        >
           <ChessBoardPanel boardSize={boardSize} />
         </div>
 

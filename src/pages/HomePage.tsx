@@ -117,9 +117,9 @@ function OpeningCard({
 
 export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageProps) {
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col items-center py-12 px-4">
+    <div className="min-h-screen bg-brand-bg flex flex-col items-center py-10 px-4">
       {/* Header */}
-      <div className="text-center mb-10 relative w-full max-w-2xl">
+      <div className="text-center mb-8 relative w-full max-w-5xl">
         <button
           onClick={onSettingsClick}
           title="Settings"
@@ -142,8 +142,8 @@ export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageP
         <p className="text-slate-400 mt-2 text-base">Choose your opening</p>
       </div>
 
-      {/* Card grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl">
+      {/* Card grid — 1 col on mobile, 2 on tablet, 3 on large screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
         {OPENINGS.map((opening) => (
           <OpeningCard
             key={opening.id}
