@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Flame } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Flame, PanelRight, X } from 'lucide-react';
 import Header from './components/Header/Header';
 import ChessBoardPanel from './components/Board/ChessBoardPanel';
 import MoveList from './components/MoveList/MoveList';
@@ -20,6 +20,44 @@ export default function App() {
 
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [boardSize, setBoardSize] = useState(480);
+
+  const mainRef = useRef<HTMLDivElement>(null);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-collapse sidebar when the window is too narrow
+  const handleMainResize = useCallback((entries: ResizeObserverEntry[]) => {
+    const w = entries[0].contentRect.width;
+    if (w < 900) setSidebarOpen(false);
+  }, []);
+
+  // Compute board size from available container space
+  const handleBoardContainerResize = useCallback((entries: ResizeObserverEntry[]) => {
+    const { width, height } = entries[0].contentRect;
+    // Subtract padding (p-4 sm:p-6 = 32–48px each side) and vertical chrome
+    // (status ~20px, progress ~44px, feedback ~28px, gaps ~32px, nav ~32px ≈ 180px total)
+    const maxW = width - 40;
+    const maxH = height - 200;
+    const size = Math.min(720, Math.max(240, Math.min(maxW, maxH)));
+    setBoardSize(Math.floor(size));
+  }, []);
+
+  useEffect(() => {
+    const mainEl = mainRef.current;
+    const boardEl = boardContainerRef.current;
+    if (!mainEl || !boardEl) return;
+
+    const roMain = new ResizeObserver(handleMainResize);
+    const roBoard = new ResizeObserver(handleBoardContainerResize);
+    roMain.observe(mainEl);
+    roBoard.observe(boardEl);
+
+    return () => {
+      roMain.disconnect();
+      roBoard.disconnect();
+    };
+  }, [handleMainResize, handleBoardContainerResize]);
 
   // Mark setup complete the first time we reach line-select.
   useEffect(() => {
@@ -62,66 +100,116 @@ export default function App() {
         onHomeClick={handleGoHome}
       />
 
-      <main className="flex-1 flex overflow-hidden min-h-0">
-        {/* ── Left: Board ─────────────────────────────────────────── */}
-        <div className="flex-1 flex items-center justify-center p-6 min-w-0 overflow-hidden">
-          <ChessBoardPanel />
+      <main ref={mainRef} className="flex-1 flex overflow-hidden min-h-0 relative">
+        {/* ── Board area ──────────────────────────────────────── */}
+        <div
+          ref={boardContainerRef}
+          className="flex-1 flex items-center justify-center p-4 sm:p-6 min-w-0 overflow-hidden"
+        >
+          <ChessBoardPanel boardSize={boardSize} />
         </div>
 
-        {/* ── Right: Sidebar ───────────────────────────────────────── */}
-        <aside className={`w-80 flex-shrink-0 border-l border-slate-700/50 flex flex-col bg-brand-surface/60 backdrop-blur-sm overflow-hidden ${mode === 'drill' ? 'ring-1 ring-red-900/40' : ''}`}>
-          {opening && (
-            <>
-              {/* Opening info + completion percentage */}
-              <OpeningInfoPanel opening={opening} />
+        {/* Open-sidebar button — visible when sidebar is closed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-brand-surface/95 border border-slate-600/50 rounded-lg px-3 py-2 text-slate-300 hover:text-white hover:border-slate-500 text-sm font-semibold transition-colors cursor-pointer shadow-xl shadow-black/40"
+            title="Open panel"
+          >
+            <PanelRight size={15} />
+            <span className="hidden sm:inline">Panel</span>
+          </button>
+        )}
 
-              {/* Setup progress banner */}
-              {phase === 'setup' && (
-                <SetupBanner opening={opening} />
-              )}
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/60 z-30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-              {/* Free play banner */}
-              {postLine && (
-                <div className="px-4 py-2.5 bg-emerald-900/30 border-b border-emerald-800/40 flex-shrink-0">
-                  <p className="text-xs text-emerald-300 font-semibold">
-                    Free play — any legal move accepted
-                  </p>
+        {/* ── Sidebar ─────────────────────────────────────────── */}
+        {/*
+          Desktop (lg+): inline, width transitions 0 ↔ 320px, no translate.
+          Mobile: fixed drawer from the right, translate-x controls visibility.
+        */}
+        <aside
+          className={[
+            // shared
+            'flex flex-col bg-brand-surface border-l border-slate-700/50 overflow-hidden transition-all duration-300',
+            // desktop — inline, width collapses
+            'lg:relative lg:flex-shrink-0',
+            sidebarOpen ? 'lg:w-80' : 'lg:w-0',
+            // mobile — fixed drawer
+            'fixed inset-y-0 right-0 w-80 z-40 shadow-2xl shadow-black/60',
+            sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
+            mode === 'drill' ? 'ring-1 ring-red-900/40' : '',
+          ].join(' ')}
+        >
+          {/* Inner wrapper — fixed width so content never wraps during transition */}
+          <div className="relative flex flex-col h-full w-80 overflow-hidden">
+            {/* Close button */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="absolute top-3 right-3 z-10 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
+              title="Close panel"
+            >
+              <X size={16} />
+            </button>
+
+            {opening && (
+              <>
+                {/* Opening info + completion percentage */}
+                <OpeningInfoPanel opening={opening} />
+
+                {/* Setup progress banner */}
+                {phase === 'setup' && (
+                  <SetupBanner opening={opening} />
+                )}
+
+                {/* Free play banner */}
+                {postLine && (
+                  <div className="px-4 py-2.5 bg-emerald-900/30 border-b border-emerald-800/40 flex-shrink-0">
+                    <p className="text-xs text-emerald-300 font-semibold">
+                      Free play — any legal move accepted
+                    </p>
+                  </div>
+                )}
+
+                {/* Timer display (time-trial mode) */}
+                {mode === 'time-trial' && <TimerDisplay />}
+
+                {/* Streak banner */}
+                {streak >= 3 && phase === 'training' && !postLine && (
+                  <div className="px-4 py-1.5 bg-amber-900/20 border-b border-amber-800/30 flex-shrink-0">
+                    <p className="text-xs text-amber-300 font-semibold flex items-center gap-1">
+                      <Flame size={14} className="text-amber-400" /> {streak} move streak!
+                    </p>
+                  </div>
+                )}
+
+                {/* Line selector */}
+                <div className="flex-1 px-4 pt-3 pb-3 border-b border-slate-700/40 min-h-0 overflow-hidden flex flex-col">
+                  <LineSelector opening={opening} />
                 </div>
-              )}
 
-              {/* Timer display (time-trial mode) */}
-              {mode === 'time-trial' && <TimerDisplay />}
-
-              {/* Streak banner */}
-              {streak >= 3 && phase === 'training' && !postLine && (
-                <div className="px-4 py-1.5 bg-amber-900/20 border-b border-amber-800/30 flex-shrink-0">
-                  <p className="text-xs text-amber-300 font-semibold flex items-center gap-1">
-                    <Flame size={14} className="text-amber-400" /> {streak} move streak!
-                  </p>
+                {/* Move list */}
+                <div className="px-4 pt-3 pb-3 border-b border-slate-700/40 h-44 flex-shrink-0 flex flex-col">
+                  <MoveList />
                 </div>
-              )}
 
-              {/* Line selector */}
-              <div className="flex-1 px-4 pt-3 pb-3 border-b border-slate-700/40 min-h-0 overflow-hidden flex flex-col">
-                <LineSelector opening={opening} />
-              </div>
-
-              {/* Move list */}
-              <div className="px-4 pt-3 pb-3 border-b border-slate-700/40 h-44 flex-shrink-0 flex flex-col">
-                <MoveList />
-              </div>
-
-              {/* Controls */}
-              <div className="px-4 pt-3 pb-4 flex-shrink-0">
-                <ControlPanel />
-              </div>
-            </>
-          )}
+                {/* Controls */}
+                <div className="px-4 pt-3 pb-4 flex-shrink-0">
+                  <ControlPanel />
+                </div>
+              </>
+            )}
+          </div>
         </aside>
       </main>
 
       {/* Modals */}
-      {/* key resets internal step state every time line-select phase is entered */}
       <TrainingSetupModal key={`setup-modal-${phase}`} />
       <CompletionModal />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
@@ -155,14 +243,14 @@ function OpeningInfoPanel({ opening }: { opening: Opening }) {
         )}
       </div>
       {totalLines > 0 && (
-        <div className="w-full bg-slate-700/60 rounded-full h-1 mb-1.5">
+        <div className="w-full bg-slate-700/60 rounded-full h-1 mb-2">
           <div
             className="bg-emerald-500 h-1 rounded-full transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>
       )}
-      <div className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+      <div className="text-xs text-slate-400 leading-relaxed">
         {opening.description}
       </div>
     </div>

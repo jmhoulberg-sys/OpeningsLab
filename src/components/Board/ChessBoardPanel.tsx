@@ -10,7 +10,7 @@ import EvalBar from './EvalBar';
 
 // Arrow colours
 const WRONG_ARROW_COLOR  = 'rgba(220, 50,  50,  0.90)';
-const ANSWER_ARROW_COLOR = 'rgba(0,   210, 90,  0.92)';
+const ANSWER_ARROW_COLOR = 'rgba(0,   240, 100, 1.00)';
 const SELECTED_HIGHLIGHT = 'rgba(255, 255, 0,   0.4)';
 
 // ─── Resolve from/to squares for a SAN in a given position ──────────
@@ -39,7 +39,7 @@ function squareToXY(
   return { x, y, size };
 }
 
-export default function ChessBoardPanel() {
+export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: number }) {
   const {
     opening,
     phase,
@@ -171,11 +171,11 @@ export default function ChessBoardPanel() {
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
   }
 
-  // Green outline for hint square
+  // Green outline + glow for hint square
   if (!isReviewing && hintSquare) {
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
-      boxShadow: 'inset 0 0 0 4px rgba(34, 197, 94, 0.95)',
+      boxShadow: 'inset 0 0 0 4px rgba(34, 197, 94, 1), 0 0 18px rgba(34, 197, 94, 0.85), 0 0 36px rgba(34, 197, 94, 0.4)',
     };
   }
 
@@ -281,7 +281,7 @@ export default function ChessBoardPanel() {
       </div>
 
       {/* Progress bar — always in layout, invisible when not applicable */}
-      <div className={`w-full max-w-[520px] ${showProgressBar ? 'visible' : 'invisible'}`}>
+      <div className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`} style={{ maxWidth: boardSize }}>
         <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
           <span>{progressLabel}</span>
           <span>{progressDone} / {progressTotal} moves</span>
@@ -314,12 +314,12 @@ export default function ChessBoardPanel() {
       {/* Board + optional eval bar */}
       <div className="flex items-center gap-2">
         {showEvalBar && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
-          <EvalBar fen={displayFen} height={520} playerColor={opening?.playerColor ?? 'white'} />
+          <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
         )}
         <div
           key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
           className={`relative rounded-lg overflow-hidden shadow-2xl shadow-black/60 ${boardFlashing ? 'board-flash-green' : ''} ${isReviewing ? 'opacity-90 ring-2 ring-amber-500/40' : ''}`}
-          style={{ width: 520, height: 520 }}
+          style={{ width: boardSize, height: boardSize }}
         >
           <Chessboard
             id="training-board"
@@ -330,7 +330,7 @@ export default function ChessBoardPanel() {
             arePiecesDraggable={isDraggable}
             customSquareStyles={customSquareStyles}
             customArrows={customArrows}
-            boardWidth={520}
+            boardWidth={boardSize}
             customBoardStyle={{ borderRadius: '4px' }}
             customDarkSquareStyle={{ backgroundColor: '#b58863' }}
             customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
@@ -338,7 +338,7 @@ export default function ChessBoardPanel() {
           />
           {/* Wrong-move X overlay */}
           {wrongMoveSquare && !isReviewing && (() => {
-            const { x, y, size } = squareToXY(wrongMoveSquare, 520, boardOrientation);
+            const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
             return (
               <div
                 className="absolute pointer-events-none flex items-center justify-center"

@@ -9,9 +9,9 @@ export default {
           dark: '#b58863',
         },
         brand: {
-          bg: '#424242',
-          surface: '#383838',
-          panel: '#2e2e2e',
+          bg: '#2a2a2a',
+          surface: '#323232',
+          panel: '#222222',
           card: '#687289',
           accent: '#e94560',
           gold: '#f5a623',

@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore, RATING_OPTIONS } from '../../store/settingsStore';
+import { useProfileStore } from '../../store/profileStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,8 +14,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { randomTopX, setRandomTopX } = useTrainingStore();
   const { reset } = useProgressStore();
   const { restartFrom, setRestartFrom, minRating, setMinRating, enableSRReminders, setEnableSRReminders, showEvalBar, setShowEvalBar } = useSettingsStore();
+  const { profileId, displayName, setDisplayName, exportData, importData } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importError, setImportError] = useState(false);
+  const [exported, setExported] = useState(false);
 
   function handleReset() {
     reset();
@@ -29,6 +34,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   function handleClose() {
     setConfirmReset(false);
     onClose();
+  }
+
+  function handleExport() {
+    const code = exportData();
+    if (!code) return;
+    navigator.clipboard.writeText(code).catch(() => {});
+    setExported(true);
+    setTimeout(() => setExported(false), 2500);
+  }
+
+  function handleImport() {
+    const ok = importData(importCode);
+    if (!ok) setImportError(true);
   }
 
   return (
@@ -61,6 +79,66 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-8">
+
+          {/* Sync / Profile */}
+          <section>
+            <div className="text-white font-semibold text-sm mb-1">Sync / Profile</div>
+            <p className="text-slate-400 text-xs mb-3 leading-relaxed">
+              Save your progress and restore it on another device with a sync code. No email needed.
+            </p>
+
+            {/* Display name */}
+            <div className="mb-3">
+              <label className="text-xs text-slate-400 mb-1 block">Display name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. ChessKid42"
+                maxLength={32}
+                className="w-full bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent/60 placeholder-slate-500"
+              />
+            </div>
+
+            {/* Profile ID badge */}
+            <div
+              className="mb-3 text-xs text-slate-500 font-mono bg-slate-800/60 border border-slate-700/40 rounded px-2 py-1 truncate"
+              title={`Your profile ID: ${profileId}`}
+            >
+              ID: {profileId.slice(0, 12)}…
+            </div>
+
+            {/* Export */}
+            <button
+              onClick={handleExport}
+              className="w-full mb-2 py-2.5 rounded-lg bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm font-semibold hover:bg-slate-600/60 transition-colors cursor-pointer"
+            >
+              {exported ? '✓ Copied to clipboard!' : 'Export sync code'}
+            </button>
+
+            {/* Import */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={importCode}
+                onChange={(e) => { setImportCode(e.target.value); setImportError(false); }}
+                placeholder="Paste sync code…"
+                className="flex-1 min-w-0 bg-slate-700/60 border border-slate-600/50 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent/60 placeholder-slate-500"
+              />
+              <button
+                onClick={handleImport}
+                disabled={!importCode.trim()}
+                className="flex-shrink-0 px-3 py-2 rounded-lg bg-brand-accent text-white text-sm font-semibold hover:bg-red-500 disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                Import
+              </button>
+            </div>
+            {importError && (
+              <p className="text-red-400 text-xs mt-1.5">
+                Invalid sync code. Please check and try again.
+              </p>
+            )}
+          </section>
 
           {/* Restart from */}
           <section>
