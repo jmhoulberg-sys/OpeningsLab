@@ -96,8 +96,8 @@ function OpeningCard({
           {totalLines > 0 && (
             <div className="mt-auto pt-1.5 border-t border-white/10 flex-shrink-0">
               <div className="flex items-center justify-between text-[10px] mb-1">
-                <span className="text-slate-400 font-semibold">Lines completed</span>
-                <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                <span className="text-slate-200 font-semibold">Lines completed</span>
+                <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
                   {completedLines}/{totalLines}
                 </span>
               </div>

@@ -69,6 +69,8 @@ interface TrainingState {
   streak: number;
   timeLeft: number;
   timerRunning: boolean;
+  freePlayResult: 'win' | 'loss' | 'draw' | null;
+  showFreePlayResult: boolean;
 }
 
 // ─── Action shape ───────────────────────────────────────────────────
@@ -95,6 +97,7 @@ interface TrainingActions {
   tickTimer(): void;
   addTimerBonus(): void;
   stopTimer(): void;
+  clearFreePlayResult(): void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -128,6 +131,8 @@ function buildInitialState(): TrainingState {
     streak: 0,
     timeLeft: -1,
     timerRunning: false,
+    freePlayResult: null,
+    showFreePlayResult: false,
   };
 }
 
@@ -324,7 +329,15 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         });
 
         if (isGameOver(newFen)) {
-          set({ phase: 'line-select' as TrainingPhase, postLine: false });
+          const chess = new Chess(newFen);
+          let result: 'win' | 'loss' | 'draw' = 'draw';
+          if (chess.isCheckmate()) {
+            // state.isAwaitingUserMove was true = user just moved = user won
+            result = 'win';
+          } else if (chess.isDraw() || chess.isStalemate()) {
+            result = 'draw';
+          }
+          set({ phase: 'line-select' as TrainingPhase, postLine: false, freePlayResult: result, showFreePlayResult: true });
           return 'correct';
         }
 
@@ -532,15 +545,34 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         const newIdx = state.currentMoveIndex + 1;
         const gameEnded = isGameOver(newFen);
 
-        set({
-          currentFen: newFen,
-          playedMoves: [...state.playedMoves, opponentSan],
-          fenHistory: [...state.fenHistory, newFen],
-          currentMoveIndex: newIdx,
-          ...(gameEnded
-            ? { phase: 'line-select' as TrainingPhase, postLine: false }
-            : { isAwaitingUserMove: true }),
-        });
+        if (gameEnded) {
+          const chess = new Chess(newFen);
+          let result: 'win' | 'loss' | 'draw' = 'draw';
+          if (chess.isCheckmate()) {
+            // opponent just moved and delivered checkmate = user lost
+            result = 'loss';
+          } else if (chess.isDraw() || chess.isStalemate()) {
+            result = 'draw';
+          }
+          set({
+            currentFen: newFen,
+            playedMoves: [...state.playedMoves, opponentSan],
+            fenHistory: [...state.fenHistory, newFen],
+            currentMoveIndex: newIdx,
+            phase: 'line-select' as TrainingPhase,
+            postLine: false,
+            freePlayResult: result,
+            showFreePlayResult: true,
+          });
+        } else {
+          set({
+            currentFen: newFen,
+            playedMoves: [...state.playedMoves, opponentSan],
+            fenHistory: [...state.fenHistory, newFen],
+            currentMoveIndex: newIdx,
+            isAwaitingUserMove: true,
+          });
+        }
         return;
       }
 
@@ -632,7 +664,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           (m) => norm(m.san) === norm(expectedSan!),
         );
         if (found) {
-          set({ hintSquare: found.from });
+          set({ hintSquare: found.from, wrongMoveSan: expectedSan, showingCorrectMove: true });
         }
       } catch { /* ignore */ }
     },
@@ -672,6 +704,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             selectedLine: line,
             repetitionBlock: 1,
             streak: 0,
+            freePlayResult: null,
+            showFreePlayResult: false,
             ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
           });
 
@@ -699,6 +733,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             selectedLine: line,
             repetitionBlock: 1,
             streak: 0,
+            freePlayResult: null,
+            showFreePlayResult: false,
             ...(isTimeTrial ? { timeLeft: 60, timerRunning: true } : {}),
           });
 
@@ -759,6 +795,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         streak: 0,
         timeLeft: -1,
         timerRunning: false,
+        freePlayResult: null,
+        showFreePlayResult: false,
       });
     },
 
@@ -803,6 +841,10 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
     stopTimer() {
       set({ timerRunning: false });
+    },
+
+    clearFreePlayResult() {
+      set({ freePlayResult: null, showFreePlayResult: false });
     },
   }),
 );

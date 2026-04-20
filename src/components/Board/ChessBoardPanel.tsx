@@ -12,6 +12,74 @@ import EvalBar from './EvalBar';
 const ANSWER_ARROW_COLOR = 'rgba(0,   240, 100, 1.00)';
 const SELECTED_HIGHLIGHT = 'rgba(255, 255, 0,   0.4)';
 
+// ─── Knight move helpers ─────────────────────────────────────────────
+
+function isKnightMove(from: string, to: string): boolean {
+  const df = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
+  const dr = Math.abs(parseInt(from[1]) - parseInt(to[1]));
+  return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+}
+
+function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
+  from: string; to: string; boardSize: number;
+  orientation: 'white' | 'black'; color: string;
+}) {
+  const sqSize = boardSize / 8;
+  const center = (sq: string) => {
+    const { x, y } = squareToXY(sq, boardSize, orientation);
+    return { x: x + sqSize / 2, y: y + sqSize / 2 };
+  };
+
+  const fromC = center(from);
+  const toC = center(to);
+
+  const dFile = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
+  let cornerSq: string;
+  if (dFile === 2) {
+    cornerSq = to[0] + from[1];
+  } else {
+    cornerSq = from[0] + to[1];
+  }
+  const cornerC = center(cornerSq);
+
+  const dx = toC.x - cornerC.x;
+  const dy = toC.y - cornerC.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const ux = dx / len, uy = dy / len;
+  const aw = 8, al = 14;
+  const arrowTip = { x: toC.x, y: toC.y };
+  const arrowBase = { x: toC.x - ux * al, y: toC.y - uy * al };
+  const perp = { x: -uy, y: ux };
+  const p1 = { x: arrowBase.x + perp.x * aw, y: arrowBase.y + perp.y * aw };
+  const p2 = { x: arrowBase.x - perp.x * aw, y: arrowBase.y - perp.y * aw };
+  const lineToX = arrowBase.x;
+  const lineToY = arrowBase.y;
+
+  return (
+    <svg
+      className="absolute inset-0 pointer-events-none"
+      width={boardSize}
+      height={boardSize}
+      style={{ zIndex: 1 }}
+    >
+      <line
+        x1={fromC.x} y1={fromC.y}
+        x2={cornerC.x} y2={cornerC.y}
+        stroke={color} strokeWidth="5" strokeLinecap="round" opacity="0.9"
+      />
+      <line
+        x1={cornerC.x} y1={cornerC.y}
+        x2={lineToX} y2={lineToY}
+        stroke={color} strokeWidth="5" strokeLinecap="round" opacity="0.9"
+      />
+      <polygon
+        points={`${arrowTip.x},${arrowTip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
+        fill={color} opacity="0.9"
+      />
+    </svg>
+  );
+}
+
 // ─── Resolve from/to squares for a SAN in a given position ──────────
 function resolveArrow(fen: string, san: string): [Square, Square] | null {
   try {
@@ -68,6 +136,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
+  const [promotionPending, setPromotionPending] = useState<{ from: Square; to: Square } | null>(null);
   const prevBlockRef = useRef(repetitionBlock);
   const flashKeyRef = useRef(0);
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(null);
@@ -180,12 +249,19 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   // ── Arrows ───────────────────────────────────────────────────────
   const customArrows: [Square, Square, string][] = [];
+  let knightArrow: [Square, Square] | null = null;
 
   // Only show the answer arrow when explicitly requested (showingCorrectMove),
   // not when just a wrong move is on screen
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
-    if (arrow) customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
+    if (arrow) {
+      if (isKnightMove(arrow[0], arrow[1])) {
+        knightArrow = arrow;
+      } else {
+        customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
+      }
+    }
   }
 
   // ── Click-click moves ────────────────────────────────────────────
@@ -219,12 +295,32 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         piece[1] === 'P' &&
         ((piece[0] === 'w' && to[1] === '8') || (piece[0] === 'b' && to[1] === '1'));
 
+      // In free play, let the built-in promotion dialog handle piece selection
+      if (isPromotion && postLine) {
+        setPromotionPending({ from, to });
+        return false; // keep piece at source; dialog will show
+      }
+
       const result = handleBoardMove(from, to, isPromotion ? 'q' : undefined);
       // Return true for both correct AND wrong — piece stays at destination;
       // for wrong moves the board shows wrongMoveFen, for correct it shows the new position.
       return result === 'correct' || result === 'wrong';
     },
-    [isAwaitingUserMove, wrongMoveFen, handleBoardMove, isReviewing, navigateToMove],
+    [isAwaitingUserMove, wrongMoveFen, handleBoardMove, isReviewing, navigateToMove, postLine],
+  );
+
+  // ── Promotion piece select (free play only) ──────────────────────
+  const onPromotionPieceSelect = useCallback(
+    (piece?: string): boolean => {
+      if (!promotionPending || !piece) { setPromotionPending(null); return false; }
+      const { from, to } = promotionPending;
+      setPromotionPending(null);
+      // piece is like 'wQ', 'bQ' etc — extract lowercase piece letter
+      const promo = piece[1]?.toLowerCase() ?? 'q';
+      const result = handleBoardMove(from, to, promo);
+      return result === 'correct';
+    },
+    [promotionPending, handleBoardMove],
   );
 
   // ── Status text ──────────────────────────────────────────────────
@@ -270,9 +366,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     !isReviewing && !wrongMoveFen && isAwaitingUserMove && (phase === 'training' || phase === 'setup');
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1">
       {/* Status */}
-      <div className={`text-sm font-semibold tracking-wide h-5 ${statusColor}`}>
+      <div className={`text-sm font-semibold tracking-wide ${statusColor}`}>
         {statusText}
       </div>
 
@@ -290,8 +386,8 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      {/* Feedback row — always h-7, never collapses */}
-      <div className="h-7 flex items-center justify-center">
+      {/* Feedback row — always h-6, never collapses */}
+      <div className="h-6 flex items-center justify-center">
         {feedbackMsg ? (
           <span className={`text-xs font-bold px-4 py-1 rounded-full ${
             feedbackMsg.type === 'correct' ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
@@ -309,7 +405,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
       {/* Board + optional eval bar */}
       <div className="flex items-center gap-2">
-        {showEvalBar && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
+        {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
           <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
         )}
         <div
@@ -331,7 +427,22 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             customDarkSquareStyle={{ backgroundColor: '#b58863' }}
             customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
             animationDuration={isReviewing ? 0 : 200}
+            {...(postLine && isAwaitingUserMove ? {
+              promotionDialogVariant: 'modal' as const,
+              onPromotionPieceSelect,
+            } : {})}
           />
+
+          {/* Knight arrow overlay (L-shaped) */}
+          {knightArrow && !isReviewing && (
+            <KnightArrowOverlay
+              from={knightArrow[0]}
+              to={knightArrow[1]}
+              boardSize={boardSize}
+              orientation={boardOrientation}
+              color={ANSWER_ARROW_COLOR}
+            />
+          )}
 
           {/* Wrong-move X badge — top-right corner of the destination square */}
           {wrongMoveSquare && !isReviewing && (() => {
@@ -367,9 +478,16 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      {/* History navigation — always visible during active phases */}
+      {/* Board nav row with mistake counter and hint button */}
       {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
-        <HistoryNav wrongMoveFen={wrongMoveFen} clearWrongMove={clearWrongMove} />
+        <BoardNavRow
+          wrongMoveFen={wrongMoveFen}
+          clearWrongMove={clearWrongMove}
+          boardSize={boardSize}
+          phase={phase}
+          mode={mode}
+          postLine={postLine}
+        />
       )}
 
       {/* Analysis panel — only during free play */}
@@ -378,22 +496,29 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   );
 }
 
-// ─── History navigation bar ──────────────────────────────────────────
+// ─── Board nav row (mistake counter + nav arrows + hint button) ───────
 
-function HistoryNav({
+function BoardNavRow({
   wrongMoveFen,
   clearWrongMove,
+  boardSize,
+  phase,
+  mode,
+  postLine,
 }: {
   wrongMoveFen: string | null;
   clearWrongMove: () => void;
+  boardSize: number;
+  phase: string;
+  mode: string;
+  postLine: boolean;
 }) {
-  const { viewMoveIndex, playedMoves, navigateToMove } = useTrainingStore();
+  const { viewMoveIndex, playedMoves, navigateToMove, mistakes, isAwaitingUserMove, showHint } = useTrainingStore();
 
   const isLive = viewMoveIndex === null;
   const currentIdx = isLive ? playedMoves.length - 1 : viewMoveIndex;
 
   function goBack() {
-    // If a wrong move is shown, undo it first
     if (wrongMoveFen) { clearWrongMove(); return; }
     const prev = currentIdx - 1;
     if (prev < 0) return;
@@ -412,22 +537,50 @@ function HistoryNav({
   const canBack = wrongMoveFen != null || currentIdx > 0;
   const canForward = !wrongMoveFen && (currentIdx < playedMoves.length - 1 || !isLive);
 
+  const inSession = phase === 'training' || phase === 'setup';
+  const hideHint = mode === 'drill' || mode === 'time-trial';
+  const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
+
   return (
-    <div className="flex items-center gap-2">
-      <NavButton onClick={goBack} disabled={!canBack} title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}>
-        ◀
-      </NavButton>
-      <NavButton onClick={goForward} disabled={!canForward} title="Next move">
-        ▶
-      </NavButton>
-      {!isLive && !wrongMoveFen && (
-        <button
-          onClick={() => navigateToMove(null)}
-          className="text-xs text-amber-400 hover:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-600/40 hover:border-amber-500/60 transition-colors cursor-pointer"
-        >
-          ▶▶ Live
-        </button>
-      )}
+    <div className="flex items-center justify-between gap-2" style={{ width: boardSize }}>
+      {/* Left: mistake counter */}
+      <div className="w-16 flex-shrink-0">
+        {mistakes > 0 && (
+          <span className="text-xs font-bold text-red-400">✗ {mistakes}</span>
+        )}
+      </div>
+
+      {/* Center: nav arrows */}
+      <div className="flex items-center gap-2">
+        <NavButton onClick={goBack} disabled={!canBack} title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}>
+          ◀
+        </NavButton>
+        <NavButton onClick={goForward} disabled={!canForward} title="Next move">
+          ▶
+        </NavButton>
+        {!isLive && !wrongMoveFen && (
+          <button
+            onClick={() => navigateToMove(null)}
+            className="text-xs text-amber-400 hover:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-600/40 hover:border-amber-500/60 transition-colors cursor-pointer"
+          >
+            ▶▶ Live
+          </button>
+        )}
+      </div>
+
+      {/* Right: hint button */}
+      <div className="w-16 flex-shrink-0 flex justify-end">
+        {!hideHint && (
+          <button
+            onClick={showHint}
+            disabled={!canHint}
+            title="Hint"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            💡 Hint
+          </button>
+        )}
+      </div>
     </div>
   );
 }

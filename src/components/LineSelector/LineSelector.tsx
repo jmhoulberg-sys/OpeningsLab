@@ -22,11 +22,11 @@ export default function LineSelector({ opening }: LineSelectorProps) {
   ).length;
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="relative">
       {/* Collapsible header button */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between rounded-lg px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors cursor-pointer flex-shrink-0 mb-2"
+        className="w-full flex items-center justify-between rounded-lg px-3 py-2.5 bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Lines</span>
@@ -53,39 +53,34 @@ export default function LineSelector({ opening }: LineSelectorProps) {
         </div>
       </button>
 
-      {/* Currently selected line label */}
-      {!expanded && selectedLine && (
-        <div className="px-3 py-1.5 bg-brand-accent/10 border border-brand-accent/30 rounded-lg mb-2 flex-shrink-0">
-          <p className="text-xs text-brand-accent font-semibold truncate">{selectedLine.name}</p>
-        </div>
-      )}
-
-      {/* Expandable line list */}
+      {/* Expandable line list — absolute popup */}
       {expanded && (
-        <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0 pr-1">
+        <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-brand-surface border border-slate-600/40 rounded-xl shadow-2xl p-2 overflow-y-auto max-h-72">
           {!setupDone && (
-            <p className="text-xs text-slate-500 italic px-1">
+            <p className="text-xs text-slate-500 italic px-1 py-1">
               Complete the opening setup to unlock lines.
             </p>
           )}
-          {opening.lines.map((line) => (
-            <LineRow
-              key={line.id}
-              line={line}
-              openingId={opening.id}
-              isSelected={selectedLine?.id === line.id}
-              isSetupDone={setupDone}
-              isActive={isActive}
-              isUnlocked={isLineUnlocked(opening.id, line.id)}
-              progress={getLineProgress(opening.id, line.id)}
-              onSelect={() => {
-                if (setupDone) {
-                  selectLine(line);
-                  setExpanded(false);
-                }
-              }}
-            />
-          ))}
+          <div className="space-y-1.5">
+            {opening.lines.map((line) => (
+              <LineRow
+                key={line.id}
+                line={line}
+                openingId={opening.id}
+                isSelected={selectedLine?.id === line.id}
+                isSetupDone={setupDone}
+                isActive={isActive}
+                isUnlocked={isLineUnlocked(opening.id, line.id)}
+                progress={getLineProgress(opening.id, line.id)}
+                onSelect={() => {
+                  if (setupDone) {
+                    selectLine(line);
+                    setExpanded(false);
+                  }
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

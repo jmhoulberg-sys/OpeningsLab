@@ -53,3 +53,12 @@
 .board-flash-green {
   animation: board-flash-green 0.7s ease-out forwards;
 }
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(250px) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+  animation: confettiFall 2s ease-in forwards;
+}

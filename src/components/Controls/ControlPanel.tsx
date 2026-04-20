@@ -1,32 +1,18 @@
-import { Lightbulb, Eye, RotateCcw, ArrowLeft } from 'lucide-react';
+import { RotateCcw, ArrowLeft } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 
 export default function ControlPanel() {
   const {
     phase,
-    mode,
-    postLine,
-    isAwaitingUserMove,
-    showingCorrectMove,
-    wrongMoveSan,
     selectedLine,
     streak,
-    hintSquare,
-    showAnswer,
-    showHint,
+    postLine,
     restart,
     backToLineSelect,
   } = useTrainingStore();
 
-  const inSession = phase === 'training' || phase === 'setup';
-  const hideHint = mode === 'drill' || mode === 'time-trial';
   const canRestart = !!selectedLine || phase === 'training' || phase === 'completed';
   const canGoBack = phase === 'training' || phase === 'completed';
-
-  // Hint is available when awaiting move, no wrong move shown, no answer shown, not post-line
-  const canHint = inSession && isAwaitingUserMove && !wrongMoveSan && !showingCorrectMove && !postLine && !hideHint;
-  // Answer phase: hint square is shown, upgrade to full arrow
-  const canAnswer = canHint && !!hintSquare;
 
   return (
     <div className="space-y-2">
@@ -36,25 +22,6 @@ export default function ControlPanel() {
         )}
       </h3>
       <div className="flex flex-col gap-2">
-        {!hideHint && (
-          canAnswer ? (
-            <ActionButton
-              label="Show Answer"
-              icon={<Eye size={14} />}
-              onClick={showAnswer}
-              disabled={false}
-              variant="hint"
-            />
-          ) : (
-            <ActionButton
-              label="Hint"
-              icon={<Lightbulb size={14} />}
-              onClick={showHint}
-              disabled={!canHint}
-              variant="hint"
-            />
-          )
-        )}
         <ActionButton
           label="Restart Line"
           icon={<RotateCcw size={14} />}

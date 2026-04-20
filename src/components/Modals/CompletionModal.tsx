@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Star, CheckCircle } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { isGameOver } from '../../engine/chessEngine';
@@ -36,6 +36,7 @@ export default function CompletionModal() {
 
   const perfect = mistakes === 0;
   const canContinue = !isGameOver(currentFen);
+  const filledStars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
 
   // Compute SR display (what will be scheduled after recording)
   const existingProgress = getLineProgress(opening.id, selectedLine.id);
@@ -47,13 +48,8 @@ export default function CompletionModal() {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
         <div className="bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-md w-full mx-4 text-center">
 
-          {/* Icon */}
-          <div className="mb-3">
-            {perfect
-              ? <Star size={48} className="text-yellow-400 mx-auto" fill="currentColor" />
-              : <CheckCircle size={48} className="text-emerald-400 mx-auto" />
-            }
-          </div>
+          {/* Animated star rating */}
+          <StarRating mistakes={mistakes} filledCount={filledStars} />
 
           {/* Headline */}
           <h2 className="text-2xl font-bold text-white mb-1">
@@ -132,6 +128,37 @@ function StatRow({ label, value, good }: { label: string; value: string; good: b
     <div className="flex justify-between items-center text-sm">
       <span className="text-slate-400">{label}</span>
       <span className={`font-bold ${good ? 'text-emerald-400' : 'text-red-400'}`}>{value}</span>
+    </div>
+  );
+}
+
+function StarRating({ mistakes, filledCount }: { mistakes: number; filledCount: number }) {
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setShown(1), 300),
+      setTimeout(() => setShown(2), 600),
+      setTimeout(() => setShown(3), 900),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [mistakes]);
+
+  return (
+    <div className="flex gap-2 justify-center mb-3">
+      {[1, 2, 3].map((star) => (
+        <div
+          key={star}
+          className={`transition-all duration-300 ${shown >= star ? 'scale-110' : 'scale-100 opacity-50'}`}
+        >
+          <Star
+            size={40}
+            className={star <= filledCount ? 'text-yellow-400' : 'text-slate-600'}
+            fill={star <= filledCount && shown >= star ? 'currentColor' : 'none'}
+            strokeWidth={star <= filledCount ? 1.5 : 2}
+          />
+        </div>
+      ))}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import MoveList from './components/MoveList/MoveList';
 import LineSelector from './components/LineSelector/LineSelector';
 import ControlPanel from './components/Controls/ControlPanel';
 import CompletionModal from './components/Modals/CompletionModal';
+import FreePlayEndModal from './components/Modals/FreePlayEndModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
 import SettingsModal from './components/Settings/SettingsModal';
 import TimerDisplay from './components/Timer/TimerDisplay';
@@ -18,7 +19,7 @@ import type { Opening } from './types';
 // 650 = 320 (sidebar) + ~300 (usable board) + padding
 const SIDEBAR_BREAK = 650;
 // Board-panel chrome height: status bar + progress + feedback + nav + gaps
-const BOARD_CHROME_H = 130;
+const BOARD_CHROME_H = 115;
 // Extra horizontal space consumed by the eval bar + gap inside the board area
 const EVAL_BAR_W = 24;
 
@@ -73,7 +74,7 @@ export default function App() {
       roMain.disconnect();
       roBoard.disconnect();
     };
-  }, [handleMainResize, handleBoardContainerResize]);
+  }, [handleMainResize, handleBoardContainerResize, showHome]);
 
   // Mark setup complete the first time we reach line-select.
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function App() {
           ].join(' ')}
         >
           {/* Inner wrapper — fixed width so content never wraps during transition */}
-          <div className="relative flex flex-col h-full w-80 overflow-hidden">
+          <div className="relative flex flex-col h-full w-80 overflow-y-auto overflow-x-hidden">
             {/* Close button — only on small screens */}
             {isSmallScreen && (
               <button
@@ -209,7 +210,7 @@ export default function App() {
                 )}
 
                 {/* Line selector */}
-                <div className="flex-1 px-4 pt-3 pb-3 border-b border-slate-700/40 min-h-0 overflow-hidden flex flex-col">
+                <div className="flex-shrink-0 relative px-4 pt-3 pb-3 border-b border-slate-700/40">
                   <LineSelector opening={opening} />
                 </div>
 
@@ -231,6 +232,7 @@ export default function App() {
       {/* Modals */}
       <TrainingSetupModal key={`setup-modal-${phase}`} />
       <CompletionModal />
+      <FreePlayEndModal />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
