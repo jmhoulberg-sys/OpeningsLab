@@ -10,43 +10,40 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   const { opening, selectedLine, phase, mistakes } = useTrainingStore();
 
   return (
-    <header className="flex items-center justify-between px-6 py-3 bg-brand-surface/90 border-b border-slate-700/50 backdrop-blur-sm flex-shrink-0">
-      {/* Logo / App name */}
+    <header className="flex flex-shrink-0 items-center justify-between border-b border-white/6 bg-stone-900/88 px-4 py-3 backdrop-blur-sm sm:px-6">
       <button
         onClick={onHomeClick}
-        className="flex items-center gap-3 cursor-pointer group"
+        className="group flex items-center gap-3 cursor-pointer"
       >
         <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent flex-shrink-0">
-          <circle cx="12" cy="5" r="3"/>
-          <path d="M10 8l-2 6h8l-2-6z"/>
-          <path d="M7 15l-1 3h12l-1-3z"/>
+          <circle cx="12" cy="5" r="3" />
+          <path d="M10 8l-2 6h8l-2-6z" />
+          <path d="M7 15l-1 3h12l-1-3z" />
         </svg>
-        <span className="text-lg font-bold text-white tracking-tight group-hover:text-brand-accent transition-colors">
+        <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-brand-accent">
           OpeningsLab
         </span>
       </button>
 
-      {/* Current context breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="hidden items-center gap-2 text-sm md:flex">
         {opening && (
           <>
-            <span className="text-slate-300 font-semibold">{opening.name}</span>
+            <span className="font-semibold text-stone-200">{opening.name}</span>
             {selectedLine && (
               <>
-                <span className="text-slate-600">›</span>
-                <span className="text-slate-400">{selectedLine.name}</span>
+                <span className="text-stone-600">/</span>
+                <span className="text-stone-400">{selectedLine.name}</span>
               </>
             )}
           </>
         )}
       </div>
 
-      {/* Right: mistakes + phase badge + settings */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {phase === 'training' && (
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="text-slate-400">Mistakes:</span>
-            <span className={`font-bold tabular-nums ${mistakes > 0 ? 'text-red-400' : 'text-slate-300'}`}>
+          <div className="hidden items-center gap-1.5 text-sm sm:flex">
+            <span className="text-stone-400">Mistakes</span>
+            <span className={`font-bold tabular-nums ${mistakes > 0 ? 'text-rose-300' : 'text-stone-200'}`}>
               {mistakes}
             </span>
           </div>
@@ -54,7 +51,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
         <PhaseBadge phase={phase} />
         <button
           onClick={onSettingsClick}
-          className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+          className="rounded-xl border border-white/6 bg-white/[0.035] p-2.5 text-stone-300 transition-colors hover:bg-white/[0.06] hover:text-white cursor-pointer"
           title="Settings"
           aria-label="Open settings"
         >
@@ -67,17 +64,17 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
 
 function PhaseBadge({ phase }: { phase: string }) {
   const config: Record<string, { label: string; color: string }> = {
-    idle:          { label: 'Idle',       color: 'bg-slate-700 text-slate-400' },
-    setup:         { label: 'Setup',      color: 'bg-blue-800/60 text-blue-300' },
-    'line-select': { label: 'Pick Line',  color: 'bg-yellow-800/60 text-yellow-300' },
-    training:      { label: 'Training',   color: 'bg-emerald-800/60 text-emerald-300' },
-    completed:     { label: 'Done',       color: 'bg-purple-800/60 text-purple-300' },
+    idle: { label: 'Idle', color: 'border-white/6 bg-white/[0.035] text-stone-400' },
+    setup: { label: 'Setup', color: 'border-sky-400/15 bg-sky-400/10 text-sky-300' },
+    'line-select': { label: 'Pick Line', color: 'border-amber-300/15 bg-amber-300/10 text-amber-200' },
+    training: { label: 'Training', color: 'border-emerald-300/15 bg-emerald-300/10 text-emerald-300' },
+    completed: { label: 'Done', color: 'border-amber-300/15 bg-amber-300/10 text-amber-200' },
   };
 
   const { label, color } = config[phase] ?? config.idle;
 
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${color}`}>
+    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${color}`}>
       {label}
     </span>
   );

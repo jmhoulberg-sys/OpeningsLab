@@ -1,6 +1,6 @@
 export const HOME_HERO = {
-  headline: 'Pick an opening. Tap the board. Start training.',
-  subheadline: 'Fast board-first opening practice.',
+  headline: 'Choose an opening and start drilling.',
+  subheadline: 'Tap any board to begin.',
   primaryCta: 'Start',
   secondaryCta: 'See Openings',
 };

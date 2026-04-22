@@ -1,13 +1,11 @@
-import type { ReactNode } from 'react';
-import { ArrowRight, Clock3, Play, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Play } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Opening, OpeningLine } from '../../types';
 import { fenAfterMoves } from '../../engine/chessEngine';
 
-const FEATURED_BOARD_SIZE = 176;
-const LIBRARY_BOARD_SIZE = 148;
-const WOOD_LIGHT = '#ead1ab';
-const WOOD_DARK = '#9d6b3f';
+const WOOD_LIGHT = '#e6d0a9';
+const WOOD_DARK = '#9b6a3c';
 
 export interface OpeningSummary {
   opening: Opening;
@@ -69,18 +67,14 @@ export function HeroSection({
   onContinueClick,
 }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 px-6 py-7 shadow-[0_30px_100px_rgba(0,0,0,0.24)] sm:px-8 sm:py-8">
-      <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(234,209,171,0.18),transparent_42%)] lg:block" />
+    <section className="relative overflow-hidden rounded-[30px] border border-white/6 bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
+      <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(234,209,171,0.14),transparent_42%)] lg:block" />
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-100">
-            <Sparkles size={13} />
-            Opening Training
-          </div>
-          <h1 className="max-w-2xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             {headline}
           </h1>
-          <p className="mt-3 text-base text-stone-300 sm:text-lg">
+          <p className="mt-2 text-base text-stone-300 sm:text-lg">
             {subheadline}
           </p>
         </div>
@@ -95,7 +89,7 @@ export function HeroSection({
           </button>
           <button
             onClick={onSecondaryClick}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/14 bg-white/5 px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-white/10 cursor-pointer"
+            className="inline-flex items-center justify-center rounded-2xl border border-white/8 bg-white/4 px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-white/8 cursor-pointer"
           >
             {secondaryLabel}
           </button>
@@ -105,20 +99,20 @@ export function HeroSection({
       {continueSummary && onContinueClick && (
         <button
           onClick={onContinueClick}
-          className="relative mt-5 flex w-full items-center justify-between gap-4 rounded-[22px] border border-emerald-300/15 bg-emerald-300/8 px-4 py-4 text-left transition-colors hover:bg-emerald-300/12 cursor-pointer"
+          className="relative mt-4 flex w-full items-center justify-between gap-4 rounded-[20px] border border-emerald-300/10 bg-emerald-300/6 px-4 py-3 text-left transition-colors hover:bg-emerald-300/10 cursor-pointer"
         >
-          <div>
+          <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
               Continue
             </div>
-            <div className="mt-1 text-base font-bold text-white">
-              {continueSummary.opening.name} · {continueSummary.line.name}
+            <div className="mt-1 truncate text-base font-bold text-white">
+              {continueSummary.opening.name}
             </div>
             <div className="mt-1 text-sm text-stone-300">
-              {continueSummary.completedLines}/{continueSummary.totalLines} lines done
+              {continueSummary.completedLines}/{continueSummary.totalLines} lines complete
             </div>
           </div>
-          <ArrowRight size={18} className="text-emerald-300" />
+          <ArrowRight size={18} className="flex-shrink-0 text-emerald-300" />
         </button>
       )}
     </section>
@@ -127,15 +121,15 @@ export function HeroSection({
 
 export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
   return (
-    <section className="rounded-[24px] border border-white/8 bg-stone-900/55 p-4 sm:p-5">
+    <section className="rounded-[22px] border border-white/5 bg-stone-900/45 p-3 sm:p-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="rounded-[18px] border border-white/8 bg-white/4 p-4"
+            className="rounded-[18px] border border-white/5 bg-white/[0.03] p-4"
           >
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200/75">
-              0{index + 1}
+            <div className="mb-2 text-lg font-extrabold text-amber-200">
+              {index + 1}
             </div>
             <h3 className="text-sm font-semibold text-white">{step.label}</h3>
             <p className="mt-1 text-sm text-stone-400">{step.description}</p>
@@ -152,89 +146,25 @@ export function FeaturedOpeningsSection({
   onStartLine,
 }: FeaturedOpeningsSectionProps) {
   return (
-    <section className="space-y-4" id="featured-openings">
+    <section className="space-y-3" id="featured-openings">
       <SectionHeading
         eyebrow="Start here"
         title="Tap a board to begin"
-        description="Your fastest route into training."
+        description="Fastest way into training."
       />
       <div className="grid gap-4 lg:grid-cols-3">
         {openings.map((summary) => (
-          <FeaturedOpeningCard
+          <OpeningCard
             key={summary.opening.id}
             summary={summary}
+            boardLabel="Start"
+            compact={false}
             onOpenOpening={onOpenOpening}
             onStartLine={onStartLine}
           />
         ))}
       </div>
     </section>
-  );
-}
-
-function FeaturedOpeningCard({
-  summary,
-  onOpenOpening,
-  onStartLine,
-}: {
-  summary: OpeningSummary;
-  onOpenOpening: (opening: Opening) => void;
-  onStartLine: (opening: Opening, line: OpeningLine) => void;
-}) {
-  const { opening, totalLines, completedLines, firstLine, setupComplete } = summary;
-  const setupFen = fenAfterMoves(opening.setupMoves);
-  const progress = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
-
-  return (
-    <article className="flex h-full flex-col rounded-[26px] border border-white/8 bg-stone-900/70 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
-      <button
-        onClick={() => onStartLine(opening, firstLine)}
-        className="group overflow-hidden rounded-[22px] text-left cursor-pointer"
-        aria-label={`Start ${opening.name}`}
-      >
-        <BoardPreview
-          opening={opening}
-          fen={setupFen}
-          size={FEATURED_BOARD_SIZE}
-          overlayLabel="Start on board"
-        />
-      </button>
-
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-bold text-white">{opening.name}</h3>
-          <div className="mt-1 text-sm text-stone-400">{firstLine.name}</div>
-        </div>
-        <CourseStatPill icon={<Clock3 size={14} />} label={`${totalLines} lines`} />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between text-xs text-stone-400">
-        <span>{setupComplete ? 'In progress' : 'New opening'}</span>
-        <span>{completedLines}/{totalLines} complete</span>
-      </div>
-      <div className="mt-2 h-1.5 rounded-full bg-white/8">
-        <div
-          className="h-1.5 rounded-full bg-emerald-400 transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => onStartLine(opening, firstLine)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-200 px-3 py-2.5 text-sm font-semibold text-stone-900 transition-colors hover:bg-amber-100 cursor-pointer"
-        >
-          <Play size={15} />
-          Start
-        </button>
-        <button
-          onClick={() => onOpenOpening(opening)}
-          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 cursor-pointer"
-        >
-          Open
-        </button>
-      </div>
-    </article>
   );
 }
 
@@ -244,7 +174,7 @@ export function OpeningLibrarySection({
   onStartLine,
 }: OpeningLibrarySectionProps) {
   return (
-    <section className="space-y-4" id="opening-library">
+    <section className="space-y-3" id="opening-library">
       <SectionHeading
         eyebrow="All openings"
         title="Choose your next line"
@@ -252,9 +182,11 @@ export function OpeningLibrarySection({
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {openings.map((summary) => (
-          <OpeningLibraryCard
+          <OpeningCard
             key={summary.opening.id}
             summary={summary}
+            boardLabel="Tap to start"
+            compact
             onOpenOpening={onOpenOpening}
             onStartLine={onStartLine}
           />
@@ -264,56 +196,60 @@ export function OpeningLibrarySection({
   );
 }
 
-function OpeningLibraryCard({
+function OpeningCard({
   summary,
+  boardLabel,
+  compact,
   onOpenOpening,
   onStartLine,
 }: {
   summary: OpeningSummary;
+  boardLabel: string;
+  compact: boolean;
   onOpenOpening: (opening: Opening) => void;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }) {
-  const { opening, totalLines, completedLines, firstLine } = summary;
+  const { opening, totalLines, completedLines, firstLine, setupComplete } = summary;
   const setupFen = fenAfterMoves(opening.setupMoves);
 
   return (
-    <article className="flex h-full flex-col rounded-[24px] border border-white/8 bg-stone-900/50 p-4 transition-colors hover:border-white/12 hover:bg-stone-900/70">
+    <article className="flex h-full flex-col rounded-[24px] border border-white/5 bg-stone-900/55 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
       <button
         onClick={() => onStartLine(opening, firstLine)}
-        className="group overflow-hidden rounded-[20px] text-left cursor-pointer"
+        className="group cursor-pointer overflow-hidden rounded-[20px] text-left"
         aria-label={`Start ${opening.name}`}
       >
-        <BoardPreview
-          opening={opening}
-          fen={setupFen}
-          size={LIBRARY_BOARD_SIZE}
-          overlayLabel="Tap board to start"
-        />
+        <BoardPreview opening={opening} fen={setupFen} overlayLabel={boardLabel} />
       </button>
 
-      <div className="mt-3 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-bold text-white">{opening.name}</h3>
-          <p className="mt-1 text-sm text-stone-400">{totalLines} lines</p>
+      <div className={`grid items-start gap-2 ${compact ? 'mt-3' : 'mt-3.5'}`} style={{ gridTemplateColumns: '1fr auto' }}>
+        <div className="min-w-0">
+          <h3 className="text-[1.75rem] font-bold leading-tight text-white md:text-[1.95rem] lg:text-[1.7rem] xl:text-[1.8rem]">
+            {opening.name}
+          </h3>
+          <div className="mt-1 text-sm text-stone-400">{totalLines} lines</div>
         </div>
-        <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs font-semibold text-stone-300">
+        <span className="rounded-full border border-white/5 bg-white/[0.035] px-3 py-1 text-xs font-semibold text-stone-200">
           {completedLines}/{totalLines}
         </span>
       </div>
 
-      <div className="mt-2 text-sm text-stone-400">{firstLine.name}</div>
+      <div className="mt-3 flex items-center justify-between text-xs text-stone-400">
+        <span>{setupComplete ? 'In progress' : 'New opening'}</span>
+        <span>{completedLines}/{totalLines} complete</span>
+      </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-3 flex gap-2">
         <button
           onClick={() => onStartLine(opening, firstLine)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-stone-950 transition-colors hover:bg-stone-100 cursor-pointer"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-200 px-3 py-2.5 text-sm font-semibold text-stone-900 transition-colors hover:bg-amber-100 cursor-pointer"
         >
           <Play size={15} />
           Start
         </button>
         <button
           onClick={() => onOpenOpening(opening)}
-          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 cursor-pointer"
+          className="inline-flex items-center justify-center rounded-xl border border-white/6 bg-white/[0.035] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.06] cursor-pointer"
         >
           Open
         </button>
@@ -336,42 +272,49 @@ function SectionHeading({
       <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/80">
         {eyebrow}
       </div>
-      <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-      <p className="mt-2 text-sm text-stone-400 sm:text-base">
+      <h2 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h2>
+      <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
         {description}
       </p>
     </div>
   );
 }
 
-function CourseStatPill({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-stone-200">
-      {icon}
-      {label}
-    </span>
-  );
-}
-
 function BoardPreview({
   opening,
   fen,
-  size,
   overlayLabel,
 }: {
   opening: Opening;
   fen: string;
-  size: number;
   overlayLabel: string;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [boardWidth, setBoardWidth] = useState(240);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    const update = () => {
+      setBoardWidth(Math.max(180, Math.floor(node.clientWidth)));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
-      className="relative overflow-hidden rounded-[20px] border border-black/12 shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
-      style={{ width: '100%', maxWidth: size, margin: '0 auto' }}
+      ref={containerRef}
+      className="relative aspect-square w-full overflow-hidden rounded-[20px] border border-black/10 shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
     >
       <Chessboard
         position={fen}
-        boardWidth={size}
+        boardWidth={boardWidth}
         boardOrientation={opening.playerColor}
         arePiecesDraggable={false}
         customBoardStyle={{
@@ -383,9 +326,9 @@ function BoardPreview({
         customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
         animationDuration={0}
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-4">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/68 via-black/24 to-transparent px-3 py-3">
         <div className="inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-stone-900 shadow-sm">
-          <Play size={13} />
+          <Play size={12} />
           {overlayLabel}
         </div>
       </div>

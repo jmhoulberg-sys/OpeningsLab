@@ -13,7 +13,16 @@ interface SettingsModalProps {
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { randomTopX, setRandomTopX } = useTrainingStore();
   const { reset } = useProgressStore();
-  const { restartFrom, setRestartFrom, minRating, setMinRating, enableSRReminders, setEnableSRReminders, showEvalBar, setShowEvalBar } = useSettingsStore();
+  const {
+    restartFrom,
+    setRestartFrom,
+    minRating,
+    setMinRating,
+    enableSRReminders,
+    setEnableSRReminders,
+    showEvalBar,
+    setShowEvalBar,
+  } = useSettingsStore();
   const { profileId, displayName, setDisplayName, exportData, importData } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -51,104 +60,96 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]"
           onClick={handleBackdropClick}
         />
       )}
 
-      {/* Slide-in panel */}
       <div
-        className={`fixed right-0 top-0 h-full w-80 z-50 bg-brand-surface border-l border-slate-700/60 shadow-2xl shadow-black/60 flex flex-col transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-80 flex-col border-l border-white/6 bg-stone-900/96 shadow-2xl shadow-black/60 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/60">
-          <h2 className="text-white font-bold text-lg">Settings</h2>
+        <div className="flex items-center justify-between border-b border-white/6 px-6 py-5">
+          <h2 className="text-lg font-bold text-white">Settings</h2>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="rounded-xl border border-white/6 bg-white/[0.035] p-2 text-stone-300 transition-colors hover:bg-white/[0.06] hover:text-white cursor-pointer"
             aria-label="Close settings"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-8">
-
-          {/* Sync / Profile */}
+        <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-6 py-6">
           <section>
-            <div className="text-white font-semibold text-sm mb-1">Sync / Profile</div>
-            <p className="text-slate-400 text-xs mb-3 leading-relaxed">
-              Save your progress and restore it on another device with a sync code. No email needed.
+            <div className="mb-1 text-sm font-semibold text-white">Sync / Profile</div>
+            <p className="mb-3 text-xs leading-relaxed text-stone-400">
+              Save progress and restore it on another device with a sync code.
             </p>
 
-            {/* Display name */}
             <div className="mb-3">
-              <label className="text-xs text-slate-400 mb-1 block">Display name</label>
+              <label className="mb-1 block text-xs text-stone-400">Display name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. ChessKid42"
                 maxLength={32}
-                className="w-full bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent/60 placeholder-slate-500"
+                className="w-full rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
               />
             </div>
 
-            {/* Profile ID badge */}
             <div
-              className="mb-3 text-xs text-slate-500 font-mono bg-slate-800/60 border border-slate-700/40 rounded px-2 py-1 truncate"
+              className="mb-3 truncate rounded-xl border border-white/5 bg-black/12 px-3 py-2 font-mono text-xs text-stone-500"
               title={`Your profile ID: ${profileId}`}
             >
-              ID: {profileId.slice(0, 12)}…
+              ID: {profileId.slice(0, 12)}...
             </div>
 
-            {/* Export */}
             <button
               onClick={handleExport}
-              className="w-full mb-2 py-2.5 rounded-lg bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm font-semibold hover:bg-slate-600/60 transition-colors cursor-pointer"
+              className="mb-2 w-full rounded-xl border border-white/6 bg-white/[0.04] py-2.5 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
             >
-              {exported ? '✓ Copied to clipboard!' : 'Export sync code'}
+              {exported ? 'Copied to clipboard' : 'Export sync code'}
             </button>
 
-            {/* Import */}
             <div className="flex gap-2">
               <input
                 type="text"
                 value={importCode}
-                onChange={(e) => { setImportCode(e.target.value); setImportError(false); }}
-                placeholder="Paste sync code…"
-                className="flex-1 min-w-0 bg-slate-700/60 border border-slate-600/50 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent/60 placeholder-slate-500"
+                onChange={(e) => {
+                  setImportCode(e.target.value);
+                  setImportError(false);
+                }}
+                placeholder="Paste sync code..."
+                className="min-w-0 flex-1 rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
               />
               <button
                 onClick={handleImport}
                 disabled={!importCode.trim()}
-                className="flex-shrink-0 px-3 py-2 rounded-lg bg-brand-accent text-white text-sm font-semibold hover:bg-red-500 disabled:opacity-40 transition-colors cursor-pointer"
+                className="flex-shrink-0 rounded-xl bg-brand-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-500 disabled:opacity-40 cursor-pointer"
               >
                 Import
               </button>
             </div>
             {importError && (
-              <p className="text-red-400 text-xs mt-1.5">
+              <p className="mt-1.5 text-xs text-rose-300">
                 Invalid sync code. Please check and try again.
               </p>
             )}
           </section>
 
-          {/* Restart from */}
           <section>
-            <label className="block text-white font-semibold text-sm mb-1">
+            <label className="mb-1 block text-sm font-semibold text-white">
               Restart Line from
             </label>
-            <p className="text-slate-400 text-xs mb-3">
-              Where "Restart Line" resets the board to.
+            <p className="mb-3 text-xs text-stone-400">
+              Choose where restart begins.
             </p>
-            <div className="flex rounded-lg overflow-hidden border border-slate-600/50">
+            <div className="flex overflow-hidden rounded-xl border border-white/6">
               {(
                 [
                   { value: 'setup', label: 'Setup position' },
@@ -161,7 +162,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   className={`flex-1 py-2 text-sm font-semibold transition-colors cursor-pointer ${
                     restartFrom === value
                       ? 'bg-brand-accent text-white'
-                      : 'bg-slate-700/40 text-slate-400 hover:text-slate-200'
+                      : 'bg-white/[0.03] text-stone-400 hover:text-stone-200'
                   }`}
                 >
                   {label}
@@ -170,13 +171,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* Opponent Depth */}
           <section>
-            <label className="block text-white font-semibold text-sm mb-1">
-              Opponent Depth (top moves)
+            <label className="mb-1 block text-sm font-semibold text-white">
+              Opponent Depth
             </label>
-            <p className="text-slate-400 text-xs mb-4">
-              How many of the most popular moves the opponent can choose from.
+            <p className="mb-4 text-xs text-stone-400">
+              How many top moves the opponent can choose from.
             </p>
             <div className="flex items-center gap-4">
               <input
@@ -186,27 +186,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 step={1}
                 value={randomTopX}
                 onChange={(e) => setRandomTopX(Number(e.target.value))}
-                className="flex-1 accent-brand-accent cursor-pointer"
+                className="flex-1 cursor-pointer accent-brand-accent"
               />
-              <span className="text-white font-bold text-sm w-5 text-center">
+              <span className="w-5 text-center text-sm font-bold text-white">
                 {randomTopX}
               </span>
             </div>
           </section>
 
-          {/* Analysis rating filter */}
           <section>
-            <label className="block text-white font-semibold text-sm mb-1">
+            <label className="mb-1 block text-sm font-semibold text-white">
               Analysis rating filter
             </label>
-            <p className="text-slate-400 text-xs mb-3">
-              Minimum average rating for Lichess top-moves database.
-              Lower = more games; higher = stronger players.
+            <p className="mb-3 text-xs text-stone-400">
+              Minimum average rating for Lichess top moves.
             </p>
             <select
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full bg-slate-700/60 border border-slate-600/50 text-slate-200 text-sm rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-brand-accent/60"
+              className="w-full cursor-pointer rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-brand-accent/45"
             >
               {RATING_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -216,74 +214,57 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </select>
           </section>
 
-          {/* Evaluation Bar */}
           <section>
-            <label className="block text-white font-semibold text-sm mb-1">
+            <label className="mb-1 block text-sm font-semibold text-white">
               Evaluation Bar
             </label>
-            <p className="text-slate-400 text-xs mb-3">
-              Show position evaluation bar next to the board.
+            <p className="mb-3 text-xs text-stone-400">
+              Show the evaluation bar beside the board.
             </p>
-            <button
-              onClick={() => setShowEvalBar(!showEvalBar)}
-              className={`w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
-                showEvalBar
-                  ? 'bg-brand-accent text-white border-brand-accent/50'
-                  : 'bg-slate-700/40 text-slate-400 border-slate-600/50 hover:text-slate-200'
-              }`}
-            >
+            <ToggleButton active={showEvalBar} onClick={() => setShowEvalBar(!showEvalBar)}>
               {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
-            </button>
+            </ToggleButton>
           </section>
 
-          {/* Spaced Repetition Reminders */}
           <section>
-            <label className="block text-white font-semibold text-sm mb-1">
+            <label className="mb-1 block text-sm font-semibold text-white">
               Spaced Repetition
             </label>
-            <p className="text-slate-400 text-xs mb-3">
+            <p className="mb-3 text-xs text-stone-400">
               Show review reminders on favourited lines.
             </p>
-            <button
-              onClick={() => setEnableSRReminders(!enableSRReminders)}
-              className={`w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
-                enableSRReminders
-                  ? 'bg-brand-accent text-white border-brand-accent/50'
-                  : 'bg-slate-700/40 text-slate-400 border-slate-600/50 hover:text-slate-200'
-              }`}
-            >
+            <ToggleButton active={enableSRReminders} onClick={() => setEnableSRReminders(!enableSRReminders)}>
               {enableSRReminders ? 'Reminders On' : 'Reminders Off'}
-            </button>
+            </ToggleButton>
           </section>
 
-          {/* Reset Progress */}
           <section>
-            <div className="text-white font-semibold text-sm mb-1">Reset Progress</div>
-            <p className="text-slate-400 text-xs mb-4">
-              Permanently clear all line completion and unlock data.
+            <div className="mb-1 text-sm font-semibold text-white">Reset Progress</div>
+            <p className="mb-4 text-xs text-stone-400">
+              Permanently clear all line completion data.
             </p>
             {!confirmReset ? (
               <button
                 onClick={() => setConfirmReset(true)}
-                className="w-full py-2.5 rounded-xl bg-red-900/40 border border-red-700/50 text-red-300 font-semibold text-sm hover:bg-red-800/50 transition-colors cursor-pointer"
+                className="w-full rounded-xl border border-rose-400/18 bg-rose-400/10 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-400/14 cursor-pointer"
               >
                 Reset All Progress
               </button>
             ) : (
-              <div className="rounded-xl border border-red-700/50 bg-red-900/30 p-4">
-                <p className="text-red-300 text-sm font-semibold mb-3">
+              <div className="rounded-xl border border-rose-400/18 bg-rose-400/10 p-4">
+                <p className="mb-3 text-sm font-semibold text-rose-200">
                   Are you sure? This cannot be undone.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleReset}
-                    className="flex-1 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold text-sm transition-colors cursor-pointer"
+                    className="flex-1 rounded-xl bg-rose-500 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-400 cursor-pointer"
                   >
                     Yes, Reset
                   </button>
                   <button
                     onClick={() => setConfirmReset(false)}
-                    className="flex-1 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-sm transition-colors cursor-pointer"
+                    className="flex-1 rounded-xl border border-white/6 bg-white/[0.04] py-2 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -294,5 +275,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
       </div>
     </>
+  );
+}
+
+function ToggleButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full rounded-xl border py-2 text-sm font-semibold transition-colors cursor-pointer ${
+        active
+          ? 'border-brand-accent/40 bg-brand-accent text-white'
+          : 'border-white/6 bg-white/[0.04] text-stone-300 hover:bg-white/[0.06]'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
