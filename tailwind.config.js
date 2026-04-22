@@ -10,7 +10,6 @@ export default {
         },
         brand: {
           bg: '#2a2a2a',
-          stage: '#3a2b20',
           surface: '#323232',
           panel: '#222222',
           card: '#687289',
