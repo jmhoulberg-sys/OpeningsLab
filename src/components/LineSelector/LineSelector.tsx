@@ -49,7 +49,7 @@ export default function LineSelector({ opening }: LineSelectorProps) {
             isUnlocked={isLineUnlocked(opening.id, line.id)}
             progress={getLineProgress(opening.id, line.id)}
             onSelect={() => {
-              if (setupDone) {
+              if (setupDone && isLineUnlocked(opening.id, line.id)) {
                 selectLine(line);
               }
             }}
@@ -119,7 +119,7 @@ function LineRow({
   onSelect,
 }: LineRowProps) {
   const { toggleFavorite, isFavorite } = useProgressStore();
-  const locked = !isSetupDone;
+  const locked = !isSetupDone || !isUnlocked;
   const favorite = isFavorite(openingId, line.id);
 
   function handleFavorite(e: React.MouseEvent) {
@@ -138,19 +138,24 @@ function LineRow({
             ? 'border-sky-500/45 bg-sky-500/10 text-white shadow-md shadow-sky-500/10'
             : isUnlocked
               ? 'border-emerald-500/20 bg-emerald-500/8 text-stone-100 hover:border-emerald-400/35 hover:bg-emerald-500/12 cursor-pointer'
-              : 'border-stone-700/60 bg-stone-900/85 text-stone-200 hover:border-stone-600 hover:bg-stone-800/85 cursor-pointer'
+              : 'border-stone-700/60 bg-stone-900/85 text-stone-200 opacity-85 cursor-not-allowed'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <span className={`mt-0.5 ${isUnlocked ? 'text-emerald-400' : 'text-stone-500'}`}>
-            {isUnlocked ? <Check size={14} strokeWidth={3} /> : <Lock size={14} />}
+            {isUnlocked ? <Check size={14} strokeWidth={3} /> : <Lock size={16} />}
           </span>
           <div className="min-w-0">
             <span className="truncate font-semibold">{line.name}</span>
             <div className="mt-1 text-xs text-stone-500">
               {getShortLineSummary(line)}
             </div>
+            {!isUnlocked && (
+              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                Choose from unlock list
+              </div>
+            )}
           </div>
         </div>
 
@@ -158,7 +163,7 @@ function LineRow({
           {progress && progress.attempts > 0 && (
             <span className="text-[10px] text-stone-500">{progress.attempts}x</span>
           )}
-          {!locked && (
+          {isUnlocked && (
             <button
               onClick={handleFavorite}
               title={favorite ? 'Remove from favourites' : 'Add to favourites'}

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { BookOpen, CalendarClock, ChevronRight, Layers, Lock, Route, Star } from 'lucide-react';
 import type { OpeningLine, TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
@@ -8,6 +9,8 @@ export default function TrainingSetupModal() {
   const { phase, opening, selectLine, setMode } = useTrainingStore();
   const { isLineUnlocked, isFavorite, toggleFavorite, isDue } = useProgressStore();
   const { enableSRReminders } = useSettingsStore();
+  const [newlyUnlockedId, setNewlyUnlockedId] = useState<string | null>(null);
+  const previousUnlockedRef = useRef<string[]>([]);
 
   if (phase !== 'line-select' || !opening) return null;
 
@@ -21,6 +24,14 @@ export default function TrainingSetupModal() {
   const practiceLines = lineStates.filter((entry) => entry.unlocked).map((entry) => entry.line);
   const learnableLines = lineStates.filter((entry) => !entry.unlocked).map((entry) => entry.line);
   const progressPct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
+
+  useEffect(() => {
+    const unlockedIds = practiceLines.map((line) => line.id);
+    const previousUnlocked = previousUnlockedRef.current;
+    const freshUnlock = unlockedIds.find((id) => !previousUnlocked.includes(id)) ?? null;
+    setNewlyUnlockedId(freshUnlock);
+    previousUnlockedRef.current = unlockedIds;
+  }, [practiceLines]);
 
   function launchLine(line: OpeningLine, mode: TrainingMode) {
     setMode(mode);
@@ -73,19 +84,19 @@ export default function TrainingSetupModal() {
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {learnableLines.map((line) => (
-                  <div key={line.id} className="relative rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4">
+                  <div key={line.id} className="relative flex min-h-[214px] flex-col rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4">
                     <div className="absolute right-4 top-4 text-stone-500">
-                      <Lock size={16} />
+                      <Lock size={20} />
                     </div>
-                    <div className="pr-8 text-lg font-bold text-white">{line.name}</div>
-                    <div className="mt-1 text-sm text-stone-300">
+                    <div className="min-h-[72px] pr-10 text-[1.05rem] font-bold leading-tight text-white">{line.name}</div>
+                    <div className="mt-2 flex-1 text-sm text-stone-300">
                       {getPlainLanguageSummary(line)}
                     </div>
                     <button
                       onClick={() => launchLine(line, 'learn')}
-                      className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+                      className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
                     >
-                      Learn line
+                      Unlock line
                       <ChevronRight size={16} />
                     </button>
                   </div>
@@ -113,6 +124,7 @@ export default function TrainingSetupModal() {
                   <PracticeLineCard
                     key={line.id}
                     line={line}
+                    isNewlyUnlocked={newlyUnlockedId === line.id}
                     enableDueBadge={enableSRReminders}
                     isFavorite={isFavorite(opening.id, line.id)}
                     isDue={isDue(opening.id, line.id)}
@@ -133,6 +145,7 @@ export default function TrainingSetupModal() {
 
 function PracticeLineCard({
   line,
+  isNewlyUnlocked,
   enableDueBadge,
   isFavorite,
   isDue,
@@ -141,6 +154,7 @@ function PracticeLineCard({
   onFullLine,
 }: {
   line: OpeningLine;
+  isNewlyUnlocked: boolean;
   enableDueBadge: boolean;
   isFavorite: boolean;
   isDue: boolean;
@@ -151,13 +165,18 @@ function PracticeLineCard({
   const dueBadge = enableDueBadge && isFavorite && isDue;
 
   return (
-    <div className="rounded-2xl border border-stone-800/70 bg-stone-950/75 p-4">
+    <div className={`rounded-2xl border border-stone-800/70 bg-stone-950/75 p-4 ${isNewlyUnlocked ? 'star-pop shadow-[0_14px_30px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-base font-bold text-white">{line.name}</div>
           <div className="mt-1 text-sm text-stone-400">
             {getPlainLanguageSummary(line)}
           </div>
+          {isNewlyUnlocked && (
+            <div className="mt-2 inline-flex rounded-full bg-emerald-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+              Newly unlocked
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {dueBadge && (
