@@ -62,15 +62,14 @@ function getCacheKey(fen: string, minRating: number, moveLimit: number): string 
 }
 
 async function fetchFromExplorer(
-  normalizedFen: string,
+  fen: string,
   minRating: number,
   moveLimit: number,
 ): Promise<LichessBookPosition | null> {
-  const enc = encodeURIComponent(normalizedFen);
+  const enc = encodeURIComponent(fen);
   const ratingsParam = buildRatingsParam(minRating);
   const url =
-    `https://explorer.lichess.ovh/lichess?variant=standard` +
-    `&speeds=bullet,blitz,rapid,classical${ratingsParam}` +
+    `https://explorer.lichess.ovh/lichess?variant=standard${ratingsParam}` +
     `&topGames=0&recentGames=0&moves=${moveLimit}&fen=${enc}`;
 
   const response = await fetch(url);
@@ -85,7 +84,7 @@ async function fetchFromExplorer(
   if (moves.length === 0) return null;
 
   return {
-    fen: normalizedFen,
+    fen,
     moves,
     totalGames: moves.reduce((sum, move) => sum + move.total, 0),
     source: 'lichess-db',
@@ -96,18 +95,33 @@ export async function fetchLichessBookPosition(
   fen: string,
   options: FetchBookOptions = {},
 ): Promise<LichessBookPosition | null> {
+  const rawFen = fen.trim();
   const normalizedFen = normalizeFenForLichessDatabase(fen);
-  if (!normalizedFen) return null;
+  if (!rawFen || !normalizedFen) return null;
 
   const minRating = options.minRating ?? 0;
   const moveLimit = options.moveLimit ?? DEFAULT_MOVE_LIMIT;
-  const key = getCacheKey(normalizedFen, minRating, moveLimit);
+  const key = getCacheKey(rawFen, minRating, moveLimit);
 
   const cached = cache.get(key);
   if (cached) return cached;
 
-  const request = fetchFromExplorer(normalizedFen, minRating, moveLimit)
-    .catch(() => null);
+  const request = (async () => {
+    const candidates = [
+      { fen: rawFen, minRating },
+      { fen: normalizedFen, minRating },
+      { fen: rawFen, minRating: 0 },
+      { fen: normalizedFen, minRating: 0 },
+    ];
+
+    for (const candidate of candidates) {
+      const result = await fetchFromExplorer(candidate.fen, candidate.minRating, moveLimit)
+        .catch(() => null);
+      if (result) return result;
+    }
+
+    return null;
+  })();
 
   cache.set(key, request);
   return request;
@@ -143,4 +157,3 @@ export async function pickLichessBookMove(
 
   return { move: candidates[candidates.length - 1], position };
 }
-

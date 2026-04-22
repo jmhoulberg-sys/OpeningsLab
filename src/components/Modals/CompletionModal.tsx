@@ -82,6 +82,12 @@ export default function CompletionModal() {
           )}
         </div>
 
+        {!canContinue && (
+          <p className="mb-4 text-sm text-amber-300">
+            This line ends the game, so there is no free-play continuation from this position.
+          </p>
+        )}
+
         <div className="flex flex-col gap-3">
           <button
             onClick={restart}
