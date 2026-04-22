@@ -43,6 +43,11 @@ export default function TrainingSetupModal() {
   function launchLine(line: OpeningLine, mode: TrainingMode) {
     if (mode === 'learn') {
       setUnlockingLineId(line.id);
+      window.setTimeout(() => {
+        setMode(mode);
+        selectLine(line);
+      }, 1100);
+      return;
     }
     setMode(mode);
     selectLine(line);
@@ -98,19 +103,22 @@ export default function TrainingSetupModal() {
                 <BookOpen size={18} />
                 <div className="text-sm font-semibold uppercase tracking-[0.18em]">Choose a line to unlock</div>
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 space-y-2.5">
                 {learnableLines.map((line) => (
-                  <div key={line.id} className={`relative flex min-h-[214px] flex-col rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4 ${unlockingLineId === line.id ? 'star-pop ring-1 ring-sky-400/30 shadow-[0_14px_30px_rgba(14,165,233,0.18)]' : ''}`}>
-                    <div className={`absolute right-4 top-4 ${unlockingLineId === line.id ? 'text-sky-300' : 'text-stone-500'}`}>
-                      <Lock size={20} />
+                  <div key={line.id} className={`relative flex items-center gap-4 rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4 ${unlockingLineId === line.id ? 'star-pop ring-1 ring-sky-400/30 shadow-[0_14px_30px_rgba(14,165,233,0.18)]' : ''}`}>
+                    <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${unlockingLineId === line.id ? 'bg-sky-500/16 text-sky-300' : 'bg-stone-900 text-stone-500'}`}>
+                      <Lock size={22} />
                     </div>
-                    <div className="min-h-[72px] pr-10 text-[1.05rem] font-bold leading-tight text-white">{line.name}</div>
-                    <div className="mt-2 flex-1 text-sm text-stone-300">
-                      {getPlainLanguageSummary(line)}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-base font-bold leading-tight text-white">{line.name}</div>
+                      <div className="mt-1 text-sm text-stone-300">
+                        {getPlainLanguageSummary(line)}
+                      </div>
                     </div>
                     <button
+                      disabled={unlockingLineId !== null}
                       onClick={() => launchLine(line, 'learn')}
-                      className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     >
                       Unlock line
                       <ChevronRight size={16} />
@@ -126,14 +134,14 @@ export default function TrainingSetupModal() {
               <Route size={18} />
               <div className="text-sm font-semibold uppercase tracking-[0.18em]">Practice unlocked lines</div>
             </div>
-          <div className="mt-2 text-sm text-stone-400">
+            <div className="mt-2 text-sm text-stone-400">
               When a line is unlocked, practice it either move-by-move or as a guided full line.
-          </div>
+            </div>
 
             {practiceLines.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
+              <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
                 Finish the next line cleanly to open practice modes.
-            </div>
+              </div>
             ) : (
               <div className="mt-4 space-y-3">
                 {practiceLines.map((line) => (

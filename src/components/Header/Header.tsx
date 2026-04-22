@@ -1,4 +1,4 @@
-import { Crown, Home, LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { Crown, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
@@ -27,35 +27,23 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   return (
     <header className="border-b border-stone-800/60 bg-stone-950/95 backdrop-blur-sm">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2 justify-self-start">
-          <button
-            onClick={onHomeClick}
-            className="group flex items-center gap-3 cursor-pointer"
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
-              <circle cx="12" cy="5" r="3" />
-              <path d="M10 8l-2 6h8l-2-6z" />
-              <path d="M7 15l-1 3h12l-1-3z" />
-            </svg>
-            <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
-              OpeningsLab
-            </span>
-          </button>
-          <button
-            onClick={onHomeClick}
-            className="hidden items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900/85 px-3 py-2 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white lg:inline-flex cursor-pointer"
-          >
-            <Home size={15} />
-            Front page
-          </button>
-        </div>
+        <button
+          onClick={onHomeClick}
+          className="group flex items-center gap-3 justify-self-start cursor-pointer"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
+            <circle cx="12" cy="5" r="3" />
+            <path d="M10 8l-2 6h8l-2-6z" />
+            <path d="M7 15l-1 3h12l-1-3z" />
+          </svg>
+          <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
+            OpeningsLab
+          </span>
+        </button>
 
         <div className="hidden min-w-0 justify-self-center lg:block">
-          <div className="rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 py-3 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-500">
-              {opening ? 'Current opening' : 'Training focus'}
-            </div>
-            <div className="mt-1 text-center text-lg font-bold leading-tight text-white">
+          <div className="min-w-[430px] rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 py-3 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
+            <div className="text-center text-lg font-bold leading-tight text-white">
               {headerTitle}
             </div>
             <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
@@ -65,7 +53,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2.5 justify-self-end">
-          <div className="hidden rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
+          <div className="hidden h-[74px] min-w-[122px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
             <div className="flex items-center gap-2">
               <Crown size={15} className="text-sky-300" />
               <span className="text-sm font-semibold text-white">
@@ -86,7 +74,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           {isLoggedIn ? (
             <button
               onClick={onSettingsClick}
-              className="hidden items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
+              className="hidden h-[42px] min-w-[162px] items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
               title="Account"
             >
               <UserCircle2 size={17} className="text-sky-300" />
@@ -95,7 +83,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           ) : (
             <button
               onClick={login}
-              className="hidden items-center gap-2 rounded-xl bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+              className="hidden h-[42px] min-w-[162px] items-center justify-center gap-2 rounded-xl bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
             >
               <LogIn size={16} />
               Sign in
@@ -103,7 +91,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           )}
           <button
             onClick={onSettingsClick}
-            className="rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="h-[42px] rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
             title="Settings"
             aria-label="Open settings"
           >

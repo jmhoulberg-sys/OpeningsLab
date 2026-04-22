@@ -140,7 +140,7 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-5 flex items-center justify-between gap-3 rounded-[24px] border border-stone-800/60 bg-stone-950/80 px-4 py-3">
+        <div className="sticky top-3 z-30 mb-5 flex items-center justify-between gap-3 rounded-[24px] border border-stone-800/60 bg-stone-950/92 px-4 py-3 backdrop-blur-md">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/70">
               OpeningsLab
@@ -148,19 +148,32 @@ export default function HomePage({
             <div className="mt-1 text-sm text-stone-400">Opening courses, reviews, and level progress.</div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden rounded-2xl bg-stone-900 px-4 py-3 sm:block">
+            <div className="hidden min-w-[150px] rounded-2xl bg-stone-900 px-4 py-3 sm:block">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">
                 Level
               </div>
               <div className="mt-1 flex items-center gap-3">
-                <div className="text-lg font-bold text-white">{levelInfo.level}</div>
+                <div className="text-lg font-bold text-white">{isLoggedIn ? levelInfo.level : '--'}</div>
                 <div className="h-1.5 w-24 rounded-full bg-stone-800">
                   <div
                     className="h-1.5 rounded-full bg-sky-400 transition-all duration-500"
-                    style={{ width: `${levelInfo.progressPct}%` }}
+                    style={{ width: `${isLoggedIn ? levelInfo.progressPct : 100}%` }}
                   />
                 </div>
               </div>
+              <div className="mt-1 text-[11px] text-stone-500">
+                {isLoggedIn ? 'Keep building lines' : 'Log in to see details'}
+              </div>
+            </div>
+            <div className="hidden min-w-[150px] rounded-2xl bg-stone-900 px-4 py-3 md:block">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Weekly</div>
+              <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${weeklyXp} XP` : '--'}</div>
+              <div className="mt-1 text-[11px] text-stone-500">{isLoggedIn ? 'This week so far' : 'Log in to see details'}</div>
+            </div>
+            <div className="hidden min-w-[150px] rounded-2xl bg-stone-900 px-4 py-3 lg:block">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Quests</div>
+              <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${questsComplete}/${quests.length}` : '--'}</div>
+              <div className="mt-1 text-[11px] text-stone-500">{isLoggedIn ? 'Daily progress' : 'Log in to see details'}</div>
             </div>
             {isLoggedIn ? (
               <button
