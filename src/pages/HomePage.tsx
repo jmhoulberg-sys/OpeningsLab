@@ -1,8 +1,9 @@
 import { useRef } from 'react';
-import { Settings } from 'lucide-react';
+import { LogIn, Settings, UserCircle2 } from 'lucide-react';
 import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
+import { useProfileStore } from '../store/profileStore';
 import {
   FeaturedOpeningsSection,
   HeroSection,
@@ -29,8 +30,10 @@ export default function HomePage({
   onSettingsClick,
 }: HomePageProps) {
   const openingProgress = useProgressStore((state) => state.openings);
+  const { isLoggedIn, displayName, login } = useProfileStore();
   const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
+  const accountLabel = displayName.trim() || 'Opening Player';
 
   const openingSummaries = OPENINGS.map((opening) => {
     const progress = openingProgress[opening.id];
@@ -71,21 +74,40 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-[24px] border border-stone-800 bg-stone-950/70 px-4 py-3">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/70">
               OpeningsLab
             </div>
             <div className="mt-1 text-sm text-stone-400">Board-first opening training.</div>
           </div>
-          <button
-            onClick={onSettingsClick}
-            title="Settings"
-            className="rounded-2xl border border-stone-700/40 bg-stone-800/80 px-3.5 py-3 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
-            aria-label="Open settings"
-          >
-            <Settings size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {isLoggedIn ? (
+              <button
+                onClick={onSettingsClick}
+                className="hidden items-center gap-2 rounded-2xl border border-stone-700/40 bg-stone-800/80 px-3.5 py-3 text-sm text-slate-200 transition-colors hover:bg-stone-700/80 hover:text-white sm:flex cursor-pointer"
+              >
+                <UserCircle2 size={18} className="text-sky-300" />
+                <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
+              </button>
+            ) : (
+              <button
+                onClick={login}
+                className="hidden items-center gap-2 rounded-2xl bg-sky-500 px-3.5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+              >
+                <LogIn size={18} />
+                Sign in
+              </button>
+            )}
+            <button
+              onClick={onSettingsClick}
+              title="Settings"
+              className="rounded-2xl border border-stone-700/40 bg-stone-800/80 px-3.5 py-3 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
+              aria-label="Open settings"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
         </div>
 
         <HeroSection

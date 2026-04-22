@@ -12,7 +12,10 @@ function generateId(): string {
 interface ProfileState {
   profileId: string;
   displayName: string;
+  isLoggedIn: boolean;
   setDisplayName: (name: string) => void;
+  login: () => void;
+  logout: () => void;
   /** Returns a base64 sync code containing all progress + settings. */
   exportData: () => string;
   /** Imports a base64 sync code. Returns true on success, false on failure. */
@@ -24,8 +27,15 @@ export const useProfileStore = create<ProfileState>()(
     (set, get) => ({
       profileId: generateId(),
       displayName: '',
+      isLoggedIn: false,
 
       setDisplayName: (name) => set({ displayName: name }),
+      login: () =>
+        set((state) => ({
+          isLoggedIn: true,
+          displayName: state.displayName.trim() || 'Opening Player',
+        })),
+      logout: () => set({ isLoggedIn: false }),
 
       exportData: () => {
         try {
@@ -35,6 +45,7 @@ export const useProfileStore = create<ProfileState>()(
             version: 1,
             profileId: get().profileId,
             displayName: get().displayName,
+            isLoggedIn: get().isLoggedIn,
             progress: JSON.parse(progress),
             settings: JSON.parse(settings),
           });
@@ -51,6 +62,7 @@ export const useProfileStore = create<ProfileState>()(
             version: number;
             profileId?: string;
             displayName?: string;
+            isLoggedIn?: boolean;
             progress?: unknown;
             settings?: unknown;
           };
@@ -69,6 +81,7 @@ export const useProfileStore = create<ProfileState>()(
           }
           if (payload.displayName) set({ displayName: payload.displayName });
           if (payload.profileId)   set({ profileId: payload.profileId });
+          if (typeof payload.isLoggedIn === 'boolean') set({ isLoggedIn: payload.isLoggedIn });
           window.location.reload();
           return true;
         } catch {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { LogIn, LogOut, ShieldCheck, X } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore, RATING_OPTIONS } from '../../store/settingsStore';
@@ -23,7 +23,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     showEvalBar,
     setShowEvalBar,
   } = useSettingsStore();
-  const { profileId, displayName, setDisplayName, exportData, importData } = useProfileStore();
+  const { profileId, displayName, setDisplayName, exportData, importData, isLoggedIn, login, logout } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [importCode, setImportCode] = useState('');
@@ -85,10 +85,37 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-6 py-6">
           <section>
-            <div className="mb-1 text-sm font-semibold text-white">Sync / Profile</div>
+            <div className="mb-1 text-sm font-semibold text-white">Account</div>
             <p className="mb-3 text-xs leading-relaxed text-stone-400">
-              Save progress and restore it on another device with a sync code.
+              Local sign-in for now. Email auth can plug in later.
             </p>
+
+            <div className="mb-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <ShieldCheck size={16} className="text-sky-300" />
+                    {isLoggedIn ? 'Signed in locally' : 'Guest mode'}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-400">
+                    {isLoggedIn
+                      ? 'Your name and progress stay on this device until full auth is added.'
+                      : 'Sign in locally to give the app an account state before full auth ships.'}
+                  </p>
+                </div>
+                <button
+                  onClick={isLoggedIn ? logout : login}
+                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                    isLoggedIn
+                      ? 'border border-stone-700/45 bg-stone-900 text-stone-200 hover:bg-stone-700'
+                      : 'bg-sky-500 text-slate-950 hover:bg-sky-400'
+                  }`}
+                >
+                  {isLoggedIn ? <LogOut size={14} /> : <LogIn size={14} />}
+                  {isLoggedIn ? 'Sign out' : 'Sign in'}
+                </button>
+              </div>
+            </div>
 
             <div className="mb-3">
               <label className="mb-1 block text-xs text-stone-400">Display name</label>
@@ -104,16 +131,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <div
               className="mb-3 truncate rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 font-mono text-xs text-stone-500"
-              title={`Your profile ID: ${profileId}`}
+              title={`Local profile ID: ${profileId}`}
             >
-              ID: {profileId.slice(0, 12)}...
+              Local ID: {profileId.slice(0, 12)}...
             </div>
 
             <button
               onClick={handleExport}
               className="mb-2 w-full rounded-xl border border-stone-700/45 bg-stone-800 py-2.5 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 cursor-pointer"
             >
-              {exported ? 'Copied to clipboard' : 'Export sync code'}
+              {exported ? 'Copied to clipboard' : 'Copy backup code'}
             </button>
 
             <div className="flex gap-2">
@@ -124,7 +151,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   setImportCode(e.target.value);
                   setImportError(false);
                 }}
-                placeholder="Paste sync code..."
+                placeholder="Paste backup code..."
                 className="min-w-0 flex-1 rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
               />
               <button

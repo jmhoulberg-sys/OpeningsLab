@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
+import { ChevronLeft, ChevronRight, Lightbulb, Sparkles } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
@@ -9,8 +10,8 @@ import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
 const SELECTED_HIGHLIGHT = 'rgba(91, 176, 255, 0.34)';
-const LAST_MOVE_FROM = 'rgba(91, 176, 255, 0.18)';
-const LAST_MOVE_TO = 'rgba(91, 176, 255, 0.42)';
+const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
+const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
 const HINT_HIGHLIGHT = 'rgba(0, 216, 153, 0.74)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -37,6 +38,92 @@ function squareToXY(
   const x = orientation === 'white' ? file * size : (7 - file) * size;
   const y = orientation === 'white' ? (7 - rank) * size : rank * size;
   return { x, y, size };
+}
+
+function getBoardMessage({
+  isReviewing,
+  viewMoveIndex,
+  wrongMoveFen,
+  phase,
+  isAwaitingUserMove,
+  postLine,
+}: {
+  isReviewing: boolean;
+  viewMoveIndex: number | null;
+  wrongMoveFen: string | null;
+  phase: string;
+  isAwaitingUserMove: boolean;
+  postLine: boolean;
+}) {
+  if (isReviewing) {
+    const moveNum = Math.floor((viewMoveIndex ?? 0) / 2) + 1;
+    const side = (viewMoveIndex ?? 0) % 2 === 0 ? 'W' : 'B';
+    return {
+      eyebrow: 'Review',
+      text: `Move ${moveNum}${side} from the line`,
+      color: 'text-sky-300',
+    };
+  }
+
+  if (wrongMoveFen) {
+    return {
+      eyebrow: 'Try again',
+      text: 'Reset and play the move once more',
+      color: 'text-rose-300',
+    };
+  }
+
+  if (phase === 'setup') {
+    return {
+      eyebrow: 'Setup',
+      text: isAwaitingUserMove
+        ? 'Reach the shared opening position'
+        : 'Hold the structure while the reply appears',
+      color: isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500',
+    };
+  }
+
+  if (phase === 'line-select') {
+    return {
+      eyebrow: 'Line pick',
+      text: 'Choose the variation you want to drill',
+      color: 'text-sky-300',
+    };
+  }
+
+  if (phase === 'training') {
+    if (postLine) {
+      return {
+        eyebrow: 'Play on',
+        text: isAwaitingUserMove
+          ? 'Keep the initiative and find the best continuation'
+          : 'Wait for the practical response',
+        color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
+      };
+    }
+
+    return {
+      eyebrow: 'Training',
+      text: isAwaitingUserMove
+        ? 'Find the next move from memory'
+        : 'Read the reply and prepare the next idea',
+      color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
+    };
+  }
+
+  if (phase === 'completed') {
+    return {
+      eyebrow: 'Complete',
+      text: 'Line complete. Run it again or keep playing',
+      color: 'text-emerald-300',
+    };
+  }
+
+  return {
+    eyebrow: '',
+    text: '',
+    color: 'text-stone-400',
+  };
 }
 
 export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: number }) {
@@ -68,8 +155,12 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
-  const [promotionPending, setPromotionPending] = useState<{ from: Square; to: Square } | null>(null);
-  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(null);
+  const [promotionPending, setPromotionPending] = useState<{ from: Square; to: Square } | null>(
+    null,
+  );
+  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(
+    null,
+  );
 
   const prevBlockRef = useRef(repetitionBlock);
   const prevStreakRef = useRef(streak);
@@ -79,7 +170,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
   const isReviewing = viewMoveIndex !== null;
   const displayFen = isReviewing
-    ? (fenHistory[viewMoveIndex + 1] ?? currentFen)
+    ? (fenHistory[(viewMoveIndex ?? 0) + 1] ?? currentFen)
     : (wrongMoveFen ?? currentFen);
 
   useEffect(() => {
@@ -208,7 +299,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         navigateToMove(null);
         return;
       }
-      if (wrongMoveFen || !isAwaitingUserMove) return;
+      if (wrongMoveFen) {
+        clearWrongMove();
+        return;
+      }
+      if (!isAwaitingUserMove) return;
 
       if (selectedSquare) {
         if (selectedSquare === square) {
@@ -222,7 +317,15 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         setSelectedSquare(square);
       }
     },
-    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, selectedSquare, wrongMoveFen],
+    [
+      clearWrongMove,
+      handleBoardMove,
+      isAwaitingUserMove,
+      isReviewing,
+      navigateToMove,
+      selectedSquare,
+      wrongMoveFen,
+    ],
   );
 
   const onPieceDrop = useCallback(
@@ -264,38 +367,14 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     [handleBoardMove, promotionPending],
   );
 
-  let statusText = '';
-  let statusColor = 'text-stone-400';
-
-  if (isReviewing) {
-    const moveNum = Math.floor(viewMoveIndex / 2) + 1;
-    const side = viewMoveIndex % 2 === 0 ? 'W' : 'B';
-    statusText = `Reviewing move ${moveNum}${side} - click board to return`;
-    statusColor = 'text-sky-300';
-  } else if (wrongMoveFen) {
-    statusText = 'Wrong move - tap back to undo';
-    statusColor = 'text-rose-300';
-  } else if (phase === 'setup') {
-    statusText = isAwaitingUserMove ? 'Play the next setup move' : 'Opponent is playing...';
-    statusColor = isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500';
-  } else if (phase === 'line-select') {
-    statusText = 'Choose a line';
-    statusColor = 'text-sky-300';
-  } else if (phase === 'training') {
-    if (postLine) {
-      statusText = isAwaitingUserMove ? 'Your move' : 'Opponent is thinking...';
-      statusColor = isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500';
-    } else if (isAwaitingUserMove) {
-      statusText = 'Your move';
-      statusColor = 'text-emerald-300';
-    } else {
-      statusText = 'Opponent is thinking...';
-      statusColor = 'text-stone-500';
-    }
-  } else if (phase === 'completed') {
-    statusText = 'Line complete!';
-    statusColor = 'text-emerald-300';
-  }
+  const boardMessage = getBoardMessage({
+    isReviewing,
+    viewMoveIndex,
+    wrongMoveFen,
+    phase,
+    isAwaitingUserMove,
+    postLine,
+  });
 
   const isDraggable =
     !isReviewing &&
@@ -305,11 +384,21 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-2">
-      <div className={`text-sm font-semibold tracking-wide ${statusColor}`}>
-        {statusText}
+      <div className="flex min-h-[52px] flex-col items-center justify-center text-center">
+        {boardMessage.eyebrow && (
+          <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
+            {boardMessage.eyebrow}
+          </div>
+        )}
+        <div className={`mt-1 text-sm font-semibold tracking-wide ${boardMessage.color}`}>
+          {boardMessage.text}
+        </div>
       </div>
 
-      <div className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`} style={{ maxWidth: boardSize }}>
+      <div
+        className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`}
+        style={{ maxWidth: boardSize }}
+      >
         <div className="mb-1 flex justify-between text-xs font-semibold text-stone-400">
           <span>{progressLabel}</span>
           <span>{progressDone} / {progressTotal} moves</span>
@@ -339,7 +428,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           </span>
         ) : wrongMoveFen && !showingCorrectMove ? (
           <span className="rounded-full bg-rose-500/85 px-3 py-1 text-xs font-semibold text-white">
-            Wrong move - tap back to undo
+            Play it again
           </span>
         ) : wrongMoveSan && showingCorrectMove ? (
           <span className="rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-slate-950">
@@ -400,18 +489,19 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                   height: badge,
                 }}
               >
-                <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-rose-500 bg-slate-900 shadow-xl shadow-black/60">
+                <div className="flex h-full w-full items-center justify-center rounded-full border border-white/10 bg-slate-950/94 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-2 ring-rose-500/90">
                   <svg
-                    width="52%"
-                    height="52%"
+                    width="50%"
+                    height="50%"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="white"
-                    strokeWidth="3.5"
+                    stroke="#f8fafc"
+                    strokeWidth="2.8"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
+                    <path d="M8 8l8 8" />
+                    <path d="M16 8l-8 8" />
                   </svg>
                 </div>
               </div>
@@ -502,35 +592,36 @@ function BoardNavRow({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <NavButton
           onClick={goBack}
           disabled={!canBack}
           title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}
         >
-          ←
+          <ChevronLeft size={18} />
         </NavButton>
         <NavButton onClick={goForward} disabled={!canForward} title="Next move">
-          →
+          <ChevronRight size={18} />
         </NavButton>
         {!isLive && !wrongMoveFen && (
           <button
             onClick={() => navigateToMove(null)}
-            className="rounded-xl border border-stone-700/40 bg-stone-800/85 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-stone-700/85 cursor-pointer"
+            className="rounded-xl border border-stone-700/40 bg-stone-800/85 px-3 py-2 text-xs font-semibold text-sky-300 transition-colors hover:bg-stone-700/85 cursor-pointer"
           >
             Live
           </button>
         )}
       </div>
 
-      <div style={{ width: sqPx }} className="flex flex-shrink-0 justify-end">
+      <div style={{ width: Math.max(sqPx, 104) }} className="flex flex-shrink-0 justify-end">
         {!hideHint && showHintBtn && (
           <button
             onClick={showHint}
             title="Hint"
-            style={{ width: sqPx, height: 32 }}
-            className="rounded-xl bg-emerald-500 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400 cursor-pointer"
+            style={{ minWidth: Math.max(sqPx, 84), height: 38 }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-400 to-emerald-300 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-300 hover:to-emerald-200 cursor-pointer"
           >
+            <Lightbulb size={14} />
             Hint
           </button>
         )}
@@ -538,9 +629,10 @@ function BoardNavRow({
           <button
             onClick={showAnswer}
             title="Show answer"
-            style={{ width: sqPx, height: 32 }}
-            className="rounded-xl bg-emerald-500 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400 cursor-pointer"
+            style={{ minWidth: Math.max(sqPx, 92), height: 38 }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-400 hover:to-emerald-300 cursor-pointer"
           >
+            <Sparkles size={14} />
             Answer
           </button>
         )}
@@ -565,7 +657,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-8 w-8 items-center justify-center rounded-xl border border-stone-700/40 bg-stone-800/85 text-sm text-stone-300 transition-colors hover:bg-stone-700/85 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/55 bg-stone-800/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-700/95 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>

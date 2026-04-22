@@ -1,5 +1,6 @@
-import { Settings } from 'lucide-react';
+import { LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
+import { useProfileStore } from '../../store/profileStore';
 
 interface HeaderProps {
   onSettingsClick: () => void;
@@ -8,9 +9,11 @@ interface HeaderProps {
 
 export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   const { opening, selectedLine, phase, mistakes } = useTrainingStore();
+  const { isLoggedIn, displayName, login } = useProfileStore();
+  const accountLabel = displayName.trim() || 'Opening Player';
 
   return (
-    <header className="bg-stone-900/92 backdrop-blur-sm">
+    <header className="border-b border-stone-800/90 bg-stone-950/92 backdrop-blur-sm">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <button
           onClick={onHomeClick}
@@ -26,17 +29,17 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           </span>
         </button>
 
-        <div className="hidden min-w-0 items-center gap-2 text-sm md:flex">
+        <div className="hidden min-w-0 flex-1 items-center justify-center md:flex">
           {opening && (
-            <>
-              <span className="truncate font-semibold text-stone-200">{opening.name}</span>
+            <div className="flex min-w-0 max-w-3xl items-center gap-2 rounded-full border border-stone-800 bg-stone-900/85 px-4 py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
+              <span className="truncate font-semibold text-stone-100">{opening.name}</span>
               {selectedLine && (
                 <>
                   <span className="text-stone-600">/</span>
                   <span className="truncate text-stone-400">{selectedLine.name}</span>
                 </>
               )}
-            </>
+            </div>
           )}
         </div>
 
@@ -50,6 +53,24 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
             </div>
           )}
           <PhaseBadge phase={phase} />
+          {isLoggedIn ? (
+            <button
+              onClick={onSettingsClick}
+              className="hidden items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
+              title="Account"
+            >
+              <UserCircle2 size={17} className="text-sky-300" />
+              <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
+            </button>
+          ) : (
+            <button
+              onClick={login}
+              className="hidden items-center gap-2 rounded-xl bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+            >
+              <LogIn size={16} />
+              Sign in
+            </button>
+          )}
           <button
             onClick={onSettingsClick}
             className="rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
