@@ -17,13 +17,19 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
   const xpToNext = Math.max(0, levelInfo.nextLevelXp - xpTotal);
+  const headerTitle = opening ? opening.name : 'Board-first opening training';
+  const headerSubtitle = selectedLine
+    ? selectedLine.name
+    : opening
+      ? 'Learn the setup, then drill the main line'
+      : 'Choose a course and start training';
 
   return (
     <header className="border-b border-stone-800/60 bg-stone-950/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
         <button
           onClick={onHomeClick}
-          className="group flex items-center gap-3 cursor-pointer"
+          className="group flex items-center gap-3 justify-self-start cursor-pointer"
         >
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
             <circle cx="12" cy="5" r="3" />
@@ -35,30 +41,21 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           </span>
         </button>
 
-        <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 lg:flex">
-          {opening ? (
-            <div className="flex min-w-0 max-w-3xl items-center gap-3 rounded-[20px] bg-stone-900/90 px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
-              <div className="min-w-0">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">
-                  Current opening
-                </div>
-                <div className="mt-1 flex min-w-0 items-center gap-2 text-sm">
-                  <span className="truncate font-semibold text-stone-100">{opening.name}</span>
-                  {selectedLine && (
-                    <>
-                      <span className="text-stone-600">/</span>
-                      <span className="truncate text-stone-400">{selectedLine.name}</span>
-                    </>
-                  )}
-                </div>
-              </div>
+        <div className="hidden min-w-0 justify-self-center lg:block">
+          <div className="rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 py-3 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-500">
+              {opening ? 'Current opening' : 'Training focus'}
             </div>
-          ) : (
-            <div className="text-sm text-stone-500">Choose a course and start training.</div>
-          )}
+            <div className="mt-1 text-center text-lg font-bold leading-tight text-white">
+              {headerTitle}
+            </div>
+            <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
+              {headerSubtitle}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 justify-self-end">
           <div className="hidden rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
             <div className="flex items-center gap-2">
               <Crown size={15} className="text-sky-300" />

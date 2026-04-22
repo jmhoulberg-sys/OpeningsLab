@@ -490,7 +490,7 @@ function OpeningCard({
         className={`group overflow-hidden rounded-[20px] text-left ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer'}`}
         aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       >
-        <BoardPreview opening={opening} fen={setupFen} overlayLabel={isComingSoon ? 'Coming soon' : 'Try first line'} />
+        <BoardPreview opening={opening} fen={setupFen} />
       </button>
 
       <div className={`mt-3 grid items-start gap-2 ${compact ? '' : ''}`} style={{ gridTemplateColumns: '1fr auto' }}>
@@ -608,11 +608,9 @@ function SectionHeading({
 function BoardPreview({
   opening,
   fen,
-  overlayLabel,
 }: {
   opening: Opening;
   fen: string;
-  overlayLabel: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(240);
@@ -635,7 +633,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-square w-full overflow-hidden rounded-[20px] border border-black/8 shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+      className="relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
     >
       <Chessboard
         position={fen}
@@ -651,12 +649,6 @@ function BoardPreview({
         customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
         animationDuration={0}
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/68 via-black/24 to-transparent px-3 py-3">
-        <div className="inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-stone-900 shadow-sm">
-          <Play size={12} />
-          {overlayLabel}
-        </div>
-      </div>
     </div>
   );
 }

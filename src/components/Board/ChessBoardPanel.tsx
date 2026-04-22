@@ -381,6 +381,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     !wrongMoveFen &&
     isAwaitingUserMove &&
     (phase === 'training' || phase === 'setup');
+  const boardColumnWidth = `${boardSize}px`;
 
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-2">
@@ -437,89 +438,90 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         ) : null}
       </div>
 
-      <div className="flex w-full items-center justify-center gap-3 sm:gap-4">
+      <div className="flex w-full items-start justify-center gap-3 sm:gap-4">
         {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
           <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
         )}
-        <div
-          key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
-          className={[
-            'board-frame relative isolate overflow-hidden rounded-[18px]',
-            'border border-black/12 bg-[#2f2116] shadow-[0_20px_50px_rgba(0,0,0,0.34)]',
-            boardFlashing ? 'board-flash-green' : '',
-            isReviewing ? 'opacity-90 ring-2 ring-sky-500/30' : '',
-          ].join(' ')}
-          style={{ width: boardSize, height: boardSize }}
-        >
-          <Chessboard
-            id="training-board"
-            position={displayFen}
-            boardOrientation={boardOrientation}
-            onPieceDrop={onPieceDrop}
-            onSquareClick={onSquareClick}
-            arePiecesDraggable={isDraggable}
-            customSquareStyles={customSquareStyles}
-            customArrows={customArrows}
-            boardWidth={boardSize}
-            customBoardStyle={{
-              borderRadius: '18px',
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
-            }}
-            customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
-            customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
-            animationDuration={isReviewing ? 0 : 200}
-            {...(postLine && isAwaitingUserMove
-              ? {
-                  promotionDialogVariant: 'modal' as const,
-                  onPromotionPieceSelect,
-                }
-              : {})}
-          />
-          {wrongMoveSquare && !isReviewing && (() => {
-            const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
-            const badge = Math.max(22, Math.min(34, size * 0.42));
-            return (
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  left: x + size - badge * 0.65,
-                  top: y - badge * 0.35,
-                  width: badge,
-                  height: badge,
-                }}
-              >
-                <div className="flex h-full w-full items-center justify-center rounded-full border border-white/10 bg-slate-950/94 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-2 ring-rose-500/90">
-                  <svg
-                    width="50%"
-                    height="50%"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#f8fafc"
-                    strokeWidth="2.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M8 8l8 8" />
-                    <path d="M16 8l-8 8" />
-                  </svg>
+        <div className="flex flex-col items-center gap-3" style={{ width: boardColumnWidth }}>
+          <div
+            key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
+            className={[
+              'board-frame relative isolate overflow-hidden rounded-[18px]',
+              'bg-[#2f2116] shadow-[0_20px_50px_rgba(0,0,0,0.34)]',
+              boardFlashing ? 'board-flash-green' : '',
+              isReviewing ? 'opacity-90 ring-2 ring-sky-500/30' : '',
+            ].join(' ')}
+            style={{ width: boardSize, height: boardSize }}
+          >
+            <Chessboard
+              id="training-board"
+              position={displayFen}
+              boardOrientation={boardOrientation}
+              onPieceDrop={onPieceDrop}
+              onSquareClick={onSquareClick}
+              arePiecesDraggable={isDraggable}
+              customSquareStyles={customSquareStyles}
+              customArrows={customArrows}
+              boardWidth={boardSize}
+              customBoardStyle={{
+                borderRadius: '18px',
+                backgroundColor: 'transparent',
+                boxShadow: 'none',
+              }}
+              customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
+              customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
+              animationDuration={isReviewing ? 0 : 200}
+              {...(postLine && isAwaitingUserMove
+                ? {
+                    promotionDialogVariant: 'modal' as const,
+                    onPromotionPieceSelect,
+                  }
+                : {})}
+            />
+            {wrongMoveSquare && !isReviewing && (() => {
+              const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
+              const badge = Math.max(22, Math.min(34, size * 0.42));
+              return (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: x + size - badge * 0.65,
+                    top: y - badge * 0.35,
+                    width: badge,
+                    height: badge,
+                  }}
+                >
+                  <div className="flex h-full w-full items-center justify-center rounded-full border border-white/10 bg-slate-950/94 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-2 ring-rose-500/90">
+                    <svg
+                      width="50%"
+                      height="50%"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#f8fafc"
+                      strokeWidth="2.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 8l8 8" />
+                      <path d="M16 8l-8 8" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
+          </div>
+
+          {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
+            <BoardNavRow
+              wrongMoveFen={wrongMoveFen}
+              clearWrongMove={clearWrongMove}
+              phase={phase}
+              mode={mode}
+              postLine={postLine}
+            />
+          )}
         </div>
       </div>
-
-      {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
-        <BoardNavRow
-          wrongMoveFen={wrongMoveFen}
-          clearWrongMove={clearWrongMove}
-          boardSize={boardSize}
-          phase={phase}
-          mode={mode}
-          postLine={postLine}
-        />
-      )}
     </div>
   );
 }
@@ -527,14 +529,12 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 function BoardNavRow({
   wrongMoveFen,
   clearWrongMove,
-  boardSize,
   phase,
   mode,
   postLine,
 }: {
   wrongMoveFen: string | null;
   clearWrongMove: () => void;
-  boardSize: number;
   phase: string;
   mode: string;
   postLine: boolean;
@@ -584,13 +584,13 @@ function BoardNavRow({
   const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
 
   return (
-    <div className="flex w-full max-w-full items-center gap-2" style={{ maxWidth: boardSize }}>
-      <div className="flex min-w-0 flex-1 items-center justify-start">
+    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+      <div className="flex min-w-0 items-center justify-start">
         {!hideHint && showHintBtn && (
           <button
             onClick={showHint}
             title="Hint"
-            className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-400 to-emerald-300 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-300 hover:to-emerald-200 cursor-pointer"
+            className="inline-flex h-11 min-w-[92px] items-center justify-center gap-1.5 rounded-2xl border border-emerald-300/15 bg-emerald-400/92 px-4 text-sm font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300 cursor-pointer"
           >
             <Lightbulb size={14} />
             Hint
@@ -600,7 +600,7 @@ function BoardNavRow({
           <button
             onClick={showAnswer}
             title="Show answer"
-            className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-400 hover:to-emerald-300 cursor-pointer"
+            className="inline-flex h-11 min-w-[92px] items-center justify-center gap-1.5 rounded-2xl border border-emerald-300/15 bg-emerald-400/92 px-4 text-sm font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300 cursor-pointer"
           >
             <Sparkles size={14} />
             Answer
@@ -608,7 +608,7 @@ function BoardNavRow({
         )}
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
         <NavButton
           onClick={goBack}
           disabled={!canBack}
@@ -629,10 +629,14 @@ function BoardNavRow({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 justify-end">
-        <span className={`text-xs font-bold ${mistakes > 0 ? 'text-rose-300' : 'text-stone-500'}`}>
+      <div className="flex min-w-0 items-center justify-end">
+        <div className={`inline-flex h-11 min-w-[112px] items-center justify-center rounded-2xl px-4 text-sm font-semibold ${
+          mistakes > 0
+            ? 'bg-rose-500/12 text-rose-300'
+            : 'bg-stone-900/75 text-stone-400'
+        }`}>
           Mistakes {mistakes}
-        </span>
+        </div>
       </div>
     </div>
   );
@@ -654,7 +658,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-600/55 bg-stone-800/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-700/95 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-700/45 bg-stone-900/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>
