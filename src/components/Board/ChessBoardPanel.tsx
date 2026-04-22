@@ -637,9 +637,9 @@ function BoardNavRow({
           <button
             onClick={showHint}
             title="Hint"
-            className="inline-flex h-11 min-w-[92px] items-center justify-center gap-1.5 rounded-2xl border border-emerald-300/15 bg-emerald-400/92 px-4 text-sm font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300 cursor-pointer"
+            className="inline-flex h-12 min-w-[118px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 px-5 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.34)] ring-1 ring-emerald-100/10 transition-all hover:-translate-y-0.5 hover:from-emerald-200 hover:via-emerald-300 hover:to-emerald-200 cursor-pointer"
           >
-            <Lightbulb size={14} />
+            <Lightbulb size={15} />
             Hint
           </button>
         )}
@@ -647,9 +647,9 @@ function BoardNavRow({
           <button
             onClick={showAnswer}
             title="Show answer"
-            className="inline-flex h-11 min-w-[92px] items-center justify-center gap-1.5 rounded-2xl border border-emerald-300/15 bg-emerald-400/92 px-4 text-sm font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300 cursor-pointer"
+            className="inline-flex h-12 min-w-[118px] items-center justify-center gap-2 rounded-2xl border border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 px-5 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 ring-sky-100/10 transition-all hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300 cursor-pointer"
           >
-            <Sparkles size={14} />
+            <Sparkles size={15} />
             Answer
           </button>
         )}

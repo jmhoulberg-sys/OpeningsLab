@@ -15,20 +15,13 @@ export default function ControlPanel({ onHomeClick }: { onHomeClick: () => void 
   const canGoBack = phase === 'training' || phase === 'completed';
 
   return (
-    <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-4">
-      <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
+    <div>
+      <div className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
         Actions {streak >= 2 && phase === 'training' && !postLine && (
           <span className="ml-1 text-emerald-300 font-bold normal-case tracking-normal">{streak}</span>
         )}
-      </h3>
+      </div>
       <div className="flex flex-col gap-2">
-        <ActionButton
-          label="Restart Line"
-          icon={<RotateCcw size={14} />}
-          onClick={restart}
-          disabled={!canRestart}
-          variant="secondary"
-        />
         <ActionButton
           label="Choose Another Line"
           icon={<ArrowLeft size={14} />}
@@ -41,6 +34,13 @@ export default function ControlPanel({ onHomeClick }: { onHomeClick: () => void 
           icon={<House size={14} />}
           onClick={onHomeClick}
           variant="ghost"
+        />
+        <ActionButton
+          label="Restart Line"
+          icon={<RotateCcw size={14} />}
+          onClick={restart}
+          disabled={!canRestart}
+          variant="secondary"
         />
       </div>
     </div>

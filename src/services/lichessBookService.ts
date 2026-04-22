@@ -35,7 +35,10 @@ interface PickMoveOptions extends FetchBookOptions {
 }
 
 const DEFAULT_MOVE_LIMIT = 12;
+const DEFAULT_SPEEDS = 'bullet,blitz,rapid,classical,correspondence,ultraBullet';
+const EXPLORER_TIMEOUT_MS = 8000;
 const cache = new Map<string, Promise<LichessBookPosition | null>>();
+let requestQueue = Promise.resolve();
 
 export function normalizeFenForLichessDatabase(fen: string): string | null {
   const parts = fen.trim().split(/\s+/);
@@ -61,6 +64,12 @@ function getCacheKey(fen: string, minRating: number, moveLimit: number): string 
   return `${fen}|${minRating}|${moveLimit}`;
 }
 
+function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
+  const next = requestQueue.catch(() => undefined).then(task);
+  requestQueue = next.catch(() => undefined).then(() => undefined);
+  return next;
+}
+
 async function fetchFromExplorer(
   fen: string,
   minRating: number,
@@ -69,26 +78,43 @@ async function fetchFromExplorer(
   const enc = encodeURIComponent(fen);
   const ratingsParam = buildRatingsParam(minRating);
   const url =
-    `https://explorer.lichess.ovh/lichess?variant=standard${ratingsParam}` +
+    `https://explorer.lichess.ovh/lichess?variant=standard&speeds=${DEFAULT_SPEEDS}${ratingsParam}` +
     `&topGames=0&recentGames=0&moves=${moveLimit}&fen=${enc}`;
 
-  const response = await fetch(url);
-  if (!response.ok) return null;
+  return queueExplorerRequest(async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), EXPLORER_TIMEOUT_MS);
 
-  const data = await response.json() as { moves?: ExplorerMove[] };
-  const moves = (data.moves ?? [])
-    .map(toBookMove)
-    .filter((move) => move.total > 0)
-    .sort((a, b) => b.total - a.total);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
 
-  if (moves.length === 0) return null;
+      if (!response.ok) {
+        return null;
+      }
 
-  return {
-    fen,
-    moves,
-    totalGames: moves.reduce((sum, move) => sum + move.total, 0),
-    source: 'lichess-db',
-  };
+      const data = await response.json() as { moves?: ExplorerMove[] };
+      const moves = (data.moves ?? [])
+        .map(toBookMove)
+        .filter((move) => move.total > 0)
+        .sort((a, b) => b.total - a.total);
+
+      if (moves.length === 0) return null;
+
+      return {
+        fen,
+        moves,
+        totalGames: moves.reduce((sum, move) => sum + move.total, 0),
+        source: 'lichess-db' as const,
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }).catch(() => null);
 }
 
 export async function fetchLichessBookPosition(
@@ -101,7 +127,7 @@ export async function fetchLichessBookPosition(
 
   const minRating = options.minRating ?? 0;
   const moveLimit = options.moveLimit ?? DEFAULT_MOVE_LIMIT;
-  const key = getCacheKey(rawFen, minRating, moveLimit);
+  const key = getCacheKey(normalizedFen, minRating, moveLimit);
 
   const cached = cache.get(key);
   if (cached) return cached;

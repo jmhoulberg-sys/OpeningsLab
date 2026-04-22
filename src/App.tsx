@@ -140,7 +140,7 @@ export default function App() {
 
         <aside
           className={[
-            'flex flex-col bg-stone-900/96 overflow-hidden transition-transform duration-300',
+            'flex flex-col border-l border-stone-800/60 bg-stone-950/96 overflow-hidden transition-transform duration-300',
             !isSmallScreen ? 'relative w-80 flex-shrink-0' : '',
             isSmallScreen
               ? `fixed inset-y-0 right-0 z-40 w-80 shadow-2xl shadow-black/60 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
@@ -161,6 +161,10 @@ export default function App() {
 
             {opening && (
               <>
+                <div className="px-4 pt-4">
+                  <ControlPanel onHomeClick={handleGoHome} />
+                </div>
+
                 <div className="px-4 pt-4">
                   <OpeningInfoPanel opening={opening} isLineUnlocked={isLineUnlocked} />
                 </div>
@@ -195,10 +199,6 @@ export default function App() {
 
                 <div className="flex h-44 flex-shrink-0 flex-col px-4 pb-3 pt-1">
                   <MoveList />
-                </div>
-
-                <div className="flex-shrink-0 px-4 pb-4 pt-2">
-                  <ControlPanel onHomeClick={handleGoHome} />
                 </div>
 
                 {postLine && <AnalysisPanel />}

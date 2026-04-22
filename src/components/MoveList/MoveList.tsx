@@ -46,7 +46,7 @@ export default function MoveList() {
   const highlightIdx = viewMoveIndex;
 
   return (
-    <div className="flex h-full flex-col rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-4">
+    <div className="flex h-full flex-col">
       <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
         Moves
       </h3>
@@ -110,7 +110,7 @@ export default function MoveList() {
       </div>
 
       {phase === 'training' && (
-        <div className="mt-3 border-t border-stone-800/70 pt-3 text-xs text-stone-500 select-none">
+        <div className="mt-3 border-t border-stone-800/40 pt-3 text-xs text-stone-500 select-none">
           {playedMoves.length} half-move{playedMoves.length !== 1 ? 's' : ''} played
           {viewMoveIndex !== null && (
             <span className="ml-1 text-sky-400">/ reviewing</span>
