@@ -128,7 +128,7 @@ function LineRow({
         ${locked
           ? 'border-slate-700/40 bg-slate-800/30 opacity-40 cursor-not-allowed'
           : isSelected
-            ? 'border-brand-accent bg-brand-accent/15 text-white shadow-md shadow-brand-accent/20'
+            ? 'border-sky-500/50 bg-sky-500/12 text-white shadow-md shadow-sky-500/10'
             : 'border-slate-700/60 bg-slate-800/40 hover:border-slate-500 hover:bg-slate-700/40 text-slate-200 cursor-pointer'
         }
       `}

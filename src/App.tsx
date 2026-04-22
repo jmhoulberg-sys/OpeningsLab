@@ -126,7 +126,7 @@ export default function App() {
         {isSmallScreen && !sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-xl border border-white/6 bg-stone-900/92 px-3 py-2 text-sm font-semibold text-stone-300 shadow-xl shadow-black/40 transition-colors hover:bg-stone-900 hover:text-white cursor-pointer"
+            className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-xl border border-stone-700/40 bg-stone-900 px-3 py-2 text-sm font-semibold text-stone-300 shadow-xl shadow-black/40 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
             title="Open panel"
           >
             <PanelRight size={15} />
@@ -155,7 +155,7 @@ export default function App() {
             {isSmallScreen && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-3 top-3 z-10 rounded-lg border border-white/6 bg-white/[0.03] p-1.5 text-stone-400 transition-colors hover:bg-white/[0.06] hover:text-stone-200 cursor-pointer"
+                className="absolute right-3 top-3 z-10 rounded-lg border border-stone-700/40 bg-stone-800 px-2 py-1.5 text-stone-400 transition-colors hover:bg-stone-700 hover:text-stone-200 cursor-pointer"
                 title="Close panel"
               >
                 <X size={16} />
@@ -181,9 +181,9 @@ export default function App() {
                 {mode === 'time-trial' && <TimerDisplay />}
 
                 {streak >= 3 && phase === 'training' && !postLine && (
-                  <div className="bg-amber-300/8 px-4 py-1.5">
-                    <p className="flex items-center gap-1 text-xs font-semibold text-amber-200">
-                      <Flame size={14} className="text-amber-300" /> {streak} move streak
+                  <div className="bg-emerald-300/8 px-4 py-1.5">
+                    <p className="flex items-center gap-1 text-xs font-semibold text-emerald-300">
+                      <Flame size={14} className="text-emerald-300" /> {streak} move streak
                     </p>
                   </div>
                 )}
@@ -244,7 +244,7 @@ function OpeningInfoPanel({
         )}
       </div>
       {totalLines > 0 && (
-        <div className="mb-2 h-1 rounded-full bg-white/[0.08]">
+        <div className="mb-2 h-1 rounded-full bg-stone-700/50">
           <div
             className="h-1 rounded-full bg-emerald-400 transition-all duration-500"
             style={{ width: `${pct}%` }}
@@ -269,7 +269,7 @@ function SetupBanner({ opening }: { opening: { setupMoves: string[] } }) {
       <div className="mb-1.5 text-xs font-semibold text-sky-300">
         Setup: play the opening moves ({done}/{total})
       </div>
-      <div className="h-1.5 w-full rounded-full bg-white/[0.08]">
+      <div className="h-1.5 w-full rounded-full bg-stone-700/50">
         <div
           className="h-1.5 rounded-full bg-sky-400 transition-all duration-300"
           style={{ width: `${pct}%` }}

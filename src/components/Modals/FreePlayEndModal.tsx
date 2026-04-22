@@ -85,7 +85,7 @@ export default function FreePlayEndModal() {
         {/* Button */}
         <button
           onClick={handleBack}
-          className="w-full py-3 rounded-xl bg-brand-accent text-white font-bold text-sm hover:bg-red-500 transition-colors cursor-pointer"
+          className="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
         >
           Back to Lines
         </button>

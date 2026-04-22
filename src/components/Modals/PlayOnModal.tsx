@@ -57,7 +57,7 @@ export default function PlayOnModal({ isOpen, onClose }: PlayOnModalProps) {
           {/* Against Top Player Moves */}
           <button
             onClick={() => go('top-moves')}
-            className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-brand-accent/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+            className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 p-4 text-left transition-all hover:border-sky-500/60 hover:bg-slate-700/60 cursor-pointer"
           >
             <div className="text-white font-bold text-sm mb-1">
               Against Top Player Moves
@@ -137,7 +137,7 @@ function Toggle({
         aria-checked={value}
         onClick={() => onChange(!value)}
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-          value ? 'bg-brand-accent' : 'bg-slate-600'
+          value ? 'bg-sky-500' : 'bg-slate-600'
         }`}
       >
         <span

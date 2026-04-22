@@ -40,7 +40,7 @@ export default function TrainingSetupModal() {
       >
         <button
           onClick={() => { setDismissed(false); setStep(1); }}
-          className="pointer-events-auto animate-pulse bg-brand-accent/90 hover:bg-brand-accent text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-lg shadow-black/40 transition-colors cursor-pointer"
+          className="pointer-events-auto animate-pulse rounded-full bg-sky-500/90 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/40 transition-colors hover:bg-sky-400 cursor-pointer"
         >
           Choose training mode →
         </button>
@@ -140,9 +140,9 @@ export default function TrainingSetupModal() {
 
               <button
                 onClick={() => handleModeSelect('step-by-step')}
-                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-amber-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-blue-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
-                <div className="flex items-center gap-2 mb-1 text-amber-400">
+                <div className="flex items-center gap-2 mb-1 text-blue-400">
                   <Layers size={20} />
                   <div className="text-white font-bold text-sm">Step by Step</div>
                 </div>
@@ -267,7 +267,7 @@ export default function TrainingSetupModal() {
               {/* Random line */}
               <button
                 onClick={handleRandom}
-                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-brand-accent/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-sky-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
               >
                 <div className="text-white font-bold text-sm mb-1">Random line</div>
                 <div className="text-slate-400 text-xs">

@@ -8,9 +8,9 @@ import { isStudentMove } from '../../engine/chessEngine';
 import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
-const SELECTED_HIGHLIGHT = 'rgba(255, 214, 94, 0.42)';
-const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
-const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
+const SELECTED_HIGHLIGHT = 'rgba(91, 176, 255, 0.34)';
+const LAST_MOVE_FROM = 'rgba(91, 176, 255, 0.18)';
+const LAST_MOVE_TO = 'rgba(91, 176, 255, 0.42)';
 const HINT_HIGHLIGHT = 'rgba(0, 216, 153, 0.74)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -124,7 +124,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   let progressLabel = '';
   let progressDone = 0;
   let progressTotal = 0;
-  let progressColor = 'bg-brand-accent';
+  let progressColor = 'bg-sky-500';
 
   if (!postLine && opening && selectedLine && phase === 'training') {
     const setupLen = opening.setupMoves.length;
@@ -136,7 +136,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       progressLabel = 'Step-by-step';
       progressTotal = studentTotal;
       progressDone = Math.min(repetitionBlock - 1, studentTotal);
-      progressColor = 'bg-amber-400';
+      progressColor = 'bg-sky-500';
     } else {
       let done = 0;
       for (let i = setupLen; i < currentMoveIndex; i += 1) {
@@ -271,7 +271,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     const moveNum = Math.floor(viewMoveIndex / 2) + 1;
     const side = viewMoveIndex % 2 === 0 ? 'W' : 'B';
     statusText = `Reviewing move ${moveNum}${side} - click board to return`;
-    statusColor = 'text-amber-300';
+    statusColor = 'text-sky-300';
   } else if (wrongMoveFen) {
     statusText = 'Wrong move - tap back to undo';
     statusColor = 'text-rose-300';
@@ -280,7 +280,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     statusColor = isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500';
   } else if (phase === 'line-select') {
     statusText = 'Choose a line';
-    statusColor = 'text-amber-300';
+    statusColor = 'text-sky-300';
   } else if (phase === 'training') {
     if (postLine) {
       statusText = isAwaitingUserMove ? 'Your move' : 'Opponent is thinking...';
@@ -294,7 +294,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     }
   } else if (phase === 'completed') {
     statusText = 'Line complete!';
-    statusColor = 'text-amber-300';
+    statusColor = 'text-emerald-300';
   }
 
   const isDraggable =
@@ -314,7 +314,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           <span>{progressLabel}</span>
           <span>{progressDone} / {progressTotal} moves</span>
         </div>
-        <div className="h-2 w-full rounded-full bg-white/8">
+        <div className="h-2 w-full rounded-full bg-stone-700/50">
           <div
             className={`${progressColor} h-2 rounded-full transition-all duration-300`}
             style={{
@@ -358,7 +358,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             'board-frame relative isolate overflow-hidden rounded-[18px]',
             'border border-black/12 bg-[#2f2116] shadow-[0_20px_50px_rgba(0,0,0,0.34)]',
             boardFlashing ? 'board-flash-green' : '',
-            isReviewing ? 'opacity-90 ring-2 ring-amber-500/30' : '',
+            isReviewing ? 'opacity-90 ring-2 ring-sky-500/30' : '',
           ].join(' ')}
           style={{ width: boardSize, height: boardSize }}
         >
@@ -516,7 +516,7 @@ function BoardNavRow({
         {!isLive && !wrongMoveFen && (
           <button
             onClick={() => navigateToMove(null)}
-            className="rounded-xl border border-white/6 bg-white/[0.035] px-2.5 py-1 text-xs font-semibold text-amber-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
+            className="rounded-xl border border-stone-700/40 bg-stone-800/85 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-stone-700/85 cursor-pointer"
           >
             Live
           </button>
@@ -565,7 +565,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/6 bg-white/[0.035] text-sm text-stone-300 transition-colors hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-8 w-8 items-center justify-center rounded-xl border border-stone-700/40 bg-stone-800/85 text-sm text-stone-300 transition-colors hover:bg-stone-700/85 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>

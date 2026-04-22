@@ -18,7 +18,7 @@ export default function ControlPanel() {
     <div className="space-y-2">
       <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-stone-400">
         Actions {streak >= 2 && phase === 'training' && !postLine && (
-          <span className="ml-1 text-amber-300 font-bold normal-case tracking-normal">{streak}</span>
+          <span className="ml-1 text-emerald-300 font-bold normal-case tracking-normal">{streak}</span>
         )}
       </h3>
       <div className="flex flex-col gap-2">
@@ -59,11 +59,11 @@ function ActionButton({
 
   const variants = {
     primary:
-      'bg-brand-accent text-white hover:bg-rose-500 disabled:opacity-40 shadow-md',
+      'bg-sky-500 text-slate-950 hover:bg-sky-400 disabled:opacity-40 shadow-md',
     secondary:
-      'border border-white/6 bg-white/[0.035] text-stone-100 hover:bg-white/[0.06] disabled:opacity-40',
+      'border border-stone-700/40 bg-stone-800/85 text-stone-100 hover:bg-stone-700/85 disabled:opacity-40',
     ghost:
-      'border border-white/5 bg-transparent text-stone-400 hover:bg-white/[0.035] hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed',
+      'border border-stone-700/35 bg-transparent text-stone-400 hover:bg-stone-800/70 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed',
     hint:
       'bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-40',
   };

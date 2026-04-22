@@ -14,14 +14,12 @@ export default function MoveList() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new moves arrive (only when not reviewing)
   useEffect(() => {
     if (viewMoveIndex === null && containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [playedMoves, viewMoveIndex]);
 
-  // Scroll reviewed move into view
   useEffect(() => {
     if (viewMoveIndex !== null && containerRef.current) {
       const el = containerRef.current.querySelector(
@@ -33,7 +31,6 @@ export default function MoveList() {
 
   if (!opening) return null;
 
-  // Group into pairs [white, black]
   const pairs: Array<{ white: string; black?: string; number: number }> = [];
   for (let i = 0; i < playedMoves.length; i += 2) {
     pairs.push({
@@ -43,46 +40,42 @@ export default function MoveList() {
     });
   }
 
-  // Pair index where free play starts
   const freePlayPairStart =
     postLine && postLineStartMoveCount !== null
       ? Math.ceil(postLineStartMoveCount / 2)
       : null;
 
-  // Which half-move index is currently highlighted (0-based in playedMoves)
-  const highlightIdx = viewMoveIndex; // null = live (no highlight offset)
+  const highlightIdx = viewMoveIndex;
 
   return (
-    <div className="flex flex-col h-full">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
+    <div className="flex h-full flex-col">
+      <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
         Moves
       </h3>
 
-      <div ref={containerRef} className="flex-1 overflow-y-auto pr-1 min-h-0">
+      <div ref={containerRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
         {pairs.length === 0 && (
-          <p className="text-slate-500 text-xs italic">No moves yet.</p>
+          <p className="text-xs italic text-slate-500">No moves yet.</p>
         )}
 
         <div className="space-y-0.5">
           {pairs.map((pair, pairIdx) => (
             <div key={pair.number}>
-              {/* Free-play divider */}
               {freePlayPairStart !== null && pairIdx === freePlayPairStart && (
-                <div className="flex items-center gap-2 my-1.5">
-                  <div className="flex-1 h-px bg-emerald-700/50" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 shrink-0 select-none">
+                <div className="my-1.5 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-emerald-700/50" />
+                  <span className="shrink-0 select-none text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Free play
                   </span>
-                  <div className="flex-1 h-px bg-emerald-700/50" />
+                  <div className="h-px flex-1 bg-emerald-700/50" />
                 </div>
               )}
 
               <div className="grid grid-cols-[28px_1fr_1fr] gap-1 text-sm">
-                <span className="text-slate-500 text-xs pt-0.5 select-none">
+                <span className="select-none pt-0.5 text-xs text-slate-500">
                   {pair.number}.
                 </span>
 
-                {/* White move — half-move index = pairIdx*2 */}
                 <MoveChip
                   san={pair.white}
                   halfMoveIdx={pairIdx * 2}
@@ -93,7 +86,6 @@ export default function MoveList() {
                   onClick={() => navigateToMove(pairIdx * 2)}
                 />
 
-                {/* Black move — half-move index = pairIdx*2+1 */}
                 {pair.black !== undefined ? (
                   <MoveChip
                     san={pair.black}
@@ -120,10 +112,10 @@ export default function MoveList() {
       </div>
 
       {phase === 'training' && (
-        <div className="mt-2 pt-2 border-t border-slate-700/50 text-xs text-slate-500 select-none">
+        <div className="mt-2 border-t border-slate-700/50 pt-2 text-xs text-slate-500 select-none">
           {playedMoves.length} half-move{playedMoves.length !== 1 ? 's' : ''} played
           {viewMoveIndex !== null && (
-            <span className="text-amber-400 ml-1">· reviewing</span>
+            <span className="ml-1 text-sky-400">· reviewing</span>
           )}
         </div>
       )}
@@ -160,9 +152,9 @@ function MoveChip({
       data-move-index={halfMoveIdx}
       onClick={onClick}
       className={`
-        px-1.5 py-0.5 rounded font-mono text-xs text-left w-full transition-colors cursor-pointer
+        w-full rounded px-1.5 py-0.5 text-left font-mono text-xs transition-colors cursor-pointer
         ${isHighlighted
-          ? 'bg-amber-500/25 text-amber-300 font-bold'
+          ? 'bg-sky-500/20 text-sky-300 font-bold'
           : `hover:bg-slate-700/50 ${textClass}`
         }
       `}

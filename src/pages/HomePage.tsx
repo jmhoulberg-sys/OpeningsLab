@@ -73,7 +73,7 @@ export default function HomePage({
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/70">
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/70">
               OpeningsLab
             </div>
             <div className="mt-1 text-sm text-stone-400">Board-first opening training.</div>
@@ -81,7 +81,7 @@ export default function HomePage({
           <button
             onClick={onSettingsClick}
             title="Settings"
-            className="rounded-2xl border border-white/10 bg-white/5 p-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+            className="rounded-2xl border border-stone-700/40 bg-stone-800/80 px-3.5 py-3 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
             aria-label="Open settings"
           >
             <Settings size={20} />

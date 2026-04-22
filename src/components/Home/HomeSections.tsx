@@ -67,8 +67,8 @@ export function HeroSection({
   onContinueClick,
 }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-white/[0.04] bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
-      <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(234,209,171,0.14),transparent_42%)] lg:block" />
+    <section className="relative overflow-hidden rounded-[30px] border border-stone-700/35 bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
+      <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(74,162,255,0.12),transparent_42%)] lg:block" />
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
           <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
@@ -82,14 +82,14 @@ export function HeroSection({
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={onPrimaryClick}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-accent px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:bg-rose-500 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-sky-400 cursor-pointer"
           >
             <Play size={16} />
             {primaryLabel}
           </button>
           <button
             onClick={onSecondaryClick}
-            className="inline-flex items-center justify-center rounded-2xl border border-white/[0.05] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-white/[0.06] cursor-pointer"
+            className="inline-flex items-center justify-center rounded-2xl border border-stone-700/35 bg-stone-800/80 px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-stone-700/80 cursor-pointer"
           >
             {secondaryLabel}
           </button>
@@ -121,14 +121,14 @@ export function HeroSection({
 
 export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
   return (
-    <section className="rounded-[22px] border border-white/[0.04] bg-stone-900/45 p-3 sm:p-4">
+    <section className="rounded-[22px] border border-stone-700/35 bg-stone-900/45 p-3 sm:p-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-4"
+            className="rounded-[18px] border border-stone-700/35 bg-stone-800/55 p-4"
           >
-            <div className="mb-2 text-lg font-extrabold text-amber-200">
+            <div className="mb-2 text-lg font-extrabold text-sky-300">
               {index + 1}
             </div>
             <h3 className="text-sm font-semibold text-white">{step.label}</h3>
@@ -213,7 +213,7 @@ function OpeningCard({
   const setupFen = fenAfterMoves(opening.setupMoves);
 
   return (
-    <article className="flex h-full flex-col rounded-[24px] border border-white/[0.04] bg-stone-900/55 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
+    <article className="flex h-full flex-col rounded-[24px] border border-stone-700/35 bg-stone-900/55 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
       <button
         onClick={() => onStartLine(opening, firstLine)}
         className="group cursor-pointer overflow-hidden rounded-[20px] text-left"
@@ -229,7 +229,7 @@ function OpeningCard({
           </h3>
           <div className="mt-1 text-sm text-stone-400">{totalLines} lines</div>
         </div>
-        <span className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-stone-200">
+        <span className="rounded-full border border-stone-700/35 bg-stone-800/80 px-3 py-1 text-xs font-semibold text-stone-200">
           {completedLines}/{totalLines}
         </span>
       </div>
@@ -242,14 +242,14 @@ function OpeningCard({
       <div className="mt-3 flex gap-2">
         <button
           onClick={() => onStartLine(opening, firstLine)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-200 px-3 py-2.5 text-sm font-semibold text-stone-900 transition-colors hover:bg-amber-100 cursor-pointer"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
         >
           <Play size={15} />
           Start
         </button>
         <button
           onClick={() => onOpenOpening(opening)}
-          className="inline-flex items-center justify-center rounded-xl border border-white/[0.04] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.06] cursor-pointer"
+          className="inline-flex items-center justify-center rounded-xl border border-stone-700/35 bg-stone-800/80 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-700/80 cursor-pointer"
         >
           Open
         </button>
@@ -269,7 +269,7 @@ function SectionHeading({
 }) {
   return (
     <div className="max-w-xl">
-      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/80">
+      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/80">
         {eyebrow}
       </div>
       <h2 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h2>
