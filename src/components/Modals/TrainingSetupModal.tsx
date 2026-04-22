@@ -19,7 +19,7 @@ export default function TrainingSetupModal() {
   const completedLines = lineStates.filter((entry) => entry.unlocked).length;
   const totalLines = lineStates.length;
   const practiceLines = lineStates.filter((entry) => entry.unlocked).map((entry) => entry.line);
-  const learnableLines = lineStates.filter((entry) => !entry.unlocked).map((entry) => entry.line);
+  const nextLearnableLine = lineStates.find((entry) => !entry.unlocked)?.line ?? null;
   const progressPct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
 
   function launchLine(line: OpeningLine, mode: TrainingMode) {
@@ -54,7 +54,7 @@ export default function TrainingSetupModal() {
                 {completedLines}/{totalLines} lines unlocked
               </div>
               <div className="mt-1 text-sm text-stone-400">
-                {learnableLines.length > 0 ? 'Pick any locked line below to unlock it.' : 'All current lines are unlocked.'}
+                {nextLearnableLine ? 'One line unlocks at a time. Finish this one cleanly to open the next.' : 'All current lines are unlocked.'}
               </div>
             </div>
             <div className="text-sm font-semibold text-emerald-300">{progressPct}%</div>
@@ -65,28 +65,24 @@ export default function TrainingSetupModal() {
         </div>
 
         <div className="mt-5 space-y-5">
-          {learnableLines.length > 0 && (
+          {nextLearnableLine && (
             <section className="rounded-[22px] border border-sky-400/15 bg-sky-400/8 p-4">
               <div className="flex items-center gap-2 text-sky-300">
                 <BookOpen size={18} />
-                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Choose a line to unlock</div>
+                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Next line to unlock</div>
               </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {learnableLines.map((line) => (
-                  <div key={line.id} className="rounded-2xl border border-sky-400/12 bg-stone-950/65 p-4">
-                    <div className="text-lg font-bold text-white">{line.name}</div>
-                    <div className="mt-1 text-sm text-stone-300">
-                      {line.description || 'Guided learning with prompts, hints, and answer help.'}
-                    </div>
-                    <button
-                      onClick={() => launchLine(line, 'learn')}
-                      className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
-                    >
-                      Learn line
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                ))}
+              <div className="mt-4 rounded-2xl border border-sky-400/12 bg-stone-950/65 p-4">
+                <div className="text-lg font-bold text-white">{nextLearnableLine.name}</div>
+                <div className="mt-1 text-sm text-stone-300">
+                  {getPlainLanguageSummary(nextLearnableLine)}
+                </div>
+                <button
+                  onClick={() => launchLine(nextLearnableLine, 'learn')}
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+                >
+                  Learn line
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </section>
           )}
@@ -96,14 +92,14 @@ export default function TrainingSetupModal() {
               <Route size={18} />
               <div className="text-sm font-semibold uppercase tracking-[0.18em]">Practice unlocked lines</div>
             </div>
-            <div className="mt-2 text-sm text-stone-400">
+          <div className="mt-2 text-sm text-stone-400">
               When a line is unlocked, practice it either move-by-move or as a guided full line.
-            </div>
+          </div>
 
             {practiceLines.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
-                Unlock your first line to open practice modes.
-              </div>
+            <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
+                Finish the next line cleanly to open practice modes.
+            </div>
             ) : (
               <div className="mt-4 space-y-3">
                 {practiceLines.map((line) => (
@@ -153,7 +149,7 @@ function PracticeLineCard({
         <div className="min-w-0">
           <div className="text-base font-bold text-white">{line.name}</div>
           <div className="mt-1 text-sm text-stone-400">
-            {line.description || 'Practice this unlocked line from memory or with guided help.'}
+            {getPlainLanguageSummary(line)}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -194,4 +190,18 @@ function PracticeLineCard({
       </div>
     </div>
   );
+}
+
+function getPlainLanguageSummary(line: OpeningLine) {
+  const label = line.name.toLowerCase();
+
+  if (label.includes('queen')) return 'A sharp trap that punishes a greedy queen grab.';
+  if (label.includes('knight')) return 'A tactical line that turns one loose knight into a lasting weakness.';
+  if (label.includes('rook')) return 'A forcing attack that wins heavy material if White grabs the bait.';
+  if (label.includes('natural development')) return 'A simple punishment line against automatic developing moves.';
+  if (label.includes('favorite trap')) return 'A direct attacking trap that keeps pressure on the king from the start.';
+  if (label.includes('everyone falls for this')) return 'A reliable attacking idea that catches natural-looking replies.';
+  if (label.includes('drag white\'s king')) return 'An aggressive line that pulls the king into danger and wins material.';
+
+  return 'A guided attacking line that helps you learn the key idea without guessing from notation.';
 }

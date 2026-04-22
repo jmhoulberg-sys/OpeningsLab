@@ -14,6 +14,7 @@ export default function LineSelector({ opening }: LineSelectorProps) {
   const setupDone = isSetupComplete(opening.id);
   const totalLines = opening.lines.length;
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
+  const nextLearnableLineId = opening.lines.find((line) => !isLineUnlocked(opening.id, line.id))?.id ?? null;
 
   return (
     <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-3">
@@ -47,9 +48,10 @@ export default function LineSelector({ opening }: LineSelectorProps) {
             isSelected={selectedLine?.id === line.id}
             isSetupDone={setupDone}
             isUnlocked={isLineUnlocked(opening.id, line.id)}
+            isNextLearnable={setupDone && nextLearnableLineId === line.id}
             progress={getLineProgress(opening.id, line.id)}
             onSelect={() => {
-              if (setupDone) {
+              if (setupDone && (isLineUnlocked(opening.id, line.id) || nextLearnableLineId === line.id)) {
                 selectLine(line);
               }
             }}
@@ -105,6 +107,7 @@ interface LineRowProps {
   isSelected: boolean;
   isSetupDone: boolean;
   isUnlocked: boolean;
+  isNextLearnable: boolean;
   progress: LineProgress | undefined;
   onSelect: () => void;
 }
@@ -115,11 +118,12 @@ function LineRow({
   isSelected,
   isSetupDone,
   isUnlocked,
+  isNextLearnable,
   progress,
   onSelect,
 }: LineRowProps) {
   const { toggleFavorite, isFavorite } = useProgressStore();
-  const locked = !isSetupDone && !isUnlocked;
+  const locked = !isSetupDone || (!isUnlocked && !isNextLearnable);
   const favorite = isFavorite(openingId, line.id);
 
   function handleFavorite(e: React.MouseEvent) {
@@ -138,7 +142,7 @@ function LineRow({
             ? 'border-sky-500/45 bg-sky-500/10 text-white shadow-md shadow-sky-500/10'
             : isUnlocked
               ? 'border-emerald-500/20 bg-emerald-500/8 text-stone-100 hover:border-emerald-400/35 hover:bg-emerald-500/12 cursor-pointer'
-              : 'border-stone-700/60 bg-stone-900/85 text-stone-200 hover:border-stone-600 hover:bg-stone-800/85 cursor-pointer'
+              : 'border-sky-500/20 bg-sky-500/8 text-stone-100 hover:border-sky-400/35 hover:bg-sky-500/12 cursor-pointer'
       }`}
     >
       <div className="flex items-center justify-between gap-3">
@@ -170,8 +174,8 @@ function LineRow({
         {isUnlocked
           ? 'Unlocked for practice'
           : locked
-            ? 'Finish setup to unlock line choice'
-            : 'Choose this line to learn or unlock'}
+            ? 'Unlocks after the line above'
+            : 'Next line to learn'}
       </div>
     </button>
   );

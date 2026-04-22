@@ -22,14 +22,18 @@ export default function CompletionModal() {
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const [earnedXp, setEarnedXp] = useState(0);
+  const [lineJustUnlocked, setLineJustUnlocked] = useState(false);
 
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
       const lineWasNew = !useProgressStore.getState().getLineProgress(opening.id, selectedLine.id)?.unlocked;
+      setLineJustUnlocked(lineWasNew && mistakes === 0);
       setEarnedXp(10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0));
       recordLineAttempt(opening.id, selectedLine.id, mistakes);
       recordSpacedRepetition(opening.id, selectedLine.id, mistakes === 0);
+    } else {
+      setLineJustUnlocked(false);
     }
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -78,8 +82,10 @@ export default function CompletionModal() {
             good={perfect}
           />
           {perfect ? (
-            <p className="flex items-center justify-center gap-1 text-sm font-semibold text-emerald-300">
-              Line unlocked! <Star size={14} fill="currentColor" />
+            <p className={`flex items-center justify-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-emerald-300 ${
+              lineJustUnlocked ? 'bg-emerald-500/12 star-pop shadow-[0_10px_24px_rgba(16,185,129,0.22)]' : ''
+            }`}>
+              {lineJustUnlocked ? 'New line unlocked!' : 'Line unlocked!'} <Star size={14} fill="currentColor" />
             </p>
           ) : (
             <p className="text-xs text-slate-400">
