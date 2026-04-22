@@ -1,7 +1,7 @@
-import { RotateCcw, ArrowLeft } from 'lucide-react';
+import { RotateCcw, ArrowLeft, House } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 
-export default function ControlPanel() {
+export default function ControlPanel({ onHomeClick }: { onHomeClick: () => void }) {
   const {
     phase,
     selectedLine,
@@ -30,10 +30,16 @@ export default function ControlPanel() {
           variant="secondary"
         />
         <ActionButton
-          label="Select Line"
+          label="Choose Another Line"
           icon={<ArrowLeft size={14} />}
           onClick={backToLineSelect}
           disabled={!canGoBack}
+          variant="primary"
+        />
+        <ActionButton
+          label="Front Page"
+          icon={<House size={14} />}
+          onClick={onHomeClick}
           variant="ghost"
         />
       </div>

@@ -17,7 +17,7 @@ import { useProgressStore } from './store/progressStore';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
-const BOARD_CHROME_H = 115;
+const BOARD_CHROME_H = 180;
 const EVAL_BAR_W = 24;
 
 export default function App() {
@@ -148,7 +148,7 @@ export default function App() {
             isSmallScreen
               ? `fixed inset-y-0 right-0 z-40 w-80 shadow-2xl shadow-black/60 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
               : '',
-            mode === 'drill' ? 'ring-1 ring-rose-900/30' : '',
+            mode === 'full-line' ? 'ring-1 ring-sky-900/25' : '',
           ].join(' ')}
         >
           <div className="relative flex h-full w-80 flex-col overflow-x-hidden overflow-y-auto">
@@ -201,7 +201,7 @@ export default function App() {
                 </div>
 
                 <div className="flex-shrink-0 px-4 pb-4 pt-2">
-                  <ControlPanel />
+                  <ControlPanel onHomeClick={handleGoHome} />
                 </div>
 
                 {postLine && <AnalysisPanel />}

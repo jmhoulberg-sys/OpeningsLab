@@ -259,7 +259,7 @@ function getModeUnlocks(setupComplete: boolean, completedLines: number) {
   return {
     learn: true,
     practice: setupComplete,
-    drill: completedLines >= 1,
+    fullLine: completedLines >= 1,
     topResponses: completedLines >= 1,
     speed: completedLines >= 3,
   };
@@ -267,7 +267,7 @@ function getModeUnlocks(setupComplete: boolean, completedLines: number) {
 
 function getOpeningStatusLabel(setupComplete: boolean, completedLines: number, totalLines: number) {
   if (completedLines >= totalLines && totalLines > 0) return 'Mastered';
-  if (completedLines >= Math.max(2, Math.ceil(totalLines / 2))) return 'Ready to drill';
+  if (completedLines >= Math.max(2, Math.ceil(totalLines / 2))) return 'Practice ready';
   if (setupComplete || completedLines > 0) return 'Learning';
   return 'New';
 }

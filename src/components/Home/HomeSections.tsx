@@ -21,7 +21,7 @@ const WOOD_DARK = '#9b6a3c';
 export interface ModeUnlockSummary {
   learn: boolean;
   practice: boolean;
-  drill: boolean;
+  fullLine: boolean;
   topResponses: boolean;
   speed: boolean;
 }
@@ -520,8 +520,8 @@ function OpeningCard({
       {!isComingSoon && (
         <div className="mt-3 flex flex-wrap gap-2">
           <ModePill icon={<Play size={12} />} label="Learn" unlocked={modeUnlocks.learn} />
-          <ModePill icon={<ChevronRight size={12} />} label="Practice" unlocked={modeUnlocks.practice} />
-          <ModePill icon={<Zap size={12} />} label="Drill" unlocked={modeUnlocks.drill} />
+          <ModePill icon={<ChevronRight size={12} />} label="Step-by-step" unlocked={modeUnlocks.practice} />
+          <ModePill icon={<Zap size={12} />} label="Full line" unlocked={modeUnlocks.fullLine} />
           <ModePill icon={<Swords size={12} />} label="Top moves" unlocked={modeUnlocks.topResponses} />
           <ModePill icon={<TimerReset size={12} />} label="Speed" unlocked={modeUnlocks.speed} />
         </div>

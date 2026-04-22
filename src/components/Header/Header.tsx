@@ -1,4 +1,4 @@
-import { Crown, LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { Crown, Home, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
@@ -21,25 +21,34 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   const headerSubtitle = selectedLine
     ? selectedLine.name
     : opening
-      ? 'Learn the setup, then drill the main line'
+      ? 'Finish setup, unlock the next line, then practice it your way'
       : 'Choose a course and start training';
 
   return (
     <header className="border-b border-stone-800/60 bg-stone-950/95 backdrop-blur-sm">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
-        <button
-          onClick={onHomeClick}
-          className="group flex items-center gap-3 justify-self-start cursor-pointer"
-        >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
-            <circle cx="12" cy="5" r="3" />
-            <path d="M10 8l-2 6h8l-2-6z" />
-            <path d="M7 15l-1 3h12l-1-3z" />
-          </svg>
-          <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
-            OpeningsLab
-          </span>
-        </button>
+        <div className="flex items-center gap-2 justify-self-start">
+          <button
+            onClick={onHomeClick}
+            className="group flex items-center gap-3 cursor-pointer"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
+              <circle cx="12" cy="5" r="3" />
+              <path d="M10 8l-2 6h8l-2-6z" />
+              <path d="M7 15l-1 3h12l-1-3z" />
+            </svg>
+            <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
+              OpeningsLab
+            </span>
+          </button>
+          <button
+            onClick={onHomeClick}
+            className="hidden items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900/85 px-3 py-2 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white lg:inline-flex cursor-pointer"
+          >
+            <Home size={15} />
+            Front page
+          </button>
+        </div>
 
         <div className="hidden min-w-0 justify-self-center lg:block">
           <div className="rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 py-3 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">

@@ -54,7 +54,7 @@ export default function LineSelector({ opening }: LineSelectorProps) {
             </p>
           )}
           <div className="space-y-1.5">
-            {opening.lines.map((line) => (
+            {opening.lines.map((line, index) => (
               <LineRow
                 key={line.id}
                 line={line}
@@ -63,6 +63,7 @@ export default function LineSelector({ opening }: LineSelectorProps) {
                 isSetupDone={setupDone}
                 isActive={isActive}
                 isUnlocked={isLineUnlocked(opening.id, line.id)}
+                isAvailableToLearn={setupDone && !isLineUnlocked(opening.id, line.id) && (index === 0 || isLineUnlocked(opening.id, opening.lines[index - 1].id))}
                 progress={getLineProgress(opening.id, line.id)}
                 onSelect={() => {
                   if (setupDone) {
@@ -86,6 +87,7 @@ interface LineRowProps {
   isSetupDone: boolean;
   isActive: boolean;
   isUnlocked: boolean;
+  isAvailableToLearn: boolean;
   progress: LineProgress | undefined;
   onSelect: () => void;
 }
@@ -96,11 +98,12 @@ function LineRow({
   isSelected,
   isSetupDone,
   isUnlocked,
+  isAvailableToLearn,
   progress,
   onSelect,
 }: LineRowProps) {
   const { toggleFavorite, isFavorite } = useProgressStore();
-  const locked = !isSetupDone;
+  const locked = !isSetupDone || (!isUnlocked && !isAvailableToLearn);
   const favorite = isFavorite(openingId, line.id);
 
   function handleFavorite(e: React.MouseEvent) {
@@ -136,6 +139,17 @@ function LineRow({
           </span>
           <div className="min-w-0 flex-1">
             <span className="block font-semibold leading-snug">{line.name}</span>
+            <span className="mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-900">
+              <span className={`rounded-full px-2 py-0.5 ${
+                isUnlocked
+                  ? 'bg-emerald-400 text-slate-950'
+                  : isAvailableToLearn
+                    ? 'bg-sky-400 text-slate-950'
+                    : 'bg-stone-800 text-stone-400'
+              }`}>
+                {isUnlocked ? 'Practice' : isAvailableToLearn ? 'Next to learn' : 'Locked'}
+              </span>
+            </span>
             {line.description && (
               <span className="mt-1.5 block whitespace-normal text-[11px] leading-relaxed text-stone-400">
                 {line.description}

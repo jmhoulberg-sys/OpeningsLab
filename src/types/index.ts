@@ -2,7 +2,7 @@
 
 export type Color = 'white' | 'black';
 
-export type TrainingMode = 'learn' | 'step-by-step' | 'drill' | 'time-trial';
+export type TrainingMode = 'learn' | 'step-by-step' | 'full-line' | 'time-trial';
 
 export type PostLineMode = 'computer-beginner' | 'computer-advanced' | 'computer-pro' | 'top-moves';
 

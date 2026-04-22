@@ -47,6 +47,9 @@ function getBoardMessage({
   phase,
   isAwaitingUserMove,
   postLine,
+  mode,
+  expectedSan,
+  selectedLineName,
 }: {
   isReviewing: boolean;
   viewMoveIndex: number | null;
@@ -54,6 +57,9 @@ function getBoardMessage({
   phase: string;
   isAwaitingUserMove: boolean;
   postLine: boolean;
+  mode: string;
+  expectedSan: string | null;
+  selectedLineName: string | null;
 }) {
   if (isReviewing) {
     const moveNum = Math.floor((viewMoveIndex ?? 0) / 2) + 1;
@@ -86,7 +92,7 @@ function getBoardMessage({
   if (phase === 'line-select') {
     return {
       eyebrow: 'Line pick',
-      text: 'Choose the variation you want to drill',
+      text: 'Choose the next line to learn or an unlocked line to practice',
       color: 'text-sky-300',
     };
   }
@@ -102,6 +108,30 @@ function getBoardMessage({
       };
     }
 
+    if (mode === 'full-line' && isAwaitingUserMove && expectedSan) {
+      return {
+        eyebrow: selectedLineName ? `Practice full line` : 'Practice full line',
+        text: `Guided move: play ${expectedSan}`,
+        color: 'text-sky-300',
+      };
+    }
+
+    if (mode === 'learn' && isAwaitingUserMove && expectedSan) {
+      return {
+        eyebrow: 'Learn line',
+        text: `Next move to learn: ${expectedSan}`,
+        color: 'text-sky-300',
+      };
+    }
+
+    if (mode === 'step-by-step' && isAwaitingUserMove) {
+      return {
+        eyebrow: 'Practice step-by-step',
+        text: 'Recall the next move. Use hint or answer if you need support.',
+        color: 'text-emerald-300',
+      };
+    }
+
     return {
       eyebrow: 'Training',
       text: isAwaitingUserMove
@@ -114,7 +144,7 @@ function getBoardMessage({
   if (phase === 'completed') {
     return {
       eyebrow: 'Complete',
-      text: 'Line complete. Run it again or keep playing',
+      text: 'Line complete. Practice another line or keep playing',
       color: 'text-emerald-300',
     };
   }
@@ -238,9 +268,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       if (mode === 'learn') {
         progressLabel = 'Line progress';
         progressColor = 'bg-sky-400';
-      } else if (mode === 'drill') {
-        progressLabel = 'Drill';
-        progressColor = 'bg-red-400';
+      } else if (mode === 'full-line') {
+        progressLabel = 'Full line';
+        progressColor = 'bg-sky-500';
       } else {
         progressLabel = 'Time Trial';
         progressColor = 'bg-cyan-400';
@@ -249,6 +279,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const showProgressBar = progressTotal > 0;
+  const expectedSan = !isReviewing && isAwaitingUserMove
+    ? (phase === 'setup'
+      ? opening?.setupMoves[currentMoveIndex] ?? null
+      : selectedLine?.moves[currentMoveIndex]?.san ?? null)
+    : null;
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
   if (
@@ -374,6 +409,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     phase,
     isAwaitingUserMove,
     postLine,
+    mode,
+    expectedSan,
+    selectedLineName: selectedLine?.name ?? null,
   });
 
   const isDraggable =
@@ -394,6 +432,15 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         <div className={`mt-1 text-sm font-semibold tracking-wide ${boardMessage.color}`}>
           {boardMessage.text}
         </div>
+        {selectedLine && phase === 'training' && !postLine && (
+          <div className="mt-1 text-xs text-stone-500">
+            {mode === 'learn'
+              ? 'Follow the guided move prompts to unlock this line.'
+              : mode === 'full-line'
+                ? 'Play through the full line with move-by-move guidance.'
+                : 'Build the line from memory and use help if needed.'}
+          </div>
+        )}
       </div>
 
       <div
@@ -577,7 +624,7 @@ function BoardNavRow({
   const canForward = !wrongMoveFen && (currentIdx < playedMoves.length - 1 || !isLive);
 
   const inSession = phase === 'training' || phase === 'setup';
-  const hideHint = mode === 'drill' || mode === 'time-trial';
+  const hideHint = mode === 'time-trial';
   const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
 
   const showHintBtn = canHint && !hintSquare && !showingCorrectMove;

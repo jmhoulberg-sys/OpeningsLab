@@ -161,6 +161,23 @@ function buildFenHistory(initialFen: string, sans: string[]): string[] {
   return history;
 }
 
+function getExpectedUserSan(state: {
+  phase: TrainingPhase;
+  opening: Opening | null;
+  selectedLine: OpeningLine | null;
+  currentMoveIndex: number;
+}) {
+  if (state.phase === 'setup' && state.opening) {
+    return state.opening.setupMoves[state.currentMoveIndex] ?? null;
+  }
+
+  if (state.phase === 'training' && state.selectedLine) {
+    return state.selectedLine.moves[state.currentMoveIndex]?.san ?? null;
+  }
+
+  return null;
+}
+
 // ─── Store ──────────────────────────────────────────────────────────
 
 export const useTrainingStore = create<TrainingState & TrainingActions>()(
@@ -645,17 +662,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     showAnswer() {
       const state = get();
       if (!state.isAwaitingUserMove) return;
-      if (state.mode === 'drill' || state.mode === 'time-trial') return;
+      if (state.mode === 'time-trial') return;
       // Exit review mode first
       if (state.viewMoveIndex !== null) set({ viewMoveIndex: null });
 
-      let expected: string | null = null;
-
-      if (state.phase === 'setup' && state.opening) {
-        expected = state.opening.setupMoves[state.currentMoveIndex] ?? null;
-      } else if (state.phase === 'training' && state.selectedLine) {
-        expected = state.selectedLine.moves[state.currentMoveIndex]?.san ?? null;
-      }
+      const expected = getExpectedUserSan(state);
 
       set({ wrongMoveSan: expected, showingCorrectMove: true, hintSquare: null });
     },
@@ -664,15 +675,10 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     showHint() {
       const state = get();
       if (!state.isAwaitingUserMove) return;
-      if (state.mode === 'drill' || state.mode === 'time-trial') return;
+      if (state.mode === 'time-trial') return;
       if (state.viewMoveIndex !== null) set({ viewMoveIndex: null });
 
-      let expectedSan: string | null = null;
-      if (state.phase === 'setup' && state.opening) {
-        expectedSan = state.opening.setupMoves[state.currentMoveIndex] ?? null;
-      } else if (state.phase === 'training' && state.selectedLine) {
-        expectedSan = state.selectedLine.moves[state.currentMoveIndex]?.san ?? null;
-      }
+      const expectedSan = getExpectedUserSan(state);
       if (!expectedSan) return;
 
       try {
