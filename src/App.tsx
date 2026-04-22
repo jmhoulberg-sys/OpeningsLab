@@ -24,6 +24,7 @@ export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, mode, streak, startOpening, selectLine } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
 
+  const [appReady, setAppReady] = useState(false);
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,6 +48,11 @@ export default function App() {
     const maxH = height - BOARD_CHROME_H;
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setAppReady(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -93,6 +99,10 @@ export default function App() {
   function handleGoHome() {
     setShowHome(true);
     startedRef.current = false;
+  }
+
+  if (!appReady) {
+    return <div className="min-h-screen bg-brand-bg text-slate-100" aria-hidden="true" />;
   }
 
   if (showHome) {
