@@ -10,6 +10,8 @@ export default function TrainingSetupModal() {
   const { isLineUnlocked, isFavorite, toggleFavorite, isDue } = useProgressStore();
   const { enableSRReminders } = useSettingsStore();
   const [newlyUnlockedId, setNewlyUnlockedId] = useState<string | null>(null);
+  const [unlockingLineId, setUnlockingLineId] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const previousUnlockedRef = useRef<string[]>([]);
 
   if (phase !== 'line-select' || !opening) return null;
@@ -33,15 +35,29 @@ export default function TrainingSetupModal() {
     previousUnlockedRef.current = unlockedIds;
   }, [practiceLines]);
 
+  useEffect(() => {
+    setDismissed(false);
+    setUnlockingLineId(null);
+  }, [phase, opening.id]);
+
   function launchLine(line: OpeningLine, mode: TrainingMode) {
+    if (mode === 'learn') {
+      setUnlockingLineId(line.id);
+    }
     setMode(mode);
     selectLine(line);
   }
 
+  if (dismissed) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-5"
+      onClick={() => setDismissed(true)}
+    >
       <div
-        className="w-full max-w-3xl rounded-[28px] border border-stone-800/70 bg-stone-950/95 p-6 shadow-2xl shadow-black/60"
+        className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[28px] border border-stone-800/70 bg-stone-950/95 p-5 shadow-2xl shadow-black/60 sm:max-h-[calc(100vh-3rem)] sm:p-6"
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -84,8 +100,8 @@ export default function TrainingSetupModal() {
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {learnableLines.map((line) => (
-                  <div key={line.id} className="relative flex min-h-[214px] flex-col rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4">
-                    <div className="absolute right-4 top-4 text-stone-500">
+                  <div key={line.id} className={`relative flex min-h-[214px] flex-col rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4 ${unlockingLineId === line.id ? 'star-pop ring-1 ring-sky-400/30 shadow-[0_14px_30px_rgba(14,165,233,0.18)]' : ''}`}>
+                    <div className={`absolute right-4 top-4 ${unlockingLineId === line.id ? 'text-sky-300' : 'text-stone-500'}`}>
                       <Lock size={20} />
                     </div>
                     <div className="min-h-[72px] pr-10 text-[1.05rem] font-bold leading-tight text-white">{line.name}</div>

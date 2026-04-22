@@ -213,18 +213,20 @@ export default function HomePage({
           />
         </div>
 
-        <div className="mt-5">
-          <ProgressOverview
-            isLoggedIn={isLoggedIn}
-            level={levelInfo.level}
-            progressPct={levelInfo.progressPct}
-            xpToNextLevel={Math.max(0, levelInfo.nextLevelXp - xpTotal)}
-            weeklyXp={weeklyXp}
-            todayXp={todayProgress.xp}
-            totalQuestsComplete={questsComplete}
-            totalQuests={quests.length}
-          />
-        </div>
+        {isLoggedIn && (
+          <div className="mt-5">
+            <ProgressOverview
+              isLoggedIn={isLoggedIn}
+              level={levelInfo.level}
+              progressPct={levelInfo.progressPct}
+              xpToNextLevel={Math.max(0, levelInfo.nextLevelXp - xpTotal)}
+              weeklyXp={weeklyXp}
+              todayXp={todayProgress.xp}
+              totalQuestsComplete={questsComplete}
+              totalQuests={quests.length}
+            />
+          </div>
+        )}
 
         <div className="mt-5">
           <TodayPanel
@@ -239,9 +241,11 @@ export default function HomePage({
           <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
         </div>
 
-        <div className="mt-8">
-          <QuestStrip quests={quests} />
-        </div>
+        {isLoggedIn && (
+          <div className="mt-8">
+            <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
+          </div>
+        )}
 
         <div className="mt-8" ref={libraryRef}>
           <OpeningLibrarySection

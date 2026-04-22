@@ -2,14 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowRight,
   CalendarClock,
-  ChevronRight,
   Crown,
   Play,
   Sparkles,
-  Swords,
-  TimerReset,
   Trophy,
-  Zap,
 } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Opening, OpeningLine } from '../../types';
@@ -106,6 +102,7 @@ interface TodayPanelProps {
 }
 
 interface QuestStripProps {
+  isLoggedIn: boolean;
   quests: QuestSummary[];
 }
 
@@ -280,13 +277,13 @@ export function TodayPanel({ today, onContinue, onReview, onStartNew }: TodayPan
   );
 }
 
-export function QuestStrip({ quests }: QuestStripProps) {
+export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
   return (
     <section className="space-y-3">
       <SectionHeading
         eyebrow="Daily quests"
         title="Small targets that bring you back"
-        description="Fast wins for today."
+        description={isLoggedIn ? 'Fast wins for today.' : 'Sign in to unlock daily quests and progress tracking.'}
       />
       <div className="grid gap-3 md:grid-cols-3">
         {quests.map((quest) => {
@@ -340,7 +337,6 @@ export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
 
 export function FeaturedOpeningsSection({
   openings,
-  onOpenOpening,
   onStartLine,
 }: FeaturedOpeningsSectionProps) {
   return (
@@ -356,7 +352,6 @@ export function FeaturedOpeningsSection({
             key={summary.opening.id}
             summary={summary}
             compact={false}
-            onOpenOpening={onOpenOpening}
             onStartLine={onStartLine}
           />
         ))}
@@ -367,7 +362,6 @@ export function FeaturedOpeningsSection({
 
 export function OpeningLibrarySection({
   openings,
-  onOpenOpening,
   onStartLine,
 }: OpeningLibrarySectionProps) {
   return (
@@ -383,7 +377,6 @@ export function OpeningLibrarySection({
             key={summary.opening.id}
             summary={summary}
             compact
-            onOpenOpening={onOpenOpening}
             onStartLine={onStartLine}
           />
         ))}
@@ -467,18 +460,17 @@ function TodayActionCard({
 function OpeningCard({
   summary,
   compact,
-  onOpenOpening,
   onStartLine,
 }: {
   summary: OpeningSummary;
   compact: boolean;
-  onOpenOpening: (opening: Opening) => void;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }) {
-  const { opening, totalLines, completedLines, firstLine, masteryPct, statusLabel, modeUnlocks } = summary;
+  const { opening, totalLines, completedLines, firstLine, masteryPct, statusLabel } = summary;
   const setupFen = fenAfterMoves(opening.setupMoves);
   const cardTitleHeight = compact ? 'min-h-[76px]' : 'min-h-[84px]';
   const isComingSoon = !firstLine;
+  const isClickable = !isComingSoon;
 
   return (
     <article className="flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
@@ -487,10 +479,10 @@ function OpeningCard({
           if (firstLine) onStartLine(opening, firstLine);
         }}
         disabled={isComingSoon}
-        className={`group overflow-hidden rounded-[20px] text-left ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer'}`}
+        className={`group overflow-hidden rounded-[20px] text-left transition-transform ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer hover:-translate-y-0.5'}`}
         aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       >
-        <BoardPreview opening={opening} fen={setupFen} />
+        <BoardPreview opening={opening} fen={setupFen} isClickable={isClickable} />
       </button>
 
       <div className={`mt-3 grid items-start gap-2 ${compact ? '' : ''}`} style={{ gridTemplateColumns: '1fr auto' }}>
@@ -517,69 +509,12 @@ function OpeningCard({
         <span>{isComingSoon ? 'More soon' : `${masteryPct}% mastery`}</span>
       </div>
 
-      {!isComingSoon && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <ModePill icon={<Play size={12} />} label="Learn" unlocked={modeUnlocks.learn} />
-          <ModePill icon={<ChevronRight size={12} />} label="Step-by-step" unlocked={modeUnlocks.practice} />
-          <ModePill icon={<Zap size={12} />} label="Full line" unlocked={modeUnlocks.fullLine} />
-          <ModePill icon={<Swords size={12} />} label="Top moves" unlocked={modeUnlocks.topResponses} />
-          <ModePill icon={<TimerReset size={12} />} label="Speed" unlocked={modeUnlocks.speed} />
+      {isComingSoon && (
+        <div className="mt-4 rounded-xl bg-stone-800/70 px-4 py-2.5 text-center text-sm font-semibold text-stone-500">
+          Coming soon
         </div>
       )}
-
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => {
-            if (firstLine) onStartLine(opening, firstLine);
-          }}
-          disabled={isComingSoon}
-          className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-            isComingSoon
-              ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
-              : 'bg-sky-500 text-slate-950 hover:bg-sky-400 cursor-pointer'
-          }`}
-        >
-          <Play size={15} />
-          {isComingSoon ? 'Coming soon' : 'Try first line'}
-        </button>
-        <button
-          onClick={() => {
-            if (!isComingSoon) onOpenOpening(opening);
-          }}
-          disabled={isComingSoon}
-          className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-            isComingSoon
-              ? 'bg-stone-800/70 text-stone-500 cursor-not-allowed'
-              : 'bg-stone-800 text-white hover:bg-stone-700 cursor-pointer'
-          }`}
-        >
-          {isComingSoon ? 'Soon' : 'Open'}
-        </button>
-      </div>
     </article>
-  );
-}
-
-function ModePill({
-  icon,
-  label,
-  unlocked,
-}: {
-  icon: ReactNode;
-  label: string;
-  unlocked: boolean;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-        unlocked
-          ? 'bg-emerald-500/10 text-emerald-300'
-          : 'bg-stone-800 text-stone-500'
-      }`}
-    >
-      {icon}
-      {label}
-    </span>
   );
 }
 
@@ -608,9 +543,11 @@ function SectionHeading({
 function BoardPreview({
   opening,
   fen,
+  isClickable,
 }: {
   opening: Opening;
   fen: string;
+  isClickable: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(240);
@@ -633,7 +570,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+      className={`relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${isClickable ? 'ring-1 ring-transparent transition-all duration-200 group-hover:ring-sky-400/30 group-hover:shadow-[0_14px_30px_rgba(14,165,233,0.18)]' : ''}`}
     >
       <Chessboard
         position={fen}
@@ -649,6 +586,9 @@ function BoardPreview({
         customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
         animationDuration={0}
       />
+      {isClickable && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/18 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      )}
     </div>
   );
 }
