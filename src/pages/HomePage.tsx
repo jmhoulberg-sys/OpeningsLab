@@ -54,10 +54,6 @@ export default function HomePage({
 
   const heroPrimaryLabel = continueSummary ? 'Continue Training' : HOME_HERO.primaryCta;
 
-  function scrollToFeatured() {
-    featuredRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
   function scrollToLibrary() {
     libraryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -80,9 +76,7 @@ export default function HomePage({
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/70">
               OpeningsLab
             </div>
-            <div className="mt-1 text-sm text-stone-400">
-              Opening training that tells you what to do next.
-            </div>
+            <div className="mt-1 text-sm text-stone-400">Board-first opening training.</div>
           </div>
           <button
             onClick={onSettingsClick}
@@ -129,14 +123,6 @@ export default function HomePage({
           />
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={scrollToFeatured}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/10 cursor-pointer"
-          >
-            Jump to featured openings
-          </button>
-        </div>
       </div>
     </div>
   );
