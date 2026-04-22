@@ -67,7 +67,7 @@ export function HeroSection({
   onContinueClick,
 }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-white/6 bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
+    <section className="relative overflow-hidden rounded-[30px] border border-white/[0.04] bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
       <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(234,209,171,0.14),transparent_42%)] lg:block" />
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
@@ -89,7 +89,7 @@ export function HeroSection({
           </button>
           <button
             onClick={onSecondaryClick}
-            className="inline-flex items-center justify-center rounded-2xl border border-white/8 bg-white/4 px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-white/8 cursor-pointer"
+            className="inline-flex items-center justify-center rounded-2xl border border-white/[0.05] bg-white/[0.03] px-5 py-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-white/[0.06] cursor-pointer"
           >
             {secondaryLabel}
           </button>
@@ -99,7 +99,7 @@ export function HeroSection({
       {continueSummary && onContinueClick && (
         <button
           onClick={onContinueClick}
-          className="relative mt-4 flex w-full items-center justify-between gap-4 rounded-[20px] border border-emerald-300/10 bg-emerald-300/6 px-4 py-3 text-left transition-colors hover:bg-emerald-300/10 cursor-pointer"
+          className="relative mt-4 flex w-full items-center justify-between gap-4 rounded-[20px] border border-emerald-300/[0.08] bg-emerald-300/[0.05] px-4 py-3 text-left transition-colors hover:bg-emerald-300/[0.08] cursor-pointer"
         >
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
@@ -121,12 +121,12 @@ export function HeroSection({
 
 export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
   return (
-    <section className="rounded-[22px] border border-white/5 bg-stone-900/45 p-3 sm:p-4">
+    <section className="rounded-[22px] border border-white/[0.04] bg-stone-900/45 p-3 sm:p-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="rounded-[18px] border border-white/5 bg-white/[0.03] p-4"
+            className="rounded-[18px] border border-white/[0.04] bg-white/[0.025] p-4"
           >
             <div className="mb-2 text-lg font-extrabold text-amber-200">
               {index + 1}
@@ -213,7 +213,7 @@ function OpeningCard({
   const setupFen = fenAfterMoves(opening.setupMoves);
 
   return (
-    <article className="flex h-full flex-col rounded-[24px] border border-white/5 bg-stone-900/55 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
+    <article className="flex h-full flex-col rounded-[24px] border border-white/[0.04] bg-stone-900/55 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
       <button
         onClick={() => onStartLine(opening, firstLine)}
         className="group cursor-pointer overflow-hidden rounded-[20px] text-left"
@@ -223,13 +223,13 @@ function OpeningCard({
       </button>
 
       <div className={`grid items-start gap-2 ${compact ? 'mt-3' : 'mt-3.5'}`} style={{ gridTemplateColumns: '1fr auto' }}>
-        <div className="min-w-0">
-          <h3 className="text-[1.75rem] font-bold leading-tight text-white md:text-[1.95rem] lg:text-[1.7rem] xl:text-[1.8rem]">
+        <div className="min-w-0 min-h-[86px]">
+          <h3 className="line-clamp-2 text-[1.7rem] font-bold leading-[1.02] text-white md:text-[1.82rem] lg:text-[1.62rem] xl:text-[1.72rem]">
             {opening.name}
           </h3>
           <div className="mt-1 text-sm text-stone-400">{totalLines} lines</div>
         </div>
-        <span className="rounded-full border border-white/5 bg-white/[0.035] px-3 py-1 text-xs font-semibold text-stone-200">
+        <span className="rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-stone-200">
           {completedLines}/{totalLines}
         </span>
       </div>
@@ -249,7 +249,7 @@ function OpeningCard({
         </button>
         <button
           onClick={() => onOpenOpening(opening)}
-          className="inline-flex items-center justify-center rounded-xl border border-white/6 bg-white/[0.035] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.06] cursor-pointer"
+          className="inline-flex items-center justify-center rounded-xl border border-white/[0.04] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/[0.06] cursor-pointer"
         >
           Open
         </button>
@@ -310,7 +310,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-square w-full overflow-hidden rounded-[20px] border border-black/10 shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+      className="relative aspect-square w-full overflow-hidden rounded-[20px] border border-black/8 shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
     >
       <Chessboard
         position={fen}

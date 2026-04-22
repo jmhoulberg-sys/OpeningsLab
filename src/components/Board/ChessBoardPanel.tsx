@@ -15,89 +15,6 @@ const HINT_HIGHLIGHT = 'rgba(0, 216, 153, 0.74)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
 
-function isKnightMove(from: string, to: string): boolean {
-  const df = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
-  const dr = Math.abs(parseInt(from[1]) - parseInt(to[1]));
-  return (df === 1 && dr === 2) || (df === 2 && dr === 1);
-}
-
-function KnightArrowOverlay({
-  from,
-  to,
-  boardSize,
-  orientation,
-  color,
-}: {
-  from: string;
-  to: string;
-  boardSize: number;
-  orientation: 'white' | 'black';
-  color: string;
-}) {
-  const sqSize = boardSize / 8;
-  const center = (sq: string) => {
-    const { x, y } = squareToXY(sq, boardSize, orientation);
-    return { x: x + sqSize / 2, y: y + sqSize / 2 };
-  };
-
-  const fromC = center(from);
-  const toC = center(to);
-
-  const dFile = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
-  const cornerSq = dFile === 2 ? `${to[0]}${from[1]}` : `${from[0]}${to[1]}`;
-  const cornerC = center(cornerSq);
-
-  const sw = sqSize * 0.14;
-  const aw = sqSize * 0.18;
-  const al = sqSize * 0.25;
-
-  const dx = toC.x - cornerC.x;
-  const dy = toC.y - cornerC.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  const ux = dx / len;
-  const uy = dy / len;
-  const arrowTip = { x: toC.x, y: toC.y };
-  const arrowBase = { x: toC.x - ux * al, y: toC.y - uy * al };
-  const perp = { x: -uy, y: ux };
-  const p1 = { x: arrowBase.x + perp.x * aw, y: arrowBase.y + perp.y * aw };
-  const p2 = { x: arrowBase.x - perp.x * aw, y: arrowBase.y - perp.y * aw };
-
-  return (
-    <svg
-      className="absolute inset-0 pointer-events-none"
-      width={boardSize}
-      height={boardSize}
-      style={{ zIndex: 1 }}
-    >
-      <line
-        x1={fromC.x}
-        y1={fromC.y}
-        x2={cornerC.x}
-        y2={cornerC.y}
-        stroke={color}
-        strokeWidth={sw}
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      <line
-        x1={cornerC.x}
-        y1={cornerC.y}
-        x2={arrowBase.x}
-        y2={arrowBase.y}
-        stroke={color}
-        strokeWidth={sw}
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      <polygon
-        points={`${arrowTip.x},${arrowTip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
-        fill={color}
-        opacity="0.85"
-      />
-    </svg>
-  );
-}
-
 function resolveArrow(fen: string, san: string): [Square, Square] | null {
   try {
     const chess = new Chess(fen);
@@ -277,16 +194,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const customArrows: [Square, Square, string][] = [];
-  let knightArrow: [Square, Square] | null = null;
 
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
     if (arrow) {
-      if (isKnightMove(arrow[0], arrow[1])) {
-        knightArrow = arrow;
-      } else {
-        customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
-      }
+      customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
     }
   }
 
@@ -475,17 +387,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                 }
               : {})}
           />
-
-          {knightArrow && !isReviewing && (
-            <KnightArrowOverlay
-              from={knightArrow[0]}
-              to={knightArrow[1]}
-              boardSize={boardSize}
-              orientation={boardOrientation}
-              color={ANSWER_ARROW_COLOR}
-            />
-          )}
-
           {wrongMoveSquare && !isReviewing && (() => {
             const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
             const badge = Math.max(22, Math.min(34, size * 0.42));

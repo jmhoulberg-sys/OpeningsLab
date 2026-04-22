@@ -68,15 +68,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       )}
 
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-80 flex-col border-l border-white/6 bg-stone-900/96 shadow-2xl shadow-black/60 transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-80 flex-col bg-stone-900/96 shadow-2xl shadow-black/60 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-white/6 px-6 py-5">
+        <div className="flex items-center justify-between px-6 py-5">
           <h2 className="text-lg font-bold text-white">Settings</h2>
           <button
             onClick={handleClose}
-            className="rounded-xl border border-white/6 bg-white/[0.035] p-2 text-stone-300 transition-colors hover:bg-white/[0.06] hover:text-white cursor-pointer"
+            className="rounded-xl border border-white/[0.04] bg-white/[0.03] p-2 text-stone-300 transition-colors hover:bg-white/[0.05] hover:text-white cursor-pointer"
             aria-label="Close settings"
           >
             <X size={18} />
@@ -98,12 +98,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. ChessKid42"
                 maxLength={32}
-                className="w-full rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
+                className="w-full rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
               />
             </div>
 
             <div
-              className="mb-3 truncate rounded-xl border border-white/5 bg-black/12 px-3 py-2 font-mono text-xs text-stone-500"
+              className="mb-3 truncate rounded-xl border border-white/[0.04] bg-black/12 px-3 py-2 font-mono text-xs text-stone-500"
               title={`Your profile ID: ${profileId}`}
             >
               ID: {profileId.slice(0, 12)}...
@@ -111,7 +111,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <button
               onClick={handleExport}
-              className="mb-2 w-full rounded-xl border border-white/6 bg-white/[0.04] py-2.5 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
+              className="mb-2 w-full rounded-xl border border-white/[0.04] bg-white/[0.03] py-2.5 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.05] cursor-pointer"
             >
               {exported ? 'Copied to clipboard' : 'Export sync code'}
             </button>
@@ -125,7 +125,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   setImportError(false);
                 }}
                 placeholder="Paste sync code..."
-                className="min-w-0 flex-1 rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
+                className="min-w-0 flex-1 rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-brand-accent/45"
               />
               <button
                 onClick={handleImport}
@@ -149,7 +149,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <p className="mb-3 text-xs text-stone-400">
               Choose where restart begins.
             </p>
-            <div className="flex overflow-hidden rounded-xl border border-white/6">
+            <div className="flex overflow-hidden rounded-xl border border-white/[0.04]">
               {(
                 [
                   { value: 'setup', label: 'Setup position' },
@@ -204,7 +204,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <select
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full cursor-pointer rounded-xl border border-white/6 bg-white/[0.04] px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-brand-accent/45"
+              className="w-full cursor-pointer rounded-xl border border-white/[0.04] bg-white/[0.03] px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-brand-accent/45"
             >
               {RATING_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -264,7 +264,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
                   <button
                     onClick={() => setConfirmReset(false)}
-                    className="flex-1 rounded-xl border border-white/6 bg-white/[0.04] py-2 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.06] cursor-pointer"
+                    className="flex-1 rounded-xl border border-white/[0.04] bg-white/[0.03] py-2 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/[0.05] cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -293,7 +293,7 @@ function ToggleButton({
       className={`w-full rounded-xl border py-2 text-sm font-semibold transition-colors cursor-pointer ${
         active
           ? 'border-brand-accent/40 bg-brand-accent text-white'
-          : 'border-white/6 bg-white/[0.04] text-stone-300 hover:bg-white/[0.06]'
+          : 'border-white/[0.04] bg-white/[0.03] text-stone-300 hover:bg-white/[0.05]'
       }`}
     >
       {children}

@@ -143,7 +143,7 @@ export default function App() {
 
         <aside
           className={[
-            'flex flex-col border-l border-white/6 bg-stone-900/96 overflow-hidden transition-transform duration-300',
+            'flex flex-col bg-stone-900/96 overflow-hidden transition-transform duration-300',
             !isSmallScreen ? 'relative w-80 flex-shrink-0' : '',
             isSmallScreen
               ? `fixed inset-y-0 right-0 z-40 w-80 shadow-2xl shadow-black/60 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
@@ -171,7 +171,7 @@ export default function App() {
                 )}
 
                 {postLine && (
-                  <div className="border-b border-white/6 bg-emerald-400/8 px-4 py-2.5">
+                  <div className="bg-emerald-400/8 px-4 py-2.5">
                     <p className="text-xs font-semibold text-emerald-300">
                       Free play - any legal move accepted
                     </p>
@@ -181,22 +181,22 @@ export default function App() {
                 {mode === 'time-trial' && <TimerDisplay />}
 
                 {streak >= 3 && phase === 'training' && !postLine && (
-                  <div className="border-b border-white/6 bg-amber-300/8 px-4 py-1.5">
+                  <div className="bg-amber-300/8 px-4 py-1.5">
                     <p className="flex items-center gap-1 text-xs font-semibold text-amber-200">
                       <Flame size={14} className="text-amber-300" /> {streak} move streak
                     </p>
                   </div>
                 )}
 
-                <div className="relative flex-shrink-0 border-b border-white/6 px-4 pb-3 pt-3">
+                <div className="relative flex-shrink-0 px-4 pb-3 pt-3">
                   <LineSelector opening={opening} />
                 </div>
 
-                <div className="flex h-44 flex-shrink-0 flex-col border-b border-white/6 px-4 pb-3 pt-3">
+                <div className="flex h-44 flex-shrink-0 flex-col px-4 pb-3 pt-1">
                   <MoveList />
                 </div>
 
-                <div className="flex-shrink-0 px-4 pb-4 pt-3">
+                <div className="flex-shrink-0 px-4 pb-4 pt-2">
                   <ControlPanel />
                 </div>
 
@@ -229,7 +229,7 @@ function OpeningInfoPanel({
   const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
 
   return (
-    <div className="border-b border-white/6 px-4 pb-3 pt-4">
+    <div className="px-4 pb-3 pt-4">
       <div className="mb-1 text-xs font-bold uppercase tracking-widest text-stone-500">
         Opening
       </div>
@@ -265,7 +265,7 @@ function SetupBanner({ opening }: { opening: { setupMoves: string[] } }) {
   const pct = Math.round((done / total) * 100);
 
   return (
-    <div className="border-b border-white/6 bg-sky-400/8 px-4 py-3">
+    <div className="bg-sky-400/8 px-4 py-3">
       <div className="mb-1.5 text-xs font-semibold text-sky-300">
         Setup: play the opening moves ({done}/{total})
       </div>
