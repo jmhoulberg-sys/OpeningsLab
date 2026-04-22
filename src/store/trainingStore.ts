@@ -21,6 +21,7 @@ import {
 } from '../engine/chessEngine';
 import { useSettingsStore } from './settingsStore';
 import { pickLichessBookMove } from '../services/lichessBookService';
+import { useProgressionStore } from './progressionStore';
 
 // ─── State shape ────────────────────────────────────────────────────
 
@@ -345,6 +346,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           } else if (chess.isDraw() || chess.isStalemate()) {
             result = 'draw';
           }
+          useProgressionStore.getState().awardTopResponseResult(result);
           set({
             phase: 'line-select' as TrainingPhase,
             postLine: false,
@@ -566,6 +568,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           } else if (chess.isDraw() || chess.isStalemate()) {
             result = 'draw';
           }
+          useProgressionStore.getState().awardTopResponseResult(result);
           set({
             currentFen: newFen,
             playedMoves: [...state.playedMoves, opponentSan],

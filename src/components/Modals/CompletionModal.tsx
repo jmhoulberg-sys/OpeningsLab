@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Crown, Sparkles, Star } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
+import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
 import { isGameOver } from '../../engine/chessEngine';
 
 export default function CompletionModal() {
@@ -19,10 +20,14 @@ export default function CompletionModal() {
   } = useTrainingStore();
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
+  const xpTotal = useProgressionStore((state) => state.xpTotal);
+  const [earnedXp, setEarnedXp] = useState(0);
 
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
+      const lineWasNew = !useProgressStore.getState().getLineProgress(opening.id, selectedLine.id)?.unlocked;
+      setEarnedXp(10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0));
       recordLineAttempt(opening.id, selectedLine.id, mistakes);
       recordSpacedRepetition(opening.id, selectedLine.id, mistakes === 0);
     }
@@ -35,10 +40,10 @@ export default function CompletionModal() {
   const perfect = mistakes === 0;
   const canContinue = !isGameOver(currentFen);
   const filledStars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
-
   const existingProgress = getLineProgress(opening.id, selectedLine.id);
   const existingInterval = existingProgress?.srInterval ?? 0;
   const nextInterval = perfect ? Math.max(1, existingInterval * 2) : 1;
+  const levelInfo = getLevelInfo(xpTotal);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -50,13 +55,14 @@ export default function CompletionModal() {
         </h2>
 
         <p className="mb-4 text-sm text-slate-400">
-          {opening.name} · {selectedLine.name}
+          {opening.name} / {selectedLine.name}
         </p>
 
         <div className="mb-6 space-y-2 rounded-xl bg-slate-800/60 p-4">
+          <StatRow label="XP earned" value={`+${earnedXp}`} good />
           <StatRow
             label="Mistakes"
-            value={mistakes === 0 ? 'None ✓' : `${mistakes}`}
+            value={mistakes === 0 ? 'None' : `${mistakes}`}
             good={mistakes === 0}
           />
           {streak >= 3 && (
@@ -68,11 +74,11 @@ export default function CompletionModal() {
           )}
           <StatRow
             label="Next review"
-            value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'} ✓` : 'Tomorrow'}
+            value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'}` : 'Tomorrow'}
             good={perfect}
           />
           {perfect ? (
-            <p className="flex items-center justify-center gap-1 text-sm font-semibold text-yellow-400">
+            <p className="flex items-center justify-center gap-1 text-sm font-semibold text-emerald-300">
               Line unlocked! <Star size={14} fill="currentColor" />
             </p>
           ) : (
@@ -80,6 +86,21 @@ export default function CompletionModal() {
               Complete with zero mistakes to unlock this line.
             </p>
           )}
+          <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/70 px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sky-300">
+                <Crown size={15} />
+                <span className="text-sm font-semibold text-white">Level {levelInfo.level}</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-slate-400">
+                <Sparkles size={13} />
+                {Math.max(0, levelInfo.nextLevelXp - xpTotal)} XP to next
+              </div>
+            </div>
+            <div className="mt-2 h-1.5 rounded-full bg-slate-800">
+              <div className="h-1.5 rounded-full bg-sky-400" style={{ width: `${levelInfo.progressPct}%` }} />
+            </div>
+          </div>
         </div>
 
         {!canContinue && (

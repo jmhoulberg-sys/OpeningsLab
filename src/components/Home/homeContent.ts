@@ -1,8 +1,8 @@
 export const HOME_HERO = {
-  headline: 'Choose an opening and start drilling.',
-  subheadline: 'Tap any board to begin.',
-  primaryCta: 'Start',
-  secondaryCta: 'See Openings',
+  headline: 'Train openings like courses you can actually finish.',
+  subheadline: 'Tap a board, learn the line, then level up through real review.',
+  primaryCta: 'Start training',
+  secondaryCta: 'Browse openings',
 };
 
 export const HOW_IT_WORKS_STEPS = [

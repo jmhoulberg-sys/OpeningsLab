@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, Layers, Zap, Timer, CalendarClock, X } from 'lucide-react';
+import { BookOpen, CalendarClock, Layers, Lock, Swords, Timer, X, Zap } from 'lucide-react';
 import type { TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
@@ -16,68 +16,59 @@ export default function TrainingSetupModal() {
   const [dismissed, setDismissed] = useState(false);
 
   if (phase !== 'line-select' || !opening) return null;
+  const currentOpening = opening;
 
-  // When dismissed the modal hides but the backdrop-click re-opens it
+  const totalLines = currentOpening.lines.length;
+  const completedLines = currentOpening.lines.filter((line) =>
+    isLineUnlocked(currentOpening.id, line.id),
+  ).length;
+  const setupComplete = totalLines > 0;
+  const modeCards = getModeCards(setupComplete, completedLines);
+
   function handleBackdropClick() {
     if (dismissed) {
-      // Re-open at step 1
       setDismissed(false);
       setStep(1);
       setLineExpanded(false);
     } else if (step === 2) {
-      // Go back to mode selection
       setStep(1);
       setLineExpanded(false);
     }
-    // step 1 + not dismissed → do nothing (stay open)
   }
 
   if (dismissed) {
-    // Show a small "Choose training" prompt so user can reopen
     return (
-      <div
-        className="fixed inset-0 z-40 flex items-end justify-center pb-8 pointer-events-none"
-      >
+      <div className="fixed inset-0 z-40 flex items-end justify-center pb-8 pointer-events-none">
         <button
           onClick={() => { setDismissed(false); setStep(1); }}
           className="pointer-events-auto animate-pulse rounded-full bg-sky-500/90 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/40 transition-colors hover:bg-sky-400 cursor-pointer"
         >
-          Choose training mode →
+          {'Choose training mode ->'}
         </button>
       </div>
     );
   }
 
-  function handleModeSelect(mode: TrainingMode) {
+  function handleModeSelect(mode: TrainingMode, unlocked: boolean) {
+    if (!unlocked) return;
     setChosenMode(mode);
     setStep(2);
     setLineExpanded(false);
   }
 
   function handleSelectLine(lineId: string) {
-    const line = opening!.lines.find((l) => l.id === lineId);
+    const line = currentOpening.lines.find((entry) => entry.id === lineId);
     if (!line) return;
     setMode(chosenMode);
     selectLine(line);
   }
 
   function handleRandom() {
-    const lines = opening!.lines;
+    const lines = currentOpening.lines;
     const random = lines[Math.floor(Math.random() * lines.length)];
     setMode(chosenMode);
     selectLine(random);
   }
-
-  function handleBack() {
-    setStep(1);
-    setLineExpanded(false);
-  }
-
-  // Completion summary
-  const totalLines = opening.lines.length;
-  const completedLines = opening.lines.filter((l) =>
-    isLineUnlocked(opening.id, l.id),
-  ).length;
 
   return (
     <div
@@ -85,168 +76,176 @@ export default function TrainingSetupModal() {
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-md w-full mx-4"
+        className="w-full max-w-2xl rounded-2xl border border-slate-700/60 bg-brand-surface p-8 shadow-2xl shadow-black/60"
         onClick={(e) => e.stopPropagation()}
       >
-
         {step === 1 && (
           <>
-            <div className="flex items-center justify-between mb-1">
+            <div className="mb-1 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
-                How do you want to train?
+                Pick your training mode
               </h2>
               <button
                 onClick={() => setDismissed(true)}
-                className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer ml-2"
+                className="ml-2 text-slate-500 transition-colors hover:text-slate-300 cursor-pointer"
                 title="Dismiss"
               >
                 <X size={18} />
               </button>
             </div>
-            <p className="text-slate-400 text-sm mb-1">
-              {opening.name}
+            <p className="text-sm text-slate-400">
+              {currentOpening.name}
             </p>
-            {/* Completion indicator */}
-            {totalLines > 0 && (
-              <div className="flex flex-col items-center mb-5">
-                <span className="text-xs text-slate-500 mb-1.5">
-                  <span className={completedLines > 0 ? 'text-emerald-400 font-semibold' : ''}>
-                    {completedLines}
-                  </span>
-                  /{totalLines} lines completed
-                </span>
-                <div className="w-40 bg-slate-700/60 rounded-full h-1.5">
-                  <div
-                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.round((completedLines / totalLines) * 100)}%` }}
-                  />
+
+            <div className="mt-5 rounded-2xl border border-slate-700/50 bg-slate-900/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Course progress
+                  </div>
+                  <div className="mt-1 text-lg font-bold text-white">
+                    {completedLines}/{totalLines} lines discovered
+                  </div>
+                </div>
+                <div className="text-sm text-emerald-300">
+                  {Math.round((completedLines / Math.max(1, totalLines)) * 100)}%
                 </div>
               </div>
-            )}
+              <div className="mt-3 h-2 rounded-full bg-slate-800">
+                <div
+                  className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
+                  style={{ width: `${Math.round((completedLines / Math.max(1, totalLines)) * 100)}%` }}
+                />
+              </div>
+            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleModeSelect('learn')}
-                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-blue-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-1 text-blue-400">
-                  <BookOpen size={20} />
-                  <div className="text-white font-bold text-sm">Learn</div>
-                </div>
-                <div className="text-slate-400 text-xs">
-                  Play the full line with hints available
-                </div>
-              </button>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {modeCards.map((card) => (
+                <button
+                  key={card.id}
+                  onClick={() => handleModeSelect(card.id, card.unlocked)}
+                  className={`rounded-xl p-4 text-left transition-all ${
+                    card.unlocked
+                      ? 'border border-slate-600/50 bg-slate-800/60 hover:bg-slate-700/60 cursor-pointer'
+                      : 'border border-slate-800 bg-slate-900/70 cursor-default'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className={`mb-1 flex items-center gap-2 ${card.color}`}>
+                        {card.icon}
+                        <div className="text-sm font-bold text-white">{card.label}</div>
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {card.description}
+                      </div>
+                    </div>
+                    {!card.unlocked && <Lock size={15} className="mt-0.5 text-slate-600" />}
+                  </div>
+                  <div className={`mt-3 text-xs font-semibold ${card.unlocked ? 'text-emerald-300' : 'text-slate-500'}`}>
+                    {card.unlocked ? 'Ready' : card.unlockText}
+                  </div>
+                </button>
+              ))}
+            </div>
 
-              <button
-                onClick={() => handleModeSelect('step-by-step')}
-                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-blue-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-1 text-blue-400">
-                  <Layers size={20} />
-                  <div className="text-white font-bold text-sm">Step by Step</div>
-                </div>
-                <div className="text-slate-400 text-xs">
-                  Build up move by move — master one move at a time
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleModeSelect('drill')}
-                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-red-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-1 text-red-400">
-                  <Zap size={20} />
-                  <div className="text-white font-bold text-sm">Drill</div>
-                </div>
-                <div className="text-slate-400 text-xs">
-                  No hints. No mercy. Pure recall under pressure.
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleModeSelect('time-trial')}
-                className="rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-cyan-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-1 text-cyan-400">
-                  <Timer size={20} />
-                  <div className="text-white font-bold text-sm">Time Trial</div>
-                </div>
-                <div className="text-slate-400 text-xs">
-                  60 seconds. Each correct move adds time. Beat the clock.
-                </div>
-              </button>
+            <div className="mt-5 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-4">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Mode ladder
+              </div>
+              <div className="grid gap-2 sm:grid-cols-5">
+                {[
+                  { label: 'Learn', unlocked: modeCards[0].unlocked, icon: <BookOpen size={13} /> },
+                  { label: 'Practice', unlocked: modeCards[1].unlocked, icon: <Layers size={13} /> },
+                  { label: 'Drill', unlocked: modeCards[2].unlocked, icon: <Zap size={13} /> },
+                  { label: 'Top moves', unlocked: completedLines >= 1, icon: <Swords size={13} /> },
+                  { label: 'Speed', unlocked: modeCards[3].unlocked, icon: <Timer size={13} /> },
+                ].map((item, index) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-xl px-3 py-2 text-center text-xs font-semibold ${
+                      item.unlocked ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-500'
+                    }`}
+                  >
+                    <div className="mb-1 flex items-center justify-center gap-1">
+                      <span className={item.unlocked ? 'text-sky-300' : 'text-slate-600'}>{index + 1}</span>
+                      {item.icon}
+                    </div>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
 
         {step === 2 && (
           <>
-            <div className="flex items-center mb-5">
+            <div className="mb-5 flex items-center">
               <button
-                onClick={handleBack}
-                className="text-slate-400 hover:text-white text-sm transition-colors cursor-pointer mr-3"
+                onClick={() => { setStep(1); setLineExpanded(false); }}
+                className="mr-3 text-sm text-slate-400 transition-colors hover:text-white cursor-pointer"
               >
-                ← Back
+                {'<- Back'}
               </button>
-              <h2 className="text-xl font-bold text-white">Choose your line</h2>
+              <div>
+                <h2 className="text-xl font-bold text-white">Choose your line</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  {currentOpening.name} / {modeCards.find((card) => card.id === chosenMode)?.label}
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3">
-              {/* Choose a line — expandable */}
-              <div className="rounded-xl border border-slate-600/50 bg-slate-800/60 overflow-hidden">
+              <div className="overflow-hidden rounded-xl border border-slate-600/50 bg-slate-800/60">
                 <button
-                  onClick={() => setLineExpanded((v) => !v)}
-                  className="w-full p-4 text-left flex items-center justify-between cursor-pointer hover:bg-slate-700/40 transition-colors"
+                  onClick={() => setLineExpanded((value) => !value)}
+                  className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-700/40 cursor-pointer"
                 >
                   <div>
-                    <div className="text-white font-bold text-sm">Choose a line</div>
-                    <div className="text-slate-400 text-xs mt-0.5">
+                    <div className="text-sm font-bold text-white">Choose a line</div>
+                    <div className="mt-0.5 text-xs text-slate-400">
                       Pick a specific variation
                     </div>
                   </div>
-                  <span className="text-slate-400 text-xs ml-2">
-                    {lineExpanded ? '▲' : '▼'}
+                  <span className="ml-2 text-xs text-slate-400">
+                    {lineExpanded ? '^' : 'v'}
                   </span>
                 </button>
 
                 {lineExpanded && (
-                  <div className="border-t border-slate-700/50 divide-y divide-slate-700/40">
-                    {opening.lines.map((line) => {
-                      const unlocked = isLineUnlocked(opening.id, line.id);
-                      const fav = isFavorite(opening.id, line.id);
-                      const due = isDue(opening.id, line.id);
+                  <div className="divide-y divide-slate-700/40 border-t border-slate-700/50">
+                    {currentOpening.lines.map((line) => {
+                      const unlocked = isLineUnlocked(currentOpening.id, line.id);
+                      const fav = isFavorite(currentOpening.id, line.id);
+                      const due = isDue(currentOpening.id, line.id);
                       const showDueBadge = fav && due && enableSRReminders;
+
                       return (
                         <div key={line.id} className="flex items-center">
                           <button
                             onClick={() => handleSelectLine(line.id)}
-                            className="flex-1 px-4 py-3 text-left flex items-center gap-2 hover:bg-slate-700/50 transition-colors cursor-pointer"
+                            className="flex flex-1 items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-slate-700/50 cursor-pointer"
                           >
-                            {/* Completion check */}
                             <span
-                              className={`flex-shrink-0 ${
-                                unlocked ? 'text-emerald-400' : 'text-slate-600'
-                              }`}
+                              className={`flex-shrink-0 ${unlocked ? 'text-emerald-400' : 'text-slate-600'}`}
                               title={unlocked ? 'Completed' : 'Not completed'}
                             >
                               {unlocked
-                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                              }
+                                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>}
                             </span>
-                            <span className="text-slate-200 text-sm">{line.name}</span>
+                            <span className="text-sm text-slate-200">{line.name}</span>
                             {showDueBadge && (
-                              <span className="ml-auto flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-cyan-300 bg-cyan-900/40 border border-cyan-700/40 rounded px-1.5 py-0.5">
+                              <span className="ml-auto flex flex-shrink-0 items-center gap-1 rounded bg-cyan-900/40 px-1.5 py-0.5 text-xs font-semibold text-cyan-300">
                                 <CalendarClock size={12} /> Due
                               </span>
                             )}
                           </button>
-                          {/* Favourite star */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleFavorite(opening.id, line.id);
+                              toggleFavorite(currentOpening.id, line.id);
                             }}
                             title={fav ? 'Remove from favourites' : 'Add to favourites'}
                             className={`px-3 py-3 transition-colors cursor-pointer ${
@@ -254,7 +253,7 @@ export default function TrainingSetupModal() {
                             }`}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                             </svg>
                           </button>
                         </div>
@@ -264,14 +263,13 @@ export default function TrainingSetupModal() {
                 )}
               </div>
 
-              {/* Random line */}
               <button
                 onClick={handleRandom}
-                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 hover:border-sky-500/60 hover:bg-slate-700/60 transition-all p-4 text-left cursor-pointer"
+                className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 p-4 text-left transition-all hover:border-sky-500/60 hover:bg-slate-700/60 cursor-pointer"
               >
-                <div className="text-white font-bold text-sm mb-1">Random line</div>
-                <div className="text-slate-400 text-xs">
-                  Surprise me — pick a random variation
+                <div className="mb-1 text-sm font-bold text-white">Random line</div>
+                <div className="text-xs text-slate-400">
+                  Surprise me and launch a random variation
                 </div>
               </button>
             </div>
@@ -280,4 +278,45 @@ export default function TrainingSetupModal() {
       </div>
     </div>
   );
+}
+
+function getModeCards(setupComplete: boolean, completedLines: number) {
+  return [
+    {
+      id: 'learn' as TrainingMode,
+      label: 'Learn',
+      description: 'Hints on. Best for first passes through a line.',
+      unlocked: true,
+      unlockText: '',
+      color: 'text-sky-400',
+      icon: <BookOpen size={20} />,
+    },
+    {
+      id: 'step-by-step' as TrainingMode,
+      label: 'Practice',
+      description: 'Build the line in chunks and lock in the sequence.',
+      unlocked: setupComplete,
+      unlockText: 'Finish setup to unlock',
+      color: 'text-sky-400',
+      icon: <Layers size={20} />,
+    },
+    {
+      id: 'drill' as TrainingMode,
+      label: 'Drill',
+      description: 'No hints. Pure recall once one line is discovered.',
+      unlocked: completedLines >= 1,
+      unlockText: 'Complete 1 line to unlock',
+      color: 'text-emerald-400',
+      icon: <Zap size={20} />,
+    },
+    {
+      id: 'time-trial' as TrainingMode,
+      label: 'Speed',
+      description: 'Race the clock once you know a few lines.',
+      unlocked: completedLines >= 3,
+      unlockText: 'Complete 3 lines to unlock',
+      color: 'text-cyan-400',
+      icon: <Timer size={20} />,
+    },
+  ];
 }

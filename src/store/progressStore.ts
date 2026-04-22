@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ProgressState, OpeningProgress, LineProgress } from '../types';
+import { useProgressionStore } from './progressionStore';
 
 interface ProgressActions {
   markSetupComplete(openingId: string): void;
@@ -46,6 +47,9 @@ export const useProgressStore = create<FullProgressState & ProgressActions>()(
       markSetupComplete(openingId) {
         set((state) => {
           const existing = state.openings[openingId] ?? defaultOpeningProgress(openingId);
+          if (!existing.setupCompleted) {
+            useProgressionStore.getState().awardSetup(openingId);
+          }
           return {
             openings: {
               ...state.openings,
@@ -84,6 +88,7 @@ export const useProgressStore = create<FullProgressState & ProgressActions>()(
             },
           };
         });
+        useProgressionStore.getState().awardLineCompletion(openingId, lineId, mistakes);
       },
 
       recordSpacedRepetition(openingId, lineId, perfect) {
