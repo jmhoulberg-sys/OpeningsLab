@@ -164,7 +164,9 @@ export default function App() {
 
             {opening && (
               <>
-                <OpeningInfoPanel opening={opening} isLineUnlocked={isLineUnlocked} />
+                <div className="px-4 pt-4">
+                  <OpeningInfoPanel opening={opening} isLineUnlocked={isLineUnlocked} />
+                </div>
 
                 {phase === 'setup' && (
                   <SetupBanner opening={opening} />
@@ -231,7 +233,7 @@ function OpeningInfoPanel({
   const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
 
   return (
-    <div className="px-4 pb-3 pt-4">
+    <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 px-4 pb-4 pt-4">
       <div className="mb-1 text-xs font-bold uppercase tracking-widest text-stone-500">
         Opening
       </div>
@@ -267,9 +269,12 @@ function SetupBanner({ opening }: { opening: { setupMoves: string[] } }) {
   const pct = Math.round((done / total) * 100);
 
   return (
-    <div className="bg-sky-400/8 px-4 py-3">
-      <div className="mb-1.5 text-xs font-semibold text-sky-300">
-        Setup: play the opening moves ({done}/{total})
+    <div className="mx-4 rounded-[20px] border border-sky-400/12 bg-sky-400/8 px-4 py-3">
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-300">
+        Step 1 of 2
+      </div>
+      <div className="mb-1.5 text-xs font-semibold text-stone-100">
+        Learn setup position ({done}/{total})
       </div>
       <div className="h-1.5 w-full rounded-full bg-stone-700/50">
         <div

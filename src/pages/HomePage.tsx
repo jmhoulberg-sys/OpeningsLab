@@ -55,7 +55,7 @@ export default function HomePage({
   const quests = getQuestProgress(todayProgress);
   const questsComplete = quests.filter((quest) => quest.progress >= quest.target).length;
 
-  const openingSummaries = OPENINGS.map((opening) => {
+  const openingSummaries: OpeningSummary[] = OPENINGS.map((opening) => {
     const progress = openingProgress[opening.id];
     const linesProgress = progress?.lines ?? {};
     const completedLines = opening.lines.filter((line) => linesProgress[line.id]?.unlocked).length;
@@ -66,22 +66,26 @@ export default function HomePage({
       opening,
       totalLines,
       completedLines,
-      firstLine: opening.lines[0],
+      firstLine: opening.lines[0] ?? null,
       setupComplete: progress?.setupCompleted ?? false,
       dueLines,
       masteryPct: totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0,
-      statusLabel: getOpeningStatusLabel(progress?.setupCompleted ?? false, completedLines, totalLines),
+      statusLabel: totalLines === 0
+        ? 'Coming soon'
+        : getOpeningStatusLabel(progress?.setupCompleted ?? false, completedLines, totalLines),
       modeUnlocks: getModeUnlocks(progress?.setupCompleted ?? false, completedLines),
     } satisfies OpeningSummary;
   });
 
   const featuredOpenings = FEATURED_OPENING_IDS
     .map((id) => openingSummaries.find((summary) => summary.opening.id === id))
-    .filter((summary): summary is OpeningSummary => Boolean(summary));
+    .filter((summary): summary is OpeningSummary => summary !== undefined);
 
   const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
   const reviewSummary = getDueReviewSummary(openingSummaries, openingProgress, isDue);
-  const nextOpening = openingSummaries.find((summary) => !summary.setupComplete) ?? openingSummaries[0];
+  const nextOpening = openingSummaries.find((summary) => summary.firstLine && !summary.setupComplete)
+    ?? openingSummaries.find((summary) => summary.firstLine)
+    ?? openingSummaries[0];
   const dueCount = countDueReviews(openingSummaries);
 
   const heroPrimaryLabel = continueSummary ? 'Continue Training' : HOME_HERO.primaryCta;
@@ -96,7 +100,7 @@ export default function HomePage({
       return;
     }
 
-    const defaultOpening = featuredOpenings[0]?.opening ?? OPENINGS[0];
+    const defaultOpening = featuredOpenings[0]?.opening ?? OPENINGS.find((opening) => opening.lines.length > 0);
     if (defaultOpening) onSelectOpening(defaultOpening);
   }
 
@@ -130,7 +134,7 @@ export default function HomePage({
       ? `${dueCount} line${dueCount === 1 ? '' : 's'} due across your openings`
       : 'Nothing due yet. Keep building new lines.',
     newOpening: nextOpening?.opening,
-    newLine: nextOpening?.firstLine,
+    newLine: nextOpening?.firstLine ?? undefined,
   };
 
   return (
@@ -307,6 +311,7 @@ function getContinueTrainingSummary(
   const continueLine =
     next.opening.lines.find((line) => openingProgress?.lines[line.id]?.unlocked) ??
     next.firstLine;
+  if (!continueLine) return undefined;
 
   return {
     opening: next.opening,

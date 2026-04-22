@@ -82,9 +82,14 @@ export default function TrainingSetupModal() {
         {step === 1 && (
           <>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">
-                Pick your training mode
-              </h2>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-300">
+                  Step 2 of 2
+                </div>
+                <h2 className="mt-1 text-xl font-bold text-white">
+                  Learn the main line
+                </h2>
+              </div>
               <button
                 onClick={() => setDismissed(true)}
                 className="ml-2 text-slate-500 transition-colors hover:text-slate-300 cursor-pointer"
@@ -94,7 +99,7 @@ export default function TrainingSetupModal() {
               </button>
             </div>
             <p className="text-sm text-slate-400">
-              {currentOpening.name}
+              Setup is complete. Choose how you want to learn the main line from here.
             </p>
 
             <div className="mt-5 rounded-2xl border border-slate-700/50 bg-slate-900/60 p-4">

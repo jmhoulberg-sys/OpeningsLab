@@ -30,7 +30,7 @@ export interface OpeningSummary {
   opening: Opening;
   totalLines: number;
   completedLines: number;
-  firstLine: OpeningLine;
+  firstLine: OpeningLine | null;
   setupComplete: boolean;
   dueLines: number;
   masteryPct: number;
@@ -478,15 +478,19 @@ function OpeningCard({
   const { opening, totalLines, completedLines, firstLine, masteryPct, statusLabel, modeUnlocks } = summary;
   const setupFen = fenAfterMoves(opening.setupMoves);
   const cardTitleHeight = compact ? 'min-h-[76px]' : 'min-h-[84px]';
+  const isComingSoon = !firstLine;
 
   return (
     <article className="flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
       <button
-        onClick={() => onStartLine(opening, firstLine)}
-        className="group cursor-pointer overflow-hidden rounded-[20px] text-left"
-        aria-label={`Start ${opening.name}`}
+        onClick={() => {
+          if (firstLine) onStartLine(opening, firstLine);
+        }}
+        disabled={isComingSoon}
+        className={`group overflow-hidden rounded-[20px] text-left ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer'}`}
+        aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       >
-        <BoardPreview opening={opening} fen={setupFen} overlayLabel="Try first line" />
+        <BoardPreview opening={opening} fen={setupFen} overlayLabel={isComingSoon ? 'Coming soon' : 'Try first line'} />
       </button>
 
       <div className={`mt-3 grid items-start gap-2 ${compact ? '' : ''}`} style={{ gridTemplateColumns: '1fr auto' }}>
@@ -494,7 +498,7 @@ function OpeningCard({
           <h3 className="line-clamp-2 text-[1.55rem] font-bold leading-[1.02] text-white md:text-[1.7rem]">
             {opening.name}
           </h3>
-          <div className="mt-2 text-sm text-stone-400">{totalLines} lines</div>
+          <div className="mt-2 text-sm text-stone-400">{isComingSoon ? 'Coming soon' : `${totalLines} lines`}</div>
         </div>
         <span className="rounded-full bg-stone-800 px-3 py-1 text-xs font-semibold text-stone-200">
           {statusLabel}
@@ -509,31 +513,47 @@ function OpeningCard({
       </div>
 
       <div className="mt-2 flex items-center justify-between text-xs text-stone-400">
-        <span>{completedLines}/{totalLines} complete</span>
-        <span>{masteryPct}% mastery</span>
+        <span>{isComingSoon ? 'Placeholder opening' : `${completedLines}/${totalLines} complete`}</span>
+        <span>{isComingSoon ? 'More soon' : `${masteryPct}% mastery`}</span>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <ModePill icon={<Play size={12} />} label="Learn" unlocked={modeUnlocks.learn} />
-        <ModePill icon={<ChevronRight size={12} />} label="Practice" unlocked={modeUnlocks.practice} />
-        <ModePill icon={<Zap size={12} />} label="Drill" unlocked={modeUnlocks.drill} />
-        <ModePill icon={<Swords size={12} />} label="Top moves" unlocked={modeUnlocks.topResponses} />
-        <ModePill icon={<TimerReset size={12} />} label="Speed" unlocked={modeUnlocks.speed} />
-      </div>
+      {!isComingSoon && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <ModePill icon={<Play size={12} />} label="Learn" unlocked={modeUnlocks.learn} />
+          <ModePill icon={<ChevronRight size={12} />} label="Practice" unlocked={modeUnlocks.practice} />
+          <ModePill icon={<Zap size={12} />} label="Drill" unlocked={modeUnlocks.drill} />
+          <ModePill icon={<Swords size={12} />} label="Top moves" unlocked={modeUnlocks.topResponses} />
+          <ModePill icon={<TimerReset size={12} />} label="Speed" unlocked={modeUnlocks.speed} />
+        </div>
+      )}
 
       <div className="mt-4 flex gap-2">
         <button
-          onClick={() => onStartLine(opening, firstLine)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+          onClick={() => {
+            if (firstLine) onStartLine(opening, firstLine);
+          }}
+          disabled={isComingSoon}
+          className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+            isComingSoon
+              ? 'bg-stone-800 text-stone-500 cursor-not-allowed'
+              : 'bg-sky-500 text-slate-950 hover:bg-sky-400 cursor-pointer'
+          }`}
         >
           <Play size={15} />
-          Try first line
+          {isComingSoon ? 'Coming soon' : 'Try first line'}
         </button>
         <button
-          onClick={() => onOpenOpening(opening)}
-          className="inline-flex items-center justify-center rounded-xl bg-stone-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-700 cursor-pointer"
+          onClick={() => {
+            if (!isComingSoon) onOpenOpening(opening);
+          }}
+          disabled={isComingSoon}
+          className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+            isComingSoon
+              ? 'bg-stone-800/70 text-stone-500 cursor-not-allowed'
+              : 'bg-stone-800 text-white hover:bg-stone-700 cursor-pointer'
+          }`}
         >
-          Open
+          {isComingSoon ? 'Soon' : 'Open'}
         </button>
       </div>
     </article>

@@ -580,19 +580,35 @@ function BoardNavRow({
   const hideHint = mode === 'drill' || mode === 'time-trial';
   const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
 
-  const sqPx = boardSize / 8;
   const showHintBtn = canHint && !hintSquare && !showingCorrectMove;
   const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
 
   return (
-    <div className="flex items-center justify-between gap-2" style={{ width: boardSize, maxWidth: '100%' }}>
-      <div style={{ width: sqPx }} className="flex-shrink-0">
-        {mistakes > 0 && (
-          <span className="text-xs font-bold text-rose-300">x {mistakes}</span>
+    <div className="flex w-full max-w-full items-center gap-2" style={{ maxWidth: boardSize }}>
+      <div className="flex min-w-0 flex-1 items-center justify-start">
+        {!hideHint && showHintBtn && (
+          <button
+            onClick={showHint}
+            title="Hint"
+            className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-400 to-emerald-300 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-300 hover:to-emerald-200 cursor-pointer"
+          >
+            <Lightbulb size={14} />
+            Hint
+          </button>
+        )}
+        {!hideHint && showAnswerBtn && (
+          <button
+            onClick={showAnswer}
+            title="Show answer"
+            className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-400 hover:to-emerald-300 cursor-pointer"
+          >
+            <Sparkles size={14} />
+            Answer
+          </button>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
         <NavButton
           onClick={goBack}
           disabled={!canBack}
@@ -613,29 +629,10 @@ function BoardNavRow({
         )}
       </div>
 
-      <div style={{ width: Math.max(sqPx, 104) }} className="flex flex-shrink-0 justify-end">
-        {!hideHint && showHintBtn && (
-          <button
-            onClick={showHint}
-            title="Hint"
-            style={{ minWidth: Math.max(sqPx, 84), height: 38 }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-400 to-emerald-300 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-300 hover:to-emerald-200 cursor-pointer"
-          >
-            <Lightbulb size={14} />
-            Hint
-          </button>
-        )}
-        {!hideHint && showAnswerBtn && (
-          <button
-            onClick={showAnswer}
-            title="Show answer"
-            style={{ minWidth: Math.max(sqPx, 92), height: 38 }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300/20 bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 text-xs font-semibold text-slate-950 shadow-[0_10px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:from-emerald-400 hover:to-emerald-300 cursor-pointer"
-          >
-            <Sparkles size={14} />
-            Answer
-          </button>
-        )}
+      <div className="flex min-w-0 flex-1 justify-end">
+        <span className={`text-xs font-bold ${mistakes > 0 ? 'text-rose-300' : 'text-stone-500'}`}>
+          Mistakes {mistakes}
+        </span>
       </div>
     </div>
   );
@@ -657,7 +654,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/55 bg-stone-800/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-700/95 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-600/55 bg-stone-800/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-700/95 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>

@@ -25,12 +25,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     showEvalBar,
     setShowEvalBar,
   } = useSettingsStore();
-  const { profileId, displayName, setDisplayName, exportData, importData, isLoggedIn, login, logout } = useProfileStore();
+  const { displayName, setDisplayName, isLoggedIn, login, logout } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
-  const [importCode, setImportCode] = useState('');
-  const [importError, setImportError] = useState(false);
-  const [exported, setExported] = useState(false);
 
   function handleReset() {
     reset();
@@ -45,19 +42,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   function handleClose() {
     setConfirmReset(false);
     onClose();
-  }
-
-  function handleExport() {
-    const code = exportData();
-    if (!code) return;
-    navigator.clipboard.writeText(code).catch(() => {});
-    setExported(true);
-    setTimeout(() => setExported(false), 2500);
-  }
-
-  function handleImport() {
-    const ok = importData(importCode);
-    if (!ok) setImportError(true);
   }
 
   return (
@@ -130,45 +114,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 className="w-full rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
               />
             </div>
-
-            <div
-              className="mb-3 truncate rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 font-mono text-xs text-stone-500"
-              title={`Local profile ID: ${profileId}`}
-            >
-              Local ID: {profileId.slice(0, 12)}...
-            </div>
-
-            <button
-              onClick={handleExport}
-              className="mb-2 w-full rounded-xl border border-stone-700/45 bg-stone-800 py-2.5 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 cursor-pointer"
-            >
-              {exported ? 'Copied to clipboard' : 'Copy backup code'}
-            </button>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={importCode}
-                onChange={(e) => {
-                  setImportCode(e.target.value);
-                  setImportError(false);
-                }}
-                placeholder="Paste backup code..."
-                className="min-w-0 flex-1 rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
-              />
-              <button
-                onClick={handleImport}
-                disabled={!importCode.trim()}
-                className="flex-shrink-0 rounded-xl bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 disabled:opacity-40 cursor-pointer"
-              >
-                Import
-              </button>
-            </div>
-            {importError && (
-              <p className="mt-1.5 text-xs text-rose-300">
-                Invalid sync code. Please check and try again.
-              </p>
-            )}
           </section>
 
           <section>

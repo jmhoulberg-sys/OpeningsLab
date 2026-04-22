@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
-  const { opening, selectedLine, phase, mistakes } = useTrainingStore();
+  const { opening, selectedLine, phase } = useTrainingStore();
   const { isLoggedIn, displayName, login } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
@@ -76,14 +76,6 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
               {isLoggedIn ? `${xpToNext} XP to next` : 'Track XP and streaks'}
             </div>
           </div>
-          {phase === 'training' && (
-            <div className="hidden items-center gap-1.5 text-sm sm:flex">
-              <span className="text-stone-400">Mistakes</span>
-              <span className={`font-bold tabular-nums ${mistakes > 0 ? 'text-rose-300' : 'text-stone-200'}`}>
-                {mistakes}
-              </span>
-            </div>
-          )}
           <PhaseBadge phase={phase} />
           {isLoggedIn ? (
             <button

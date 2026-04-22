@@ -22,9 +22,7 @@ export default function MoveList() {
 
   useEffect(() => {
     if (viewMoveIndex !== null && containerRef.current) {
-      const el = containerRef.current.querySelector(
-        `[data-move-index="${viewMoveIndex}"]`,
-      );
+      const el = containerRef.current.querySelector(`[data-move-index="${viewMoveIndex}"]`);
       el?.scrollIntoView({ block: 'nearest' });
     }
   }, [viewMoveIndex]);
@@ -48,14 +46,14 @@ export default function MoveList() {
   const highlightIdx = viewMoveIndex;
 
   return (
-    <div className="flex h-full flex-col">
-      <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+    <div className="flex h-full flex-col rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-4">
+      <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
         Moves
       </h3>
 
       <div ref={containerRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
         {pairs.length === 0 && (
-          <p className="text-xs italic text-slate-500">No moves yet.</p>
+          <p className="text-xs italic text-stone-500">No moves yet.</p>
         )}
 
         <div className="space-y-0.5">
@@ -63,16 +61,16 @@ export default function MoveList() {
             <div key={pair.number}>
               {freePlayPairStart !== null && pairIdx === freePlayPairStart && (
                 <div className="my-1.5 flex items-center gap-2">
-                  <div className="h-px flex-1 bg-emerald-700/50" />
+                  <div className="h-px flex-1 bg-emerald-700/30" />
                   <span className="shrink-0 select-none text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Free play
                   </span>
-                  <div className="h-px flex-1 bg-emerald-700/50" />
+                  <div className="h-px flex-1 bg-emerald-700/30" />
                 </div>
               )}
 
               <div className="grid grid-cols-[28px_1fr_1fr] gap-1 text-sm">
-                <span className="select-none pt-0.5 text-xs text-slate-500">
+                <span className="select-none pt-0.5 text-xs text-stone-500">
                   {pair.number}.
                 </span>
 
@@ -112,10 +110,10 @@ export default function MoveList() {
       </div>
 
       {phase === 'training' && (
-        <div className="mt-2 border-t border-slate-700/50 pt-2 text-xs text-slate-500 select-none">
+        <div className="mt-3 border-t border-stone-800/70 pt-3 text-xs text-stone-500 select-none">
           {playedMoves.length} half-move{playedMoves.length !== 1 ? 's' : ''} played
           {viewMoveIndex !== null && (
-            <span className="ml-1 text-sky-400">· reviewing</span>
+            <span className="ml-1 text-sky-400">/ reviewing</span>
           )}
         </div>
       )}
@@ -144,8 +142,8 @@ function MoveChip({
     (color === 'white' && opening.playerColor === 'white') ||
     (color === 'black' && opening.playerColor === 'black');
 
-  let textClass = isPlayerMove ? 'text-emerald-300 font-semibold' : 'text-slate-300';
-  if (isFreePlay) textClass = 'text-emerald-600 italic';
+  let textClass = isPlayerMove ? 'text-emerald-300 font-semibold' : 'text-stone-300';
+  if (isFreePlay) textClass = 'text-emerald-500 italic';
 
   return (
     <button
@@ -155,7 +153,7 @@ function MoveChip({
         w-full rounded px-1.5 py-0.5 text-left font-mono text-xs transition-colors cursor-pointer
         ${isHighlighted
           ? 'bg-sky-500/20 text-sky-300 font-bold'
-          : `hover:bg-slate-700/50 ${textClass}`
+          : `hover:bg-stone-800/80 ${textClass}`
         }
       `}
     >

@@ -15,8 +15,8 @@ export default function ControlPanel() {
   const canGoBack = phase === 'training' || phase === 'completed';
 
   return (
-    <div className="space-y-2">
-      <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-stone-400">
+    <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-4">
+      <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
         Actions {streak >= 2 && phase === 'training' && !postLine && (
           <span className="ml-1 text-emerald-300 font-bold normal-case tracking-normal">{streak}</span>
         )}
