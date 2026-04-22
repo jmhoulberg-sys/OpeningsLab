@@ -12,7 +12,9 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   const { opening, selectedLine, phase, mistakes } = useTrainingStore();
   const { isLoggedIn, displayName, login } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
-  const accountLabel = displayName.trim() || 'Opening Player';
+  const accountLabel = typeof displayName === 'string' && displayName.trim()
+    ? displayName.trim()
+    : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
   const xpToNext = Math.max(0, levelInfo.nextLevelXp - xpTotal);
 

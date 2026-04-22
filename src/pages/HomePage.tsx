@@ -48,7 +48,9 @@ export default function HomePage({
   const { isLoggedIn, displayName, login } = useProfileStore();
   const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
-  const accountLabel = displayName.trim() || 'Opening Player';
+  const accountLabel = typeof displayName === 'string' && displayName.trim()
+    ? displayName.trim()
+    : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
   const todayProgress = getTodayProgress(daily);
   const weeklyXp = getWeeklyXp(daily);

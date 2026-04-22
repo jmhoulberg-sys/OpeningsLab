@@ -22,6 +22,28 @@ interface ProfileState {
   importData: (code: string) => boolean;
 }
 
+interface PersistedProfileState {
+  profileId?: unknown;
+  displayName?: unknown;
+  isLoggedIn?: unknown;
+}
+
+function asString(value: unknown, fallback = '') {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function sanitiseProfileState(state?: PersistedProfileState) {
+  return {
+    profileId: asString(state?.profileId, generateId()),
+    displayName: asString(state?.displayName),
+    isLoggedIn: asBoolean(state?.isLoggedIn),
+  };
+}
+
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set, get) => ({
@@ -89,6 +111,12 @@ export const useProfileStore = create<ProfileState>()(
         }
       },
     }),
-    { name: 'openingslab-profile-v1' },
+    {
+      name: 'openingslab-profile-v1',
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...sanitiseProfileState(persistedState as PersistedProfileState | undefined),
+      }),
+    },
   ),
 );

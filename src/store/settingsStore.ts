@@ -47,6 +47,36 @@ interface SettingsActions {
   setShowEvalBar(v: boolean): void;
 }
 
+interface PersistedSettingsState {
+  restartFrom?: unknown;
+  minRating?: unknown;
+  topMovesToInclude?: unknown;
+  enableSRReminders?: unknown;
+  showEvalBar?: unknown;
+}
+
+function asNumber(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback: boolean) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
+  const restartFrom = state?.restartFrom === 'start' || state?.restartFrom === 'setup'
+    ? state.restartFrom
+    : 'setup';
+
+  return {
+    restartFrom,
+    minRating: asNumber(state?.minRating, 0),
+    topMovesToInclude: Math.min(5, Math.max(1, asNumber(state?.topMovesToInclude, 3))),
+    enableSRReminders: asBoolean(state?.enableSRReminders, true),
+    showEvalBar: asBoolean(state?.showEvalBar, true),
+  };
+}
+
 // ─── Store ──────────────────────────────────────────────────────────
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
@@ -63,6 +93,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
       setShowEvalBar: (v) => set({ showEvalBar: v }),
     }),
-    { name: 'openingslab-settings-v1' },
+    {
+      name: 'openingslab-settings-v1',
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...sanitiseSettingsState(persistedState as PersistedSettingsState | undefined),
+      }),
+    },
   ),
 );

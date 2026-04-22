@@ -17,8 +17,12 @@ interface ProgressActions {
 }
 
 interface FullProgressState extends ProgressState {
-  /** openingId → set of favourite lineIds (stored as string[]) */
   favorites: Record<string, string[]>;
+}
+
+interface PersistedProgressStore {
+  openings?: unknown;
+  favorites?: unknown;
 }
 
 const defaultOpeningProgress = (openingId: string): OpeningProgress => ({
@@ -36,14 +40,78 @@ const defaultLineProgress = (lineId: string): LineProgress => ({
   nextReviewDate: null,
 });
 
+function asBoolean(value: unknown, fallback = false) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function asFiniteNumber(value: unknown, fallback = 0) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function asNullableString(value: unknown) {
+  return typeof value === 'string' ? value : null;
+}
+
+function asStringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function sanitiseLineProgress(lineId: string, value: unknown): LineProgress {
+  if (!value || typeof value !== 'object') return defaultLineProgress(lineId);
+  const line = value as Partial<LineProgress>;
+  return {
+    lineId,
+    unlocked: asBoolean(line.unlocked),
+    bestMistakes: typeof line.bestMistakes === 'number' ? line.bestMistakes : Infinity,
+    attempts: asFiniteNumber(line.attempts, 0),
+    srInterval: asFiniteNumber(line.srInterval, 0),
+    nextReviewDate: asNullableString(line.nextReviewDate),
+  };
+}
+
+function sanitiseOpeningProgress(openingId: string, value: unknown): OpeningProgress {
+  if (!value || typeof value !== 'object') return defaultOpeningProgress(openingId);
+  const opening = value as Partial<OpeningProgress> & { lines?: unknown };
+  const lines = opening.lines && typeof opening.lines === 'object'
+    ? Object.fromEntries(
+      Object.entries(opening.lines).map(([lineId, lineValue]) => [lineId, sanitiseLineProgress(lineId, lineValue)]),
+    )
+    : {};
+
+  return {
+    openingId,
+    setupCompleted: asBoolean(opening.setupCompleted),
+    lines,
+  };
+}
+
+function sanitiseOpenings(value: unknown): Record<string, OpeningProgress> {
+  if (!value || typeof value !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([openingId, openingValue]) => [openingId, sanitiseOpeningProgress(openingId, openingValue)]),
+  );
+}
+
+function sanitiseFavorites(value: unknown): Record<string, string[]> {
+  if (!value || typeof value !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([openingId, lineIds]) => [openingId, asStringArray(lineIds)]),
+  );
+}
+
+function sanitiseProgressStore(state?: PersistedProgressStore): FullProgressState {
+  return {
+    openings: sanitiseOpenings(state?.openings),
+    favorites: sanitiseFavorites(state?.favorites),
+  };
+}
+
 export const useProgressStore = create<FullProgressState & ProgressActions>()(
   persist(
     (set, get) => ({
-      // ── State ──────────────────────────────────────────────────────
       openings: {},
       favorites: {},
 
-      // ── Actions ────────────────────────────────────────────────────
       markSetupComplete(openingId) {
         set((state) => {
           const existing = state.openings[openingId] ?? defaultOpeningProgress(openingId);
@@ -97,18 +165,10 @@ export const useProgressStore = create<FullProgressState & ProgressActions>()(
           const existing = opening.lines[lineId] ?? defaultLineProgress(lineId);
 
           const today = new Date();
-          let newInterval: number;
-          let nextDate: string;
-
-          if (perfect) {
-            newInterval = Math.max(1, existing.srInterval * 2);
-          } else {
-            newInterval = 1;
-          }
-
+          const newInterval = perfect ? Math.max(1, existing.srInterval * 2) : 1;
           const next = new Date(today);
           next.setDate(today.getDate() + newInterval);
-          nextDate = next.toISOString().split('T')[0];
+          const nextDate = next.toISOString().split('T')[0];
 
           return {
             openings: {
@@ -168,6 +228,10 @@ export const useProgressStore = create<FullProgressState & ProgressActions>()(
     }),
     {
       name: 'openingslab-progress-v1',
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...sanitiseProgressStore(persistedState as PersistedProgressStore | undefined),
+      }),
     },
   ),
 );
