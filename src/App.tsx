@@ -21,7 +21,7 @@ const BOARD_CHROME_H = 180;
 const EVAL_BAR_W = 24;
 
 export default function App() {
-  const { opening, phase, postLine, postLineOutOfBook, mode, streak, startOpening, selectLine } = useTrainingStore();
+  const { opening, phase, postLine, postLineOutOfBook, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
@@ -79,15 +79,12 @@ export default function App() {
     startOpening(selectedOpening);
   }
 
-  function handleStartOpeningLine(selectedOpening: Opening, line: OpeningLine) {
+  function handleStartOpeningLine(selectedOpening: Opening, _line: OpeningLine) {
     if (!startedRef.current) {
       startedRef.current = true;
     }
     setShowHome(false);
     startOpening(selectedOpening);
-    setTimeout(() => {
-      selectLine(line);
-    }, 0);
   }
 
   function handleGoHome() {
@@ -118,7 +115,7 @@ export default function App() {
       <main ref={mainRef} className="relative flex min-h-0 flex-1 overflow-hidden">
         <div
           ref={boardContainerRef}
-          className="flex flex-1 min-w-0 items-center justify-center overflow-hidden px-2 py-2 sm:px-3 sm:py-3"
+          className="flex flex-1 min-w-0 items-start justify-center overflow-hidden px-2 py-4 sm:px-3 sm:py-6"
         >
           <ChessBoardPanel boardSize={boardSize} />
         </div>
