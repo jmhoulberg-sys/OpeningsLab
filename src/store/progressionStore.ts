@@ -37,6 +37,13 @@ interface ProgressionActions {
   reset(): void;
 }
 
+interface PersistedProgressionState {
+  xpTotal?: unknown;
+  setupAwards?: unknown;
+  discoveredLines?: unknown;
+  daily?: unknown;
+}
+
 function getTodayKey() {
   return new Date().toISOString().split('T')[0];
 }
@@ -51,14 +58,50 @@ function defaultDaily(): DailyProgress {
   };
 }
 
+function asNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function asStringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function sanitiseDaily(value: unknown): DailyProgress {
+  if (!value || typeof value !== 'object') return defaultDaily();
+  const entry = value as Partial<DailyProgress>;
+  return {
+    xp: asNumber(entry.xp),
+    sessions: asNumber(entry.sessions),
+    linesCompleted: asStringArray(entry.linesCompleted),
+    perfectLines: asStringArray(entry.perfectLines),
+    topResponseWins: asNumber(entry.topResponseWins),
+  };
+}
+
+function sanitiseDailyRecord(value: unknown): Record<string, DailyProgress> {
+  if (!value || typeof value !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([key, daily]) => [key, sanitiseDaily(daily)]),
+  );
+}
+
+function sanitiseState(state?: PersistedProgressionState): ProgressionState {
+  return {
+    xpTotal: asNumber(state?.xpTotal),
+    setupAwards: asStringArray(state?.setupAwards),
+    discoveredLines: asStringArray(state?.discoveredLines),
+    daily: sanitiseDailyRecord(state?.daily),
+  };
+}
+
 function updateDaily(
   state: ProgressionState,
   todayKey: string,
   updater: (daily: DailyProgress) => DailyProgress,
 ) {
-  const current = state.daily[todayKey] ?? defaultDaily();
+  const current = sanitiseDaily(state.daily[todayKey]);
   return {
-    ...state.daily,
+    ...sanitiseDailyRecord(state.daily),
     [todayKey]: updater(current),
   };
 }
@@ -81,7 +124,7 @@ export function getLevelInfo(xpTotal: number): LevelInfo {
 }
 
 export function getWeeklyXp(daily: Record<string, DailyProgress>) {
-  const entries = Object.entries(daily);
+  const entries = Object.entries(sanitiseDailyRecord(daily));
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 6);
   const cutoffKey = cutoff.toISOString().split('T')[0];
@@ -92,27 +135,28 @@ export function getWeeklyXp(daily: Record<string, DailyProgress>) {
 }
 
 export function getTodayProgress(daily: Record<string, DailyProgress>) {
-  return daily[getTodayKey()] ?? defaultDaily();
+  return sanitiseDaily(daily?.[getTodayKey()]);
 }
 
 export function getQuestProgress(daily: DailyProgress) {
+  const safeDaily = sanitiseDaily(daily);
   return [
     {
       id: 'three-lines',
       label: 'Complete 3 lines',
-      progress: Math.min(3, daily.linesCompleted.length),
+      progress: Math.min(3, safeDaily.linesCompleted.length),
       target: 3,
     },
     {
       id: 'perfect-line',
       label: 'Perfect 1 line',
-      progress: Math.min(1, daily.perfectLines.length),
+      progress: Math.min(1, safeDaily.perfectLines.length),
       target: 1,
     },
     {
       id: 'top-response',
       label: 'Win 1 top response run',
-      progress: Math.min(1, daily.topResponseWins),
+      progress: Math.min(1, safeDaily.topResponseWins),
       target: 1,
     },
   ];
@@ -196,6 +240,12 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
         });
       },
     }),
-    { name: 'openingslab-progression-v1' },
+    {
+      name: 'openingslab-progression-v1',
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...sanitiseState(persistedState as PersistedProgressionState | undefined),
+      }),
+    },
   ),
 );
