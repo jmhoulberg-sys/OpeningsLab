@@ -14,7 +14,6 @@ export default function LineSelector({ opening }: LineSelectorProps) {
   const setupDone = isSetupComplete(opening.id);
   const totalLines = opening.lines.length;
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
-  const nextLearnableLineId = opening.lines.find((line) => !isLineUnlocked(opening.id, line.id))?.id ?? null;
 
   return (
     <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 p-3">
@@ -48,10 +47,9 @@ export default function LineSelector({ opening }: LineSelectorProps) {
             isSelected={selectedLine?.id === line.id}
             isSetupDone={setupDone}
             isUnlocked={isLineUnlocked(opening.id, line.id)}
-            isNextLearnable={setupDone && nextLearnableLineId === line.id}
             progress={getLineProgress(opening.id, line.id)}
             onSelect={() => {
-              if (setupDone && (isLineUnlocked(opening.id, line.id) || nextLearnableLineId === line.id)) {
+              if (setupDone) {
                 selectLine(line);
               }
             }}
@@ -107,7 +105,6 @@ interface LineRowProps {
   isSelected: boolean;
   isSetupDone: boolean;
   isUnlocked: boolean;
-  isNextLearnable: boolean;
   progress: LineProgress | undefined;
   onSelect: () => void;
 }
@@ -118,12 +115,11 @@ function LineRow({
   isSelected,
   isSetupDone,
   isUnlocked,
-  isNextLearnable,
   progress,
   onSelect,
 }: LineRowProps) {
   const { toggleFavorite, isFavorite } = useProgressStore();
-  const locked = !isSetupDone || (!isUnlocked && !isNextLearnable);
+  const locked = !isSetupDone;
   const favorite = isFavorite(openingId, line.id);
 
   function handleFavorite(e: React.MouseEvent) {
@@ -142,15 +138,20 @@ function LineRow({
             ? 'border-sky-500/45 bg-sky-500/10 text-white shadow-md shadow-sky-500/10'
             : isUnlocked
               ? 'border-emerald-500/20 bg-emerald-500/8 text-stone-100 hover:border-emerald-400/35 hover:bg-emerald-500/12 cursor-pointer'
-              : 'border-sky-500/20 bg-sky-500/8 text-stone-100 hover:border-sky-400/35 hover:bg-sky-500/12 cursor-pointer'
+              : 'border-stone-700/60 bg-stone-900/85 text-stone-200 hover:border-stone-600 hover:bg-stone-800/85 cursor-pointer'
       }`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={isUnlocked ? 'text-emerald-400' : locked ? 'text-stone-600' : 'text-sky-300'}>
-            {isUnlocked ? <Check size={14} strokeWidth={3} /> : locked ? <Lock size={14} /> : <Minus size={14} />}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className={`mt-0.5 ${isUnlocked ? 'text-emerald-400' : 'text-stone-500'}`}>
+            {isUnlocked ? <Check size={14} strokeWidth={3} /> : <Lock size={14} />}
           </span>
-          <span className="truncate font-semibold">{line.name}</span>
+          <div className="min-w-0">
+            <span className="truncate font-semibold">{line.name}</span>
+            <div className="mt-1 text-xs text-stone-500">
+              {getShortLineSummary(line)}
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-2">
@@ -170,13 +171,20 @@ function LineRow({
           )}
         </div>
       </div>
-      <div className="mt-1 text-xs text-stone-500">
-        {isUnlocked
-          ? 'Unlocked for practice'
-          : locked
-            ? 'Unlocks after the line above'
-            : 'Next line to learn'}
-      </div>
     </button>
   );
+}
+
+function getShortLineSummary(line: OpeningLine) {
+  const label = line.name.toLowerCase();
+
+  if (label.includes('queen')) return 'A sharp trap that punishes a greedy queen grab.';
+  if (label.includes('knight')) return 'A tactical line that leaves White tied up and exposed.';
+  if (label.includes('rook')) return 'A forcing attack that wins major material for Black.';
+  if (label.includes('natural development')) return 'A clean punishment line against automatic development.';
+  if (label.includes('favorite trap')) return 'A direct attacking idea that builds fast pressure on the king.';
+  if (label.includes('everyone falls for this')) return 'A reliable trap that hits natural-looking moves hard.';
+  if (label.includes('drag')) return 'An aggressive line that drags the king into danger.';
+
+  return 'A guided attacking line built around one clear tactical idea.';
 }

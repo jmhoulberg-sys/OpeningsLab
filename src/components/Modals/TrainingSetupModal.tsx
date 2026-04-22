@@ -1,4 +1,4 @@
-import { BookOpen, CalendarClock, ChevronRight, Layers, Route, Star } from 'lucide-react';
+import { BookOpen, CalendarClock, ChevronRight, Layers, Lock, Route, Star } from 'lucide-react';
 import type { OpeningLine, TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
@@ -19,7 +19,7 @@ export default function TrainingSetupModal() {
   const completedLines = lineStates.filter((entry) => entry.unlocked).length;
   const totalLines = lineStates.length;
   const practiceLines = lineStates.filter((entry) => entry.unlocked).map((entry) => entry.line);
-  const nextLearnableLine = lineStates.find((entry) => !entry.unlocked)?.line ?? null;
+  const learnableLines = lineStates.filter((entry) => !entry.unlocked).map((entry) => entry.line);
   const progressPct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
 
   function launchLine(line: OpeningLine, mode: TrainingMode) {
@@ -54,7 +54,7 @@ export default function TrainingSetupModal() {
                 {completedLines}/{totalLines} lines unlocked
               </div>
               <div className="mt-1 text-sm text-stone-400">
-                {nextLearnableLine ? 'One line unlocks at a time. Finish this one cleanly to open the next.' : 'All current lines are unlocked.'}
+                {learnableLines.length > 0 ? 'Choose any locked line to learn next.' : 'All current lines are unlocked.'}
               </div>
             </div>
             <div className="text-sm font-semibold text-emerald-300">{progressPct}%</div>
@@ -65,24 +65,31 @@ export default function TrainingSetupModal() {
         </div>
 
         <div className="mt-5 space-y-5">
-          {nextLearnableLine && (
+          {learnableLines.length > 0 && (
             <section className="rounded-[22px] border border-sky-400/15 bg-sky-400/8 p-4">
               <div className="flex items-center gap-2 text-sky-300">
                 <BookOpen size={18} />
-                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Next line to unlock</div>
+                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Choose a line to unlock</div>
               </div>
-              <div className="mt-4 rounded-2xl border border-sky-400/12 bg-stone-950/65 p-4">
-                <div className="text-lg font-bold text-white">{nextLearnableLine.name}</div>
-                <div className="mt-1 text-sm text-stone-300">
-                  {getPlainLanguageSummary(nextLearnableLine)}
-                </div>
-                <button
-                  onClick={() => launchLine(nextLearnableLine, 'learn')}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
-                >
-                  Learn line
-                  <ChevronRight size={16} />
-                </button>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {learnableLines.map((line) => (
+                  <div key={line.id} className="relative rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4">
+                    <div className="absolute right-4 top-4 text-stone-500">
+                      <Lock size={16} />
+                    </div>
+                    <div className="pr-8 text-lg font-bold text-white">{line.name}</div>
+                    <div className="mt-1 text-sm text-stone-300">
+                      {getPlainLanguageSummary(line)}
+                    </div>
+                    <button
+                      onClick={() => launchLine(line, 'learn')}
+                      className="mt-4 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+                    >
+                      Learn line
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </section>
           )}
