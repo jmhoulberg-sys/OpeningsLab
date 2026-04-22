@@ -41,10 +41,8 @@ export default function HomePage({
 }: HomePageProps) {
   const openingProgress = useProgressStore((state) => state.openings);
   const isDue = useProgressStore((state) => state.isDue);
-  const { xpTotal, daily } = useProgressionStore((state) => ({
-    xpTotal: state.xpTotal,
-    daily: state.daily,
-  }));
+  const xpTotal = useProgressionStore((state) => state.xpTotal);
+  const daily = useProgressionStore((state) => state.daily);
   const { isLoggedIn, displayName, login } = useProfileStore();
   const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
