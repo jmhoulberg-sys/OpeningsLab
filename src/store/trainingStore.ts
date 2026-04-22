@@ -15,12 +15,12 @@ import {
   getOpponentMoveSan,
   applyMove,
   dropToSan,
-  getRandomLegalMove,
   isGameOver,
   repetitionTarget,
   getSetupFen,
 } from '../engine/chessEngine';
-import { useSettingsStore, buildRatingsParam } from './settingsStore';
+import { useSettingsStore } from './settingsStore';
+import { pickLichessBookMove } from '../services/lichessBookService';
 
 // ─── State shape ────────────────────────────────────────────────────
 
@@ -59,6 +59,8 @@ interface TrainingState {
   randomTopX: number;
   postLine: boolean;
   postLineMode: PostLineMode | null;
+  postLineSource: 'lichess-db' | null;
+  postLineOutOfBook: boolean;
   /** playedMoves.length at the moment postLine started — used for move list divider. */
   postLineStartMoveCount: number | null;
   /** Show position evaluation panel during free play. */
@@ -124,6 +126,8 @@ function buildInitialState(): TrainingState {
     randomTopX: 3,
     postLine: false,
     postLineMode: null,
+    postLineSource: null,
+    postLineOutOfBook: false,
     postLineStartMoveCount: null,
     showEval: false,
     showTopMoves: true,
@@ -209,6 +213,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
+          postLineSource: null,
+          postLineOutOfBook: false,
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
@@ -238,6 +244,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           hintSquare: null,
           showingCorrectMove: false,
           postLine: false,
+          postLineSource: null,
+          postLineOutOfBook: false,
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
@@ -337,7 +345,14 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           } else if (chess.isDraw() || chess.isStalemate()) {
             result = 'draw';
           }
-          set({ phase: 'line-select' as TrainingPhase, postLine: false, freePlayResult: result, showFreePlayResult: true });
+          set({
+            phase: 'line-select' as TrainingPhase,
+            postLine: false,
+            postLineSource: null,
+            postLineOutOfBook: false,
+            freePlayResult: result,
+            showFreePlayResult: true,
+          });
           return 'correct';
         }
 
@@ -416,6 +431,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   hintSquare: null,
                   showingCorrectMove: false,
                   postLine: false,
+                  postLineSource: null,
+                  postLineOutOfBook: false,
                   postLineStartMoveCount: null,
                   isAwaitingUserMove: false,
                   selectedLine: line,
@@ -441,6 +458,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   hintSquare: null,
                   showingCorrectMove: false,
                   postLine: false,
+                  postLineSource: null,
+                  postLineOutOfBook: false,
                   postLineStartMoveCount: null,
                   isAwaitingUserMove: false,
                   selectedLine: line,
@@ -515,27 +534,20 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         let opponentSan: string | null = null;
 
         if (state.postLineMode === 'top-moves') {
-          // Try to get most popular Lichess move
-          try {
-            const enc = encodeURIComponent(state.currentFen);
-            const { minRating } = useSettingsStore.getState();
-            const ratingsParam = buildRatingsParam(minRating);
-            const res = await fetch(
-              `https://explorer.lichess.ovh/lichess?variant=standard${ratingsParam}&topGames=0&recentGames=0&moves=5&fen=${enc}`
-            );
-            if (res.ok) {
-              const data = await res.json() as { moves?: Array<{ san: string; white: number; draws: number; black: number }> };
-              const topMove = data.moves?.[0];
-              if (topMove) opponentSan = topMove.san;
-            }
-          } catch { /* fall through to random */ }
+          const { minRating, topMovesToInclude } = useSettingsStore.getState();
+          const { move } = await pickLichessBookMove(state.currentFen, {
+            minRating,
+            topMovesToInclude,
+            moveLimit: 12,
+          });
+          opponentSan = move?.san ?? null;
         }
 
-        // Fallback to random legal move
-        if (!opponentSan) opponentSan = getRandomLegalMove(state.currentFen);
-
         if (!opponentSan) {
-          set({ phase: 'line-select' as TrainingPhase, postLine: false });
+          set({
+            isAwaitingUserMove: false,
+            postLineOutOfBook: true,
+          });
           return;
         }
 
@@ -561,6 +573,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             currentMoveIndex: newIdx,
             phase: 'line-select' as TrainingPhase,
             postLine: false,
+            postLineSource: null,
+            postLineOutOfBook: false,
             freePlayResult: result,
             showFreePlayResult: true,
           });
@@ -570,6 +584,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             playedMoves: [...state.playedMoves, opponentSan],
             fenHistory: [...state.fenHistory, newFen],
             currentMoveIndex: newIdx,
+            postLineOutOfBook: false,
             isAwaitingUserMove: true,
           });
         }
@@ -699,6 +714,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             hintSquare: null,
             showingCorrectMove: false,
             postLine: false,
+            postLineSource: null,
+            postLineOutOfBook: false,
             postLineStartMoveCount: null,
             isAwaitingUserMove: false,
             selectedLine: line,
@@ -728,6 +745,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             hintSquare: null,
             showingCorrectMove: false,
             postLine: false,
+            postLineSource: null,
+            postLineOutOfBook: false,
             postLineStartMoveCount: null,
             isAwaitingUserMove: false,
             selectedLine: line,
@@ -757,6 +776,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLineStartMoveCount: get().playedMoves.length,
         isAwaitingUserMove: false,
         postLineMode: mode ?? null,
+        postLineSource: mode === 'top-moves' ? 'lichess-db' : null,
+        postLineOutOfBook: false,
         showEval,
         showTopMoves,
         viewMoveIndex: null,
@@ -790,6 +811,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         showingCorrectMove: false,
         isAwaitingUserMove: false,
         postLine: false,
+        postLineSource: null,
+        postLineOutOfBook: false,
         postLineStartMoveCount: null,
         repetitionBlock: 1,
         streak: 0,

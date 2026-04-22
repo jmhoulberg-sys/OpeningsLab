@@ -3,7 +3,6 @@ import { Star } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { isGameOver } from '../../engine/chessEngine';
-import PlayOnModal from './PlayOnModal';
 
 export default function CompletionModal() {
   const {
@@ -15,13 +14,12 @@ export default function CompletionModal() {
     streak,
     restart,
     backToLineSelect,
+    startPostLine,
     stopTimer,
   } = useTrainingStore();
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
-  const [showPlayOn, setShowPlayOn] = useState(false);
 
-  // Record progress once when the modal first appears
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
@@ -38,94 +36,84 @@ export default function CompletionModal() {
   const canContinue = !isGameOver(currentFen);
   const filledStars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
 
-  // Compute SR display (what will be scheduled after recording)
   const existingProgress = getLineProgress(opening.id, selectedLine.id);
   const existingInterval = existingProgress?.srInterval ?? 0;
   const nextInterval = perfect ? Math.max(1, existingInterval * 2) : 1;
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-        <div className="bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-md w-full mx-4 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="mx-4 w-full max-w-md rounded-2xl border border-slate-700/60 bg-brand-surface p-8 text-center shadow-2xl shadow-black/60">
+        <StarRating mistakes={mistakes} filledCount={filledStars} />
 
-          {/* Animated star rating */}
-          <StarRating mistakes={mistakes} filledCount={filledStars} />
+        <h2 className="mb-1 text-2xl font-bold text-white">
+          {perfect ? 'Perfect!' : 'Good job!'}
+        </h2>
 
-          {/* Headline */}
-          <h2 className="text-2xl font-bold text-white mb-1">
-            {perfect ? 'Perfect!' : 'Good job!'}
-          </h2>
+        <p className="mb-4 text-sm text-slate-400">
+          {opening.name} · {selectedLine.name}
+        </p>
 
-          <p className="text-slate-400 text-sm mb-4">
-            {opening.name} · {selectedLine.name}
-          </p>
-
-          {/* Stats */}
-          <div className="bg-slate-800/60 rounded-xl p-4 mb-6 space-y-2">
+        <div className="mb-6 space-y-2 rounded-xl bg-slate-800/60 p-4">
+          <StatRow
+            label="Mistakes"
+            value={mistakes === 0 ? 'None ✓' : `${mistakes}`}
+            good={mistakes === 0}
+          />
+          {streak >= 3 && (
             <StatRow
-              label="Mistakes"
-              value={mistakes === 0 ? 'None ✓' : `${mistakes}`}
-              good={mistakes === 0}
+              label="Best streak"
+              value={`${streak} moves`}
+              good
             />
-            {streak >= 3 && (
-              <StatRow
-                label="Best streak"
-                value={`${streak} moves`}
-                good={true}
-              />
-            )}
-            <StatRow
-              label="Next review"
-              value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'} ✓` : 'Tomorrow'}
-              good={perfect}
-            />
-            {perfect ? (
-              <p className="text-yellow-400 text-sm font-semibold flex items-center justify-center gap-1">
-                Line unlocked! <Star size={14} fill="currentColor" />
-              </p>
-            ) : (
-              <p className="text-slate-400 text-xs">
-                Complete with zero mistakes to unlock this line.
-              </p>
-            )}
-          </div>
+          )}
+          <StatRow
+            label="Next review"
+            value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'} ✓` : 'Tomorrow'}
+            good={perfect}
+          />
+          {perfect ? (
+            <p className="flex items-center justify-center gap-1 text-sm font-semibold text-yellow-400">
+              Line unlocked! <Star size={14} fill="currentColor" />
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400">
+              Complete with zero mistakes to unlock this line.
+            </p>
+          )}
+        </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={restart}
+            className="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+          >
+            Retry line
+          </button>
+
+          {canContinue && (
             <button
-              onClick={restart}
-              className="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+              onClick={() => startPostLine('top-moves', false, true)}
+              className="w-full rounded-xl border border-emerald-600/40 bg-emerald-700/70 py-2.5 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-600/70 cursor-pointer"
             >
-              Try Again
+              Practice top responses (Lichess)
             </button>
+          )}
 
-            {canContinue && (
-              <button
-                onClick={() => setShowPlayOn(true)}
-                className="w-full py-2.5 rounded-xl bg-emerald-700/70 border border-emerald-600/40 text-emerald-100 font-semibold text-sm hover:bg-emerald-600/70 transition-colors cursor-pointer"
-              >
-                Play On →
-              </button>
-            )}
-
-            <button
-              onClick={backToLineSelect}
-              className="w-full py-2.5 rounded-xl bg-slate-700/60 border border-slate-600/40 text-slate-200 font-semibold text-sm hover:bg-slate-600/60 transition-colors cursor-pointer"
-            >
-              Select Another Line
-            </button>
-          </div>
+          <button
+            onClick={backToLineSelect}
+            className="w-full rounded-xl border border-slate-600/40 bg-slate-700/60 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-600/60 cursor-pointer"
+          >
+            Choose another line
+          </button>
         </div>
       </div>
-
-      <PlayOnModal isOpen={showPlayOn} onClose={() => setShowPlayOn(false)} />
-    </>
+    </div>
   );
 }
 
 function StatRow({ label, value, good }: { label: string; value: string; good: boolean }) {
   return (
-    <div className="flex justify-between items-center text-sm">
+    <div className="flex items-center justify-between text-sm">
       <span className="text-slate-400">{label}</span>
       <span className={`font-bold ${good ? 'text-emerald-400' : 'text-red-400'}`}>{value}</span>
     </div>
@@ -145,7 +133,7 @@ function StarRating({ mistakes, filledCount }: { mistakes: number; filledCount: 
   }, [mistakes]);
 
   return (
-    <div className="flex gap-3 justify-center mb-3">
+    <div className="mb-3 flex justify-center gap-3">
       {[1, 2, 3].map((star) => (
         <div
           key={`${star}-${shown}`}

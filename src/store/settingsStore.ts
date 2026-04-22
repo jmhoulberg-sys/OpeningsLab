@@ -34,6 +34,7 @@ interface SettingsState {
   restartFrom: 'start' | 'setup';
   /** Minimum average rating filter for Lichess explorer. 0 = all. */
   minRating: number;
+  topMovesToInclude: number;
   enableSRReminders: boolean;
   showEvalBar: boolean;
 }
@@ -41,6 +42,7 @@ interface SettingsState {
 interface SettingsActions {
   setRestartFrom(v: 'start' | 'setup'): void;
   setMinRating(v: number): void;
+  setTopMovesToInclude(v: number): void;
   setEnableSRReminders(v: boolean): void;
   setShowEvalBar(v: boolean): void;
 }
@@ -52,10 +54,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
     (set) => ({
       restartFrom: 'setup',
       minRating: 0,
+      topMovesToInclude: 3,
       enableSRReminders: true,
       showEvalBar: true,
       setRestartFrom: (v) => set({ restartFrom: v }),
       setMinRating: (v) => set({ minRating: v }),
+      setTopMovesToInclude: (v) => set({ topMovesToInclude: Math.min(5, Math.max(1, v)) }),
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
       setShowEvalBar: (v) => set({ showEvalBar: v }),
     }),

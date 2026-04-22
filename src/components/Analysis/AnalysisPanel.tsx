@@ -2,49 +2,55 @@ import { useLichessAnalysis, type LichessMove } from '../../hooks/useLichessAnal
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
-/**
- * Panel shown in the sidebar during free play.
- * Shows top database moves from Lichess (when showTopMoves is enabled).
- */
 export default function AnalysisPanel() {
-  const { currentFen, showTopMoves, opening } = useTrainingStore();
-  const { minRating } = useSettingsStore();
+  const { currentFen, showTopMoves, opening, postLineOutOfBook } = useTrainingStore();
+  const { minRating, topMovesToInclude } = useSettingsStore();
 
   const { moves, loading } = useLichessAnalysis(
     showTopMoves ? currentFen : null,
     showTopMoves,
     minRating,
+    topMovesToInclude,
   );
 
   if (!showTopMoves) return null;
 
   return (
-    <div className="px-4 pt-3 pb-4 border-b border-slate-700/40 flex-shrink-0">
-      <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-        Top Database Moves
+    <div className="flex-shrink-0 px-4 pb-4 pt-3">
+      <div className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+        Based on Lichess games
       </div>
+      <p className="mb-2 text-[11px] text-slate-500">
+        Top {topMovesToInclude} continuation{topMovesToInclude === 1 ? '' : 's'} by game count.
+      </p>
 
       {loading && (
-        <p className="text-xs text-slate-500 animate-pulse">Fetching…</p>
+        <p className="animate-pulse text-xs text-slate-500">Fetching...</p>
       )}
 
-      {!loading && moves.length === 0 && (
-        <p className="text-xs text-slate-500 italic">
-          No database games found for this position.
+      {!loading && postLineOutOfBook && (
+        <p className="text-xs italic text-amber-300">
+          Out of book. No Lichess game data for this position.
+        </p>
+      )}
+
+      {!loading && !postLineOutOfBook && moves.length === 0 && (
+        <p className="text-xs italic text-slate-500">
+          No Lichess game data found for this position.
         </p>
       )}
 
       {!loading && moves.length > 0 && (
         <div className="space-y-1.5">
-          <div className="grid grid-cols-[36px_1fr_44px_44px_44px] gap-x-1 text-[10px] text-slate-500 uppercase tracking-wider mb-1 px-0.5">
+          <div className="mb-1 grid grid-cols-[36px_1fr_44px_44px_44px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
             <span>Move</span>
             <span />
             <span className="text-center">W%</span>
             <span className="text-center">D%</span>
             <span className="text-center">L%</span>
           </div>
-          {moves.map((m) => (
-            <MoveRow key={m.san} move={m} playerColor={opening?.playerColor ?? 'white'} />
+          {moves.map((move) => (
+            <MoveRow key={move.san} move={move} playerColor={opening?.playerColor ?? 'white'} />
           ))}
         </div>
       )}
@@ -56,29 +62,27 @@ function MoveRow({ move, playerColor }: { move: LichessMove; playerColor: string
   const total = move.total;
   const games = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
 
-  // From player's perspective
-  const winPct   = playerColor === 'white' ? move.whitePct : move.blackPct;
-  const lossPct  = playerColor === 'white' ? move.blackPct : move.whitePct;
-  const drawPct  = move.drawPct;
+  const winPct = playerColor === 'white' ? move.whitePct : move.blackPct;
+  const lossPct = playerColor === 'white' ? move.blackPct : move.whitePct;
+  const drawPct = move.drawPct;
 
   return (
-    <div className="grid grid-cols-[36px_1fr_44px_44px_44px] gap-x-1 items-center">
-      <span className="font-mono font-bold text-white text-xs">{move.san}</span>
+    <div className="grid grid-cols-[36px_1fr_44px_44px_44px] items-center gap-x-1">
+      <span className="font-mono text-xs font-bold text-white">{move.san}</span>
 
-      {/* Stacked win/draw/loss bar */}
-      <div className="h-3 rounded-sm overflow-hidden flex" title={`${games} games`}>
-        <div className="bg-slate-100"     style={{ width: `${winPct}%` }} />
-        <div className="bg-slate-500"     style={{ width: `${drawPct}%` }} />
-        <div className="bg-slate-900 border-l border-slate-700" style={{ width: `${lossPct}%` }} />
+      <div className="flex h-3 overflow-hidden rounded-sm" title={`${games} games`}>
+        <div className="bg-slate-100" style={{ width: `${winPct}%` }} />
+        <div className="bg-slate-500" style={{ width: `${drawPct}%` }} />
+        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${lossPct}%` }} />
       </div>
 
-      <span className="text-[11px] text-center text-slate-200 font-semibold tabular-nums">
+      <span className="text-center text-[11px] font-semibold tabular-nums text-slate-200">
         {winPct}%
       </span>
-      <span className="text-[11px] text-center text-slate-400 tabular-nums">
+      <span className="text-center text-[11px] tabular-nums text-slate-400">
         {drawPct}%
       </span>
-      <span className="text-[11px] text-center text-slate-500 tabular-nums">
+      <span className="text-center text-[11px] tabular-nums text-slate-500">
         {lossPct}%
       </span>
     </div>

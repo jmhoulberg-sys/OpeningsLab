@@ -18,6 +18,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setRestartFrom,
     minRating,
     setMinRating,
+    topMovesToInclude,
+    setTopMovesToInclude,
     enableSRReminders,
     setEnableSRReminders,
     showEvalBar,
@@ -223,10 +225,33 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           <section>
             <label className="mb-1 block text-sm font-semibold text-white">
+              Top moves to include
+            </label>
+            <p className="mb-4 text-xs text-stone-400">
+              Use the top 1-5 Lichess database moves for post-line practice.
+            </p>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min={1}
+                max={5}
+                step={1}
+                value={topMovesToInclude}
+                onChange={(e) => setTopMovesToInclude(Number(e.target.value))}
+                className="flex-1 cursor-pointer accent-sky-500"
+              />
+              <span className="w-5 text-center text-sm font-bold text-white">
+                {topMovesToInclude}
+              </span>
+            </div>
+          </section>
+
+          <section>
+            <label className="mb-1 block text-sm font-semibold text-white">
               Analysis rating filter
             </label>
             <p className="mb-3 text-xs text-stone-400">
-              Minimum average rating for Lichess top moves.
+              Minimum average rating for Lichess database moves.
             </p>
             <select
               value={minRating}
