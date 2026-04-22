@@ -1,178 +1,188 @@
+import { useRef } from 'react';
 import { Settings } from 'lucide-react';
-import { Chessboard } from 'react-chessboard';
-import type { Opening } from '../types';
+import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
-import { fenAfterMoves } from '../engine/chessEngine';
 import { useProgressStore } from '../store/progressStore';
+import {
+  FeaturedOpeningsSection,
+  HeroSection,
+  HowItWorksStrip,
+  OpeningLibrarySection,
+  type ContinueTrainingSummary,
+  type OpeningSummary,
+} from '../components/Home/HomeSections';
+import {
+  FEATURED_OPENING_IDS,
+  HOME_HERO,
+  HOW_IT_WORKS_STEPS,
+} from '../components/Home/homeContent';
 
 interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
+  onStartOpeningLine: (opening: Opening, line: OpeningLine) => void;
   onSettingsClick: () => void;
 }
 
-const PLACEHOLDER_CARDS = [
-  { name: "King's Indian Defense", id: 'kings-indian' },
-  { name: "French Defense", id: 'french-defense' },
-];
+export default function HomePage({
+  onSelectOpening,
+  onStartOpeningLine,
+  onSettingsClick,
+}: HomePageProps) {
+  const openingProgress = useProgressStore((state) => state.openings);
+  const featuredRef = useRef<HTMLDivElement | null>(null);
+  const libraryRef = useRef<HTMLDivElement | null>(null);
 
-function PawnIcon({ color }: { color: 'white' | 'black' }) {
+  const openingSummaries = OPENINGS.map((opening) => {
+    const progress = openingProgress[opening.id];
+    const linesProgress = progress?.lines ?? {};
+    const completedLines = opening.lines.filter((line) => linesProgress[line.id]?.unlocked).length;
+
+    return {
+      opening,
+      totalLines: opening.lines.length,
+      completedLines,
+      firstLine: opening.lines[0],
+      setupComplete: progress?.setupCompleted ?? false,
+    } satisfies OpeningSummary;
+  });
+
+  const featuredOpenings = FEATURED_OPENING_IDS
+    .map((id) => openingSummaries.find((summary) => summary.opening.id === id))
+    .filter((summary): summary is OpeningSummary => Boolean(summary));
+
+  const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
+
+  const heroPrimaryLabel = continueSummary ? 'Continue Training' : HOME_HERO.primaryCta;
+
+  function scrollToFeatured() {
+    featuredRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function scrollToLibrary() {
+    libraryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handlePrimaryAction() {
+    if (continueSummary) {
+      onStartOpeningLine(continueSummary.opening, continueSummary.line);
+      return;
+    }
+
+    const defaultOpening = featuredOpenings[0]?.opening ?? OPENINGS[0];
+    if (defaultOpening) onSelectOpening(defaultOpening);
+  }
+
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill={color === 'white' ? '#f1f5f9' : '#1e1e1e'}
-      stroke="none"
-    >
-      <circle cx="12" cy="5" r="3" />
-      <path d="M10 8l-2 6h8l-2-6z" />
-      <path d="M7 15l-1 3h12l-1-3z" />
-    </svg>
-  );
-}
-
-const BOARD_H = 130; // mini board height — used to pin the right column
-
-function OpeningCard({
-  opening,
-  onSelect,
-}: {
-  opening: Opening;
-  onSelect: () => void;
-}) {
-  const { isLineUnlocked } = useProgressStore();
-  const totalLines = opening.lines.length;
-  const completedLines = opening.lines.filter((l) =>
-    isLineUnlocked(opening.id, l.id),
-  ).length;
-  const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
-  const setupFen = fenAfterMoves(opening.setupMoves);
-
-  return (
-    <button
-      onClick={onSelect}
-      className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
-    >
-      {/* items-stretch so the right column fills the mini-board height */}
-      <div className="flex items-stretch gap-4">
-        {/* Mini board — fixed size, oriented for the player */}
-        <div
-          className="flex-shrink-0 rounded-lg overflow-hidden pointer-events-none"
-          style={{ width: BOARD_H, height: BOARD_H }}
-        >
-          <Chessboard
-            position={setupFen}
-            boardWidth={BOARD_H}
-            boardOrientation={opening.playerColor}
-            arePiecesDraggable={false}
-            customBoardStyle={{ borderRadius: '4px' }}
-            customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-            customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
-            animationDuration={0}
-          />
-        </div>
-
-        {/* Right column: fixed height = board height so progress always aligns */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ height: BOARD_H }}>
-          {/* Title + pawn */}
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h2 className="text-white font-bold text-base leading-tight group-hover:text-brand-accent transition-colors">
-              {opening.name}
-            </h2>
-            <span
-              title={opening.playerColor === 'white' ? 'You play White' : 'You play Black'}
-              className="flex-shrink-0 mt-0.5"
-            >
-              <PawnIcon color={opening.playerColor} />
-            </span>
-          </div>
-
-          {/* Description — clipped with ellipsis, never pushes progress bar down */}
-          <p className="text-slate-300 text-xs leading-relaxed flex-1 overflow-hidden line-clamp-3">
-            {opening.description}
-          </p>
-
-          {/* Progress — pinned to the bottom, aligns with the mini board bottom */}
-          {totalLines > 0 && (
-            <div className="mt-auto pt-1.5 border-t border-white/10 flex-shrink-0">
-              <div className="flex items-center justify-between text-[10px] mb-1">
-                <span className="text-slate-200 font-semibold">Lines completed</span>
-                <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
-                  {completedLines}/{totalLines}
-                </span>
-              </div>
-              <div className="w-full bg-slate-600/40 rounded-full h-1.5">
-                <div
-                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
+    <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/70">
+              OpeningsLab
             </div>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageProps) {
-  return (
-    <div className="min-h-screen bg-brand-bg flex flex-col items-center py-10 px-4">
-      {/* Header */}
-      <div className="text-center mb-8 relative w-full max-w-5xl">
-        <button
-          onClick={onSettingsClick}
-          title="Settings"
-          className="absolute right-0 top-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
-          aria-label="Open settings"
-        >
-          <Settings size={24} />
-        </button>
-
-        <div className="mb-3 flex justify-center">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent">
-            <circle cx="12" cy="5" r="3"/>
-            <path d="M10 8l-2 6h8l-2-6z"/>
-            <path d="M7 15l-1 3h12l-1-3z"/>
-          </svg>
-        </div>
-        <h1 className="text-4xl font-extrabold text-white tracking-tight">
-          OpeningsLab
-        </h1>
-        <p className="text-slate-400 mt-2 text-base">Choose your opening</p>
-      </div>
-
-      {/* Card grid — 1 col on mobile, 2 on tablet, 3 on large screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
-        {OPENINGS.map((opening) => (
-          <OpeningCard
-            key={opening.id}
-            opening={opening}
-            onSelect={() => onSelectOpening(opening)}
-          />
-        ))}
-
-        {/* Placeholder cards */}
-        {PLACEHOLDER_CARDS.map((card) => (
-          <div
-            key={card.id}
-            className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left opacity-40 cursor-not-allowed"
+            <div className="mt-1 text-sm text-stone-400">
+              Opening training that tells you what to do next.
+            </div>
+          </div>
+          <button
+            onClick={onSettingsClick}
+            title="Settings"
+            className="rounded-2xl border border-white/10 bg-white/5 p-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+            aria-label="Open settings"
           >
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 rounded-lg bg-slate-800/60 border border-slate-700/40" style={{ width: 130, height: 130 }} />
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h2 className="text-slate-400 font-bold text-base">{card.name}</h2>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-500 shrink-0">
-                    Coming Soon
-                  </span>
-                </div>
-                <p className="text-slate-600 text-xs">This opening is not yet available.</p>
-              </div>
-            </div>
-          </div>
-        ))}
+            <Settings size={20} />
+          </button>
+        </div>
+
+        <HeroSection
+          headline={HOME_HERO.headline}
+          subheadline={HOME_HERO.subheadline}
+          primaryLabel={heroPrimaryLabel}
+          secondaryLabel={HOME_HERO.secondaryCta}
+          onPrimaryClick={handlePrimaryAction}
+          onSecondaryClick={scrollToLibrary}
+          continueSummary={continueSummary}
+          onContinueClick={
+            continueSummary
+              ? () => onStartOpeningLine(continueSummary.opening, continueSummary.line)
+              : undefined
+          }
+        />
+
+        <div className="mt-5">
+          <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
+        </div>
+
+        <div className="mt-8" ref={featuredRef}>
+          <FeaturedOpeningsSection
+            openings={featuredOpenings}
+            onOpenOpening={onSelectOpening}
+            onStartLine={onStartOpeningLine}
+          />
+        </div>
+
+        <div className="mt-8" ref={libraryRef}>
+          <OpeningLibrarySection
+            openings={openingSummaries}
+            onOpenOpening={onSelectOpening}
+            onStartLine={onStartOpeningLine}
+          />
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={scrollToFeatured}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-white/10 cursor-pointer"
+          >
+            Jump to featured openings
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+function getContinueTrainingSummary(
+  summaries: OpeningSummary[],
+  progressState: ReturnType<typeof useProgressStore.getState>['openings'],
+): ContinueTrainingSummary | undefined {
+  const ranked = summaries
+    .map((summary) => {
+      const progress = progressState[summary.opening.id];
+      const lineAttempts = Object.values(progress?.lines ?? {}).reduce(
+        (total, lineProgress) => total + lineProgress.attempts,
+        0,
+      );
+      const started = summary.setupComplete || lineAttempts > 0 || summary.completedLines > 0;
+
+      return {
+        summary,
+        lineAttempts,
+        started,
+      };
+    })
+    .filter((item) => item.started)
+    .sort((a, b) => {
+      if (b.lineAttempts !== a.lineAttempts) return b.lineAttempts - a.lineAttempts;
+      if (b.summary.completedLines !== a.summary.completedLines) {
+        return b.summary.completedLines - a.summary.completedLines;
+      }
+      return Number(b.summary.setupComplete) - Number(a.summary.setupComplete);
+    });
+
+  const next = ranked[0]?.summary;
+  if (!next) return undefined;
+
+  const openingProgress = progressState[next.opening.id];
+  const continueLine =
+    next.opening.lines.find((line) => openingProgress?.lines[line.id]?.unlocked) ??
+    next.firstLine;
+
+  return {
+    opening: next.opening,
+    line: continueLine,
+    completedLines: next.completedLines,
+    totalLines: next.totalLines,
+    setupComplete: next.setupComplete,
+  };
 }

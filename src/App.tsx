@@ -14,7 +14,7 @@ import TimerDisplay from './components/Timer/TimerDisplay';
 import HomePage from './pages/HomePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
-import type { Opening } from './types';
+import type { Opening, OpeningLine } from './types';
 
 // Width at which the sidebar collapses from inline → fixed drawer.
 // 650 = 320 (sidebar) + ~300 (usable board) + padding
@@ -25,7 +25,7 @@ const BOARD_CHROME_H = 115;
 const EVAL_BAR_W = 24;
 
 export default function App() {
-  const { opening, phase, postLine, mode, streak, startOpening } = useTrainingStore();
+  const { opening, phase, postLine, mode, streak, startOpening, selectLine } = useTrainingStore();
   const { markSetupComplete, isSetupComplete } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
@@ -94,6 +94,17 @@ export default function App() {
     startOpening(selectedOpening);
   }
 
+  function handleStartOpeningLine(selectedOpening: Opening, line: OpeningLine) {
+    if (!startedRef.current) {
+      startedRef.current = true;
+    }
+    setShowHome(false);
+    startOpening(selectedOpening);
+    setTimeout(() => {
+      selectLine(line);
+    }, 0);
+  }
+
   function handleGoHome() {
     setShowHome(true);
     startedRef.current = false;
@@ -104,6 +115,7 @@ export default function App() {
       <>
         <HomePage
           onSelectOpening={handleSelectOpening}
+          onStartOpeningLine={handleStartOpeningLine}
           onSettingsClick={() => setShowSettings(true)}
         />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
