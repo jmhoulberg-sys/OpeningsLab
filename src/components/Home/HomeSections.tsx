@@ -88,6 +88,7 @@ interface HowItWorksStripProps {
 }
 
 interface ProgressOverviewProps {
+  isLoggedIn: boolean;
   level: number;
   progressPct: number;
   xpToNextLevel: number;
@@ -184,6 +185,7 @@ export function HeroSection({
 }
 
 export function ProgressOverview({
+  isLoggedIn,
   level,
   progressPct,
   xpToNextLevel,
@@ -200,17 +202,22 @@ export function ProgressOverview({
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/80">
               Level Progress
             </div>
-            <div className="mt-2 text-3xl font-extrabold text-white">Level {level}</div>
+            <div className="mt-2 text-3xl font-extrabold text-white">
+              {isLoggedIn ? `Level ${level}` : 'Sign in to see level'}
+            </div>
           </div>
           <div className="rounded-2xl bg-sky-500/15 p-3 text-sky-300">
             <Crown size={24} />
           </div>
         </div>
         <div className="mt-4 h-2 rounded-full bg-stone-800">
-          <div className="h-2 rounded-full bg-sky-400 transition-all duration-500" style={{ width: `${progressPct}%` }} />
+          <div
+            className="h-2 rounded-full bg-sky-400 transition-all duration-500"
+            style={{ width: `${isLoggedIn ? progressPct : 100}%` }}
+          />
         </div>
         <div className="mt-2 text-sm text-stone-400">
-          {xpToNextLevel} XP to the next level
+          {isLoggedIn ? `${xpToNextLevel} XP to the next level` : 'Save XP, streaks, and progress to your account'}
         </div>
       </div>
 

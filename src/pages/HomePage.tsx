@@ -201,8 +201,17 @@ export default function HomePage({
           }
         />
 
+        <div className="mt-5" ref={featuredRef}>
+          <FeaturedOpeningsSection
+            openings={featuredOpenings}
+            onOpenOpening={onSelectOpening}
+            onStartLine={onStartOpeningLine}
+          />
+        </div>
+
         <div className="mt-5">
           <ProgressOverview
+            isLoggedIn={isLoggedIn}
             level={levelInfo.level}
             progressPct={levelInfo.progressPct}
             xpToNextLevel={Math.max(0, levelInfo.nextLevelXp - xpTotal)}
@@ -228,14 +237,6 @@ export default function HomePage({
 
         <div className="mt-8">
           <QuestStrip quests={quests} />
-        </div>
-
-        <div className="mt-8" ref={featuredRef}>
-          <FeaturedOpeningsSection
-            openings={featuredOpenings}
-            onOpenOpening={onSelectOpening}
-            onStartLine={onStartOpeningLine}
-          />
         </div>
 
         <div className="mt-8" ref={libraryRef}>

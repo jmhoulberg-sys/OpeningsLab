@@ -62,15 +62,19 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           <div className="hidden rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
             <div className="flex items-center gap-2">
               <Crown size={15} className="text-sky-300" />
-              <span className="text-sm font-semibold text-white">Level {levelInfo.level}</span>
+              <span className="text-sm font-semibold text-white">
+                {isLoggedIn ? `Level ${levelInfo.level}` : 'Sign in for level'}
+              </span>
             </div>
             <div className="mt-2 h-1.5 w-24 rounded-full bg-stone-800">
               <div
                 className="h-1.5 rounded-full bg-sky-400 transition-all duration-500"
-                style={{ width: `${levelInfo.progressPct}%` }}
+                style={{ width: `${isLoggedIn ? levelInfo.progressPct : 100}%` }}
               />
             </div>
-            <div className="mt-1 text-[11px] text-stone-500">{xpToNext} XP to next</div>
+            <div className="mt-1 text-[11px] text-stone-500">
+              {isLoggedIn ? `${xpToNext} XP to next` : 'Track XP and streaks'}
+            </div>
           </div>
           {phase === 'training' && (
             <div className="hidden items-center gap-1.5 text-sm sm:flex">
