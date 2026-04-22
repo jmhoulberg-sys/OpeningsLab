@@ -7,11 +7,10 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
 import EvalBar from './EvalBar';
 
-// Arrow colours
-const ANSWER_ARROW_COLOR = 'rgba(0,   240, 100, 1.00)';
-const SELECTED_HIGHLIGHT = 'rgba(255, 255, 0,   0.4)';
-
-// ─── Knight move helpers ─────────────────────────────────────────────
+const ANSWER_ARROW_COLOR = 'rgba(0, 240, 100, 1)';
+const SELECTED_HIGHLIGHT = 'rgba(255, 255, 0, 0.4)';
+const WOOD_LIGHT = '#e4c79a';
+const WOOD_DARK = '#9d6b3f';
 
 function isKnightMove(from: string, to: string): boolean {
   const df = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
@@ -19,9 +18,18 @@ function isKnightMove(from: string, to: string): boolean {
   return (df === 1 && dr === 2) || (df === 2 && dr === 1);
 }
 
-function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
-  from: string; to: string; boardSize: number;
-  orientation: 'white' | 'black'; color: string;
+function KnightArrowOverlay({
+  from,
+  to,
+  boardSize,
+  orientation,
+  color,
+}: {
+  from: string;
+  to: string;
+  boardSize: number;
+  orientation: 'white' | 'black';
+  color: string;
 }) {
   const sqSize = boardSize / 8;
   const center = (sq: string) => {
@@ -33,23 +41,18 @@ function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
   const toC = center(to);
 
   const dFile = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
-  let cornerSq: string;
-  if (dFile === 2) {
-    cornerSq = to[0] + from[1];
-  } else {
-    cornerSq = from[0] + to[1];
-  }
+  const cornerSq = dFile === 2 ? `${to[0]}${from[1]}` : `${from[0]}${to[1]}`;
   const cornerC = center(cornerSq);
 
-  // Match react-chessboard arrow proportions
-  const sw = sqSize * 0.14;   // stroke width proportional to square size
-  const aw = sqSize * 0.18;   // arrowhead half-width
-  const al = sqSize * 0.25;   // arrowhead length
+  const sw = sqSize * 0.14;
+  const aw = sqSize * 0.18;
+  const al = sqSize * 0.25;
 
   const dx = toC.x - cornerC.x;
   const dy = toC.y - cornerC.y;
   const len = Math.sqrt(dx * dx + dy * dy);
-  const ux = dx / len, uy = dy / len;
+  const ux = dx / len;
+  const uy = dy / len;
   const arrowTip = { x: toC.x, y: toC.y };
   const arrowBase = { x: toC.x - ux * al, y: toC.y - uy * al };
   const perp = { x: -uy, y: ux };
@@ -64,43 +67,52 @@ function KnightArrowOverlay({ from, to, boardSize, orientation, color }: {
       style={{ zIndex: 1 }}
     >
       <line
-        x1={fromC.x} y1={fromC.y}
-        x2={cornerC.x} y2={cornerC.y}
-        stroke={color} strokeWidth={sw} strokeLinecap="round" opacity="0.85"
+        x1={fromC.x}
+        y1={fromC.y}
+        x2={cornerC.x}
+        y2={cornerC.y}
+        stroke={color}
+        strokeWidth={sw}
+        strokeLinecap="round"
+        opacity="0.85"
       />
       <line
-        x1={cornerC.x} y1={cornerC.y}
-        x2={arrowBase.x} y2={arrowBase.y}
-        stroke={color} strokeWidth={sw} strokeLinecap="round" opacity="0.85"
+        x1={cornerC.x}
+        y1={cornerC.y}
+        x2={arrowBase.x}
+        y2={arrowBase.y}
+        stroke={color}
+        strokeWidth={sw}
+        strokeLinecap="round"
+        opacity="0.85"
       />
       <polygon
         points={`${arrowTip.x},${arrowTip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
-        fill={color} opacity="0.85"
+        fill={color}
+        opacity="0.85"
       />
     </svg>
   );
 }
 
-// ─── Resolve from/to squares for a SAN in a given position ──────────
 function resolveArrow(fen: string, san: string): [Square, Square] | null {
   try {
     const chess = new Chess(fen);
-    const norm = (s: string) => s.replace(/[+#!?]/g, '').trim();
-    const found = chess.moves({ verbose: true }).find((m) => norm(m.san) === norm(san));
+    const norm = (value: string) => value.replace(/[+#!?]/g, '').trim();
+    const found = chess.moves({ verbose: true }).find((move) => norm(move.san) === norm(san));
     return found ? [found.from as Square, found.to as Square] : null;
   } catch {
     return null;
   }
 }
 
-/** Convert algebraic square to pixel {x, y} coordinates on the board. */
 function squareToXY(
   square: string,
   boardSize: number,
   orientation: 'white' | 'black',
 ): { x: number; y: number; size: number } {
-  const file = square.charCodeAt(0) - 'a'.charCodeAt(0); // 0–7
-  const rank = parseInt(square[1]) - 1;                  // 0–7
+  const file = square.charCodeAt(0) - 'a'.charCodeAt(0);
+  const rank = parseInt(square[1]) - 1;
   const size = boardSize / 8;
   const x = orientation === 'white' ? file * size : (7 - file) * size;
   const y = orientation === 'white' ? (7 - rank) * size : rank * size;
@@ -132,62 +144,63 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     mistakes,
     hintSquare,
   } = useTrainingStore();
-
   const { showEvalBar } = useSettingsStore();
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
   const [promotionPending, setPromotionPending] = useState<{ from: Square; to: Square } | null>(null);
-  const prevBlockRef = useRef(repetitionBlock);
-  const flashKeyRef = useRef(0);
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(null);
+
+  const prevBlockRef = useRef(repetitionBlock);
   const prevStreakRef = useRef(streak);
   const prevMistakesRef = useRef(mistakes);
+  const flashKeyRef = useRef(0);
 
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
-
-  // FEN shown on the board — wrong move position → historical → live
   const isReviewing = viewMoveIndex !== null;
   const displayFen = isReviewing
     ? (fenHistory[viewMoveIndex + 1] ?? currentFen)
     : (wrongMoveFen ?? currentFen);
 
-  // ── Green flash when repetition block increments ─────────────────
   useEffect(() => {
     if (repetitionBlock > prevBlockRef.current) {
       flashKeyRef.current += 1;
       setBoardFlashing(true);
-      const t = setTimeout(() => setBoardFlashing(false), 750);
+      const timer = setTimeout(() => setBoardFlashing(false), 750);
       prevBlockRef.current = repetitionBlock;
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
     prevBlockRef.current = repetitionBlock;
   }, [repetitionBlock]);
 
-  // ── Feedback toast on streak/mistakes changes ─────────────────
   useEffect(() => {
     if (streak > prevStreakRef.current) {
-      const msgs = ['Nice!', 'Sharp!', 'Excellent!', "That's it!", 'On the money!', 'Perfect!'];
-      setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'correct' });
-      const t = setTimeout(() => setFeedbackMsg(null), 2500);
+      const messages = ['Nice!', 'Sharp!', 'Excellent!', "That's it!", 'On the money!', 'Perfect!'];
+      setFeedbackMsg({
+        text: messages[Math.floor(Math.random() * messages.length)],
+        type: 'correct',
+      });
+      const timer = setTimeout(() => setFeedbackMsg(null), 2500);
       prevStreakRef.current = streak;
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
     prevStreakRef.current = streak;
   }, [streak]);
 
   useEffect(() => {
     if (mistakes > prevMistakesRef.current) {
-      const msgs = ['Not quite!', 'Wrong move!', 'Remember the plan!', 'Stay on the line!'];
-      setFeedbackMsg({ text: msgs[Math.floor(Math.random() * msgs.length)], type: 'wrong' });
-      const t = setTimeout(() => setFeedbackMsg(null), 2500);
+      const messages = ['Not quite!', 'Wrong move!', 'Remember the plan!', 'Stay on the line!'];
+      setFeedbackMsg({
+        text: messages[Math.floor(Math.random() * messages.length)],
+        type: 'wrong',
+      });
+      const timer = setTimeout(() => setFeedbackMsg(null), 2500);
       prevMistakesRef.current = mistakes;
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
     prevMistakesRef.current = mistakes;
   }, [mistakes]);
 
-  // ── Progress bar (all training modes) ───────────────────────────
   let progressLabel = '';
   let progressDone = 0;
   let progressTotal = 0;
@@ -206,23 +219,36 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       progressColor = 'bg-amber-400';
     } else {
       let done = 0;
-      for (let i = setupLen; i < currentMoveIndex; i++) {
-        if (isStudentMove(opening, i)) done++;
+      for (let i = setupLen; i < currentMoveIndex; i += 1) {
+        if (isStudentMove(opening, i)) done += 1;
       }
       progressTotal = studentTotal;
       progressDone = done;
-      if (mode === 'learn')       { progressLabel = 'Line progress'; progressColor = 'bg-blue-400'; }
-      else if (mode === 'drill')  { progressLabel = 'Drill';         progressColor = 'bg-red-400'; }
-      else                        { progressLabel = 'Time Trial';    progressColor = 'bg-cyan-400'; }
+      if (mode === 'learn') {
+        progressLabel = 'Line progress';
+        progressColor = 'bg-blue-400';
+      } else if (mode === 'drill') {
+        progressLabel = 'Drill';
+        progressColor = 'bg-red-400';
+      } else {
+        progressLabel = 'Time Trial';
+        progressColor = 'bg-cyan-400';
+      }
     }
   }
-  const showProgressBar = progressTotal > 0;
 
-  // ── Custom square styles ─────────────────────────────────────────
+  const showProgressBar = progressTotal > 0;
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
-  // Yellow highlight for last computer move (only when live, not reviewing, no wrong move)
-  if (!isReviewing && !wrongMoveFen && isAwaitingUserMove && !postLine && opening && playedMoves.length > 0 && currentMoveIndex > 0) {
+  if (
+    !isReviewing &&
+    !wrongMoveFen &&
+    isAwaitingUserMove &&
+    !postLine &&
+    opening &&
+    playedMoves.length > 0 &&
+    currentMoveIndex > 0
+  ) {
     const lastMoveIsComputer = !isStudentMove(opening, currentMoveIndex - 1);
     if (lastMoveIsComputer && fenHistory.length >= 2) {
       const prevFen = fenHistory[fenHistory.length - 2];
@@ -239,7 +265,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
   }
 
-  // Subtle green background for hint square (like last-move yellow)
   if (!isReviewing && hintSquare) {
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
@@ -247,12 +272,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     };
   }
 
-  // ── Arrows ───────────────────────────────────────────────────────
   const customArrows: [Square, Square, string][] = [];
   let knightArrow: [Square, Square] | null = null;
 
-  // Only show the answer arrow when explicitly requested (showingCorrectMove),
-  // not when just a wrong move is on screen
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
     if (arrow) {
@@ -264,15 +286,19 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     }
   }
 
-  // ── Click-click moves ────────────────────────────────────────────
   const onSquareClick = useCallback(
     (square: Square) => {
-      if (isReviewing) { navigateToMove(null); return; }
-      if (wrongMoveFen) return; // must undo wrong move first
-      if (!isAwaitingUserMove) return;
+      if (isReviewing) {
+        navigateToMove(null);
+        return;
+      }
+      if (wrongMoveFen || !isAwaitingUserMove) return;
 
       if (selectedSquare) {
-        if (selectedSquare === square) { setSelectedSquare(null); return; }
+        if (selectedSquare === square) {
+          setSelectedSquare(null);
+          return;
+        }
         const result = handleBoardMove(selectedSquare, square);
         setSelectedSquare(null);
         if (result === 'ignored') setSelectedSquare(square);
@@ -280,64 +306,62 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         setSelectedSquare(square);
       }
     },
-    [isAwaitingUserMove, wrongMoveFen, selectedSquare, handleBoardMove, isReviewing, navigateToMove],
+    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, selectedSquare, wrongMoveFen],
   );
 
-  // ── Drag-and-drop ────────────────────────────────────────────────
   const onPieceDrop = useCallback(
     (from: Square, to: Square, piece: string): boolean => {
-      if (isReviewing) { navigateToMove(null); return false; }
-      if (wrongMoveFen) return false; // must undo wrong move first
-      if (!isAwaitingUserMove) return false;
+      if (isReviewing) {
+        navigateToMove(null);
+        return false;
+      }
+      if (wrongMoveFen || !isAwaitingUserMove) return false;
       setSelectedSquare(null);
 
       const isPromotion =
         piece[1] === 'P' &&
         ((piece[0] === 'w' && to[1] === '8') || (piece[0] === 'b' && to[1] === '1'));
 
-      // In free play, let the built-in promotion dialog handle piece selection
       if (isPromotion && postLine) {
         setPromotionPending({ from, to });
-        return false; // keep piece at source; dialog will show
+        return false;
       }
 
       const result = handleBoardMove(from, to, isPromotion ? 'q' : undefined);
-      // Return true for both correct AND wrong — piece stays at destination;
-      // for wrong moves the board shows wrongMoveFen, for correct it shows the new position.
       return result === 'correct' || result === 'wrong';
     },
-    [isAwaitingUserMove, wrongMoveFen, handleBoardMove, isReviewing, navigateToMove, postLine],
+    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, postLine, wrongMoveFen],
   );
 
-  // ── Promotion piece select (free play only) ──────────────────────
   const onPromotionPieceSelect = useCallback(
     (piece?: string): boolean => {
-      if (!promotionPending || !piece) { setPromotionPending(null); return false; }
+      if (!promotionPending || !piece) {
+        setPromotionPending(null);
+        return false;
+      }
       const { from, to } = promotionPending;
       setPromotionPending(null);
-      // piece is like 'wQ', 'bQ' etc — extract lowercase piece letter
       const promo = piece[1]?.toLowerCase() ?? 'q';
       const result = handleBoardMove(from, to, promo);
       return result === 'correct';
     },
-    [promotionPending, handleBoardMove],
+    [handleBoardMove, promotionPending],
   );
 
-  // ── Status text ──────────────────────────────────────────────────
   let statusText = '';
   let statusColor = 'text-slate-400';
 
   if (isReviewing) {
     const moveNum = Math.floor(viewMoveIndex / 2) + 1;
     const side = viewMoveIndex % 2 === 0 ? 'W' : 'B';
-    statusText = `Reviewing move ${moveNum}${side} — click board to return`;
+    statusText = `Reviewing move ${moveNum}${side} - click board to return`;
     statusColor = 'text-amber-400';
   } else if (wrongMoveFen) {
-    statusText = 'Wrong move — click ◀ to undo';
+    statusText = 'Wrong move - click back to undo';
     statusColor = 'text-red-400';
   } else if (phase === 'setup') {
     if (isAwaitingUserMove) {
-      statusText = 'Your turn — play the next setup move';
+      statusText = 'Your turn - play the next setup move';
       statusColor = 'text-blue-300';
     } else {
       statusText = 'Opponent is playing...';
@@ -363,54 +387,74 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const isDraggable =
-    !isReviewing && !wrongMoveFen && isAwaitingUserMove && (phase === 'training' || phase === 'setup');
+    !isReviewing &&
+    !wrongMoveFen &&
+    isAwaitingUserMove &&
+    (phase === 'training' || phase === 'setup');
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      {/* Status */}
-      <div className={`text-sm font-semibold tracking-wide ${statusColor}`}>
+    <div
+      className="flex w-full max-w-full flex-col items-center gap-2 sm:gap-3"
+      style={{ maxWidth: Math.max(320, boardSize + 64) }}
+    >
+      <div className={`text-center text-sm font-semibold tracking-wide ${statusColor}`}>
         {statusText}
       </div>
 
-      {/* Progress bar — always in layout, invisible when not applicable */}
-      <div className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`} style={{ maxWidth: boardSize }}>
-        <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
+      <div
+        className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`}
+        style={{ maxWidth: boardSize }}
+      >
+        <div className="mb-1 flex justify-between text-xs font-semibold text-slate-400">
           <span>{progressLabel}</span>
           <span>{progressDone} / {progressTotal} moves</span>
         </div>
-        <div className="w-full bg-slate-700/60 rounded-full h-2">
+        <div className="h-2 w-full rounded-full bg-slate-700/60">
           <div
             className={`${progressColor} h-2 rounded-full transition-all duration-300`}
-            style={{ width: progressTotal > 0 ? `${Math.round((progressDone / progressTotal) * 100)}%` : '0%' }}
+            style={{
+              width: progressTotal > 0
+                ? `${Math.round((progressDone / progressTotal) * 100)}%`
+                : '0%',
+            }}
           />
         </div>
       </div>
 
-      {/* Feedback row — always h-6, never collapses */}
-      <div className="h-6 flex items-center justify-center">
+      <div className="flex h-6 items-center justify-center">
         {feedbackMsg ? (
-          <span className={`text-xs font-bold px-4 py-1 rounded-full ${
-            feedbackMsg.type === 'correct' ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
-          }`}>{feedbackMsg.text}</span>
+          <span
+            className={`rounded-full px-4 py-1 text-xs font-bold ${
+              feedbackMsg.type === 'correct'
+                ? 'bg-emerald-600/90 text-white'
+                : 'bg-red-600/90 text-white'
+            }`}
+          >
+            {feedbackMsg.text}
+          </span>
         ) : wrongMoveFen && !showingCorrectMove ? (
-          <span className="bg-red-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            Wrong move — click ◀ to undo
+          <span className="rounded-full bg-red-700/80 px-3 py-1 text-xs font-semibold text-white">
+            Wrong move - click back to undo
           </span>
         ) : wrongMoveSan && showingCorrectMove ? (
-          <span className="bg-emerald-700/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            Follow the arrow — now play it
+          <span className="rounded-full bg-emerald-700/80 px-3 py-1 text-xs font-semibold text-white">
+            Follow the arrow - now play it
           </span>
         ) : null}
       </div>
 
-      {/* Board + optional eval bar */}
-      <div className="flex items-center gap-2">
+      <div className="board-shell flex w-full items-center justify-center gap-3 sm:gap-4">
         {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
           <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
         )}
         <div
           key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
-          className={`relative rounded-lg overflow-hidden shadow-2xl shadow-black/60 ${boardFlashing ? 'board-flash-green' : ''} ${isReviewing ? 'opacity-90 ring-2 ring-amber-500/40' : ''}`}
+          className={[
+            'board-frame relative isolate overflow-hidden rounded-[22px]',
+            'border border-black/15 bg-[#2f2116] shadow-[0_20px_55px_rgba(0,0,0,0.42)]',
+            boardFlashing ? 'board-flash-green' : '',
+            isReviewing ? 'opacity-90 ring-2 ring-amber-500/40' : '',
+          ].join(' ')}
           style={{ width: boardSize, height: boardSize }}
         >
           <Chessboard
@@ -423,17 +467,22 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             customSquareStyles={customSquareStyles}
             customArrows={customArrows}
             boardWidth={boardSize}
-            customBoardStyle={{ borderRadius: '4px' }}
-            customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-            customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+            customBoardStyle={{
+              borderRadius: '18px',
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+            }}
+            customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
+            customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
             animationDuration={isReviewing ? 0 : 200}
-            {...(postLine && isAwaitingUserMove ? {
-              promotionDialogVariant: 'modal' as const,
-              onPromotionPieceSelect,
-            } : {})}
+            {...(postLine && isAwaitingUserMove
+              ? {
+                  promotionDialogVariant: 'modal' as const,
+                  onPromotionPieceSelect,
+                }
+              : {})}
           />
 
-          {/* Knight arrow overlay (L-shaped) */}
           {knightArrow && !isReviewing && (
             <KnightArrowOverlay
               from={knightArrow[0]}
@@ -444,7 +493,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             />
           )}
 
-          {/* Wrong-move X badge — top-right corner of the destination square */}
           {wrongMoveSquare && !isReviewing && (() => {
             const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
             const badge = Math.max(22, Math.min(34, size * 0.42));
@@ -458,7 +506,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                   height: badge,
                 }}
               >
-                <div className="w-full h-full rounded-full bg-slate-900 border-[3px] border-red-500 flex items-center justify-center shadow-xl shadow-black/60">
+                <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-red-500 bg-slate-900 shadow-xl shadow-black/60">
                   <svg
                     width="52%"
                     height="52%"
@@ -478,7 +526,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      {/* Board nav row with mistake counter and hint button */}
       {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
         <BoardNavRow
           wrongMoveFen={wrongMoveFen}
@@ -489,13 +536,9 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           postLine={postLine}
         />
       )}
-
-      {/* Analysis panel moved to sidebar */}
     </div>
   );
 }
-
-// ─── Board nav row (mistake counter + nav arrows + hint button) ───────
 
 function BoardNavRow({
   wrongMoveFen,
@@ -512,13 +555,26 @@ function BoardNavRow({
   mode: string;
   postLine: boolean;
 }) {
-  const { viewMoveIndex, playedMoves, navigateToMove, mistakes, isAwaitingUserMove, showHint, showAnswer, hintSquare, showingCorrectMove } = useTrainingStore();
+  const {
+    viewMoveIndex,
+    playedMoves,
+    navigateToMove,
+    mistakes,
+    isAwaitingUserMove,
+    showHint,
+    showAnswer,
+    hintSquare,
+    showingCorrectMove,
+  } = useTrainingStore();
 
   const isLive = viewMoveIndex === null;
   const currentIdx = isLive ? playedMoves.length - 1 : viewMoveIndex;
 
   function goBack() {
-    if (wrongMoveFen) { clearWrongMove(); return; }
+    if (wrongMoveFen) {
+      clearWrongMove();
+      return;
+    }
     const prev = currentIdx - 1;
     if (prev < 0) return;
     navigateToMove(prev);
@@ -545,40 +601,44 @@ function BoardNavRow({
   const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
 
   return (
-    <div className="flex items-center justify-between gap-2" style={{ width: boardSize }}>
-      {/* Left: mistake counter */}
+    <div
+      className="flex items-center justify-between gap-2"
+      style={{ width: boardSize, maxWidth: '100%' }}
+    >
       <div style={{ width: sqPx }} className="flex-shrink-0">
         {mistakes > 0 && (
-          <span className="text-xs font-bold text-red-400">✗ {mistakes}</span>
+          <span className="text-xs font-bold text-red-400">x {mistakes}</span>
         )}
       </div>
 
-      {/* Center: nav arrows */}
       <div className="flex items-center gap-2">
-        <NavButton onClick={goBack} disabled={!canBack} title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}>
-          ◀
+        <NavButton
+          onClick={goBack}
+          disabled={!canBack}
+          title={wrongMoveFen ? 'Undo wrong move' : 'Previous move'}
+        >
+          ←
         </NavButton>
         <NavButton onClick={goForward} disabled={!canForward} title="Next move">
-          ▶
+          →
         </NavButton>
         {!isLive && !wrongMoveFen && (
           <button
             onClick={() => navigateToMove(null)}
-            className="text-xs text-amber-400 hover:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-600/40 hover:border-amber-500/60 transition-colors cursor-pointer"
+            className="rounded border border-amber-600/40 px-2 py-0.5 text-xs font-semibold text-amber-400 transition-colors hover:border-amber-500/60 hover:text-amber-300 cursor-pointer"
           >
-            ▶▶ Live
+            Live
           </button>
         )}
       </div>
 
-      {/* Right: hint / answer button */}
-      <div style={{ width: sqPx }} className="flex-shrink-0 flex justify-end">
+      <div style={{ width: sqPx }} className="flex flex-shrink-0 justify-end">
         {!hideHint && showHintBtn && (
           <button
             onClick={showHint}
             title="Hint"
             style={{ width: sqPx, height: 32 }}
-            className="rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 cursor-pointer transition-colors"
+            className="rounded-lg bg-emerald-600 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 cursor-pointer"
           >
             Hint
           </button>
@@ -588,7 +648,7 @@ function BoardNavRow({
             onClick={showAnswer}
             title="Show answer"
             style={{ width: sqPx, height: 32 }}
-            className="rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-400 cursor-pointer transition-colors"
+            className="rounded-lg bg-emerald-500 text-xs font-semibold text-white transition-colors hover:bg-emerald-400 cursor-pointer"
           >
             Answer
           </button>
@@ -614,7 +674,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/60 border border-slate-600/40 text-slate-300 hover:bg-slate-600/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer text-sm"
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/40 bg-slate-700/60 text-sm text-slate-300 transition-colors hover:bg-slate-600/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>

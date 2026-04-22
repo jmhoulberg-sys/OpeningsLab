@@ -12,8 +12,12 @@ interface HomePageProps {
 
 const PLACEHOLDER_CARDS = [
   { name: "King's Indian Defense", id: 'kings-indian' },
-  { name: "French Defense", id: 'french-defense' },
+  { name: 'French Defense', id: 'french-defense' },
 ];
+
+const MINI_BOARD_SIZE = 130;
+const WOOD_LIGHT = '#e4c79a';
+const WOOD_DARK = '#9d6b3f';
 
 function PawnIcon({ color }: { color: 'white' | 'black' }) {
   return (
@@ -31,8 +35,6 @@ function PawnIcon({ color }: { color: 'white' | 'black' }) {
   );
 }
 
-const BOARD_H = 130; // mini board height — used to pin the right column
-
 function OpeningCard({
   opening,
   onSelect,
@@ -42,8 +44,8 @@ function OpeningCard({
 }) {
   const { isLineUnlocked } = useProgressStore();
   const totalLines = opening.lines.length;
-  const completedLines = opening.lines.filter((l) =>
-    isLineUnlocked(opening.id, l.id),
+  const completedLines = opening.lines.filter((line) =>
+    isLineUnlocked(opening.id, line.id),
   ).length;
   const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
   const setupFen = fenAfterMoves(opening.setupMoves);
@@ -51,59 +53,57 @@ function OpeningCard({
   return (
     <button
       onClick={onSelect}
-      className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 transition-all duration-200 cursor-pointer group w-full"
+      className="group w-full rounded-[24px] border border-white/10 bg-brand-card p-4 text-left transition-all duration-200 hover:border-brand-accent/60 hover:shadow-lg hover:shadow-brand-accent/10 cursor-pointer"
     >
-      {/* items-stretch so the right column fills the mini-board height */}
       <div className="flex items-stretch gap-4">
-        {/* Mini board — fixed size, oriented for the player */}
         <div
-          className="flex-shrink-0 rounded-lg overflow-hidden pointer-events-none"
-          style={{ width: BOARD_H, height: BOARD_H }}
+          className="flex-shrink-0 overflow-hidden rounded-[18px] pointer-events-none shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+          style={{ width: MINI_BOARD_SIZE, height: MINI_BOARD_SIZE }}
         >
           <Chessboard
             position={setupFen}
-            boardWidth={BOARD_H}
+            boardWidth={MINI_BOARD_SIZE}
             boardOrientation={opening.playerColor}
             arePiecesDraggable={false}
-            customBoardStyle={{ borderRadius: '4px' }}
-            customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-            customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+            customBoardStyle={{
+              borderRadius: '18px',
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+            }}
+            customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
+            customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
             animationDuration={0}
           />
         </div>
 
-        {/* Right column: fixed height = board height so progress always aligns */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ height: BOARD_H }}>
-          {/* Title + pawn */}
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h2 className="text-white font-bold text-base leading-tight group-hover:text-brand-accent transition-colors">
+        <div className="flex flex-1 min-w-0 flex-col" style={{ height: MINI_BOARD_SIZE }}>
+          <div className="mb-1 flex items-start justify-between gap-2">
+            <h2 className="text-base font-bold leading-tight text-white transition-colors group-hover:text-brand-accent">
               {opening.name}
             </h2>
             <span
               title={opening.playerColor === 'white' ? 'You play White' : 'You play Black'}
-              className="flex-shrink-0 mt-0.5"
+              className="mt-0.5 flex-shrink-0"
             >
               <PawnIcon color={opening.playerColor} />
             </span>
           </div>
 
-          {/* Description — clipped with ellipsis, never pushes progress bar down */}
-          <p className="text-slate-300 text-xs leading-relaxed flex-1 overflow-hidden line-clamp-3">
+          <p className="line-clamp-3 flex-1 overflow-hidden text-xs leading-relaxed text-slate-300">
             {opening.description}
           </p>
 
-          {/* Progress — pinned to the bottom, aligns with the mini board bottom */}
           {totalLines > 0 && (
-            <div className="mt-auto pt-1.5 border-t border-white/10 flex-shrink-0">
-              <div className="flex items-center justify-between text-[10px] mb-1">
-                <span className="text-slate-200 font-semibold">Lines completed</span>
-                <span className={completedLines > 0 ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
+            <div className="mt-auto flex-shrink-0 border-t border-white/10 pt-1.5">
+              <div className="mb-1 flex items-center justify-between text-[10px]">
+                <span className="font-semibold text-slate-200">Lines completed</span>
+                <span className={completedLines > 0 ? 'font-bold text-emerald-400' : 'text-slate-300'}>
                   {completedLines}/{totalLines}
                 </span>
               </div>
-              <div className="w-full bg-slate-600/40 rounded-full h-1.5">
+              <div className="h-1.5 w-full rounded-full bg-slate-600/40">
                 <div
-                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                  className="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -117,61 +117,69 @@ function OpeningCard({
 
 export default function HomePage({ onSelectOpening, onSettingsClick }: HomePageProps) {
   return (
-    <div className="min-h-screen bg-brand-bg flex flex-col items-center py-10 px-4">
-      {/* Header */}
-      <div className="text-center mb-8 relative w-full max-w-5xl">
-        <button
-          onClick={onSettingsClick}
-          title="Settings"
-          className="absolute right-0 top-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
-          aria-label="Open settings"
-        >
-          <Settings size={24} />
-        </button>
-
-        <div className="mb-3 flex justify-center">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent">
-            <circle cx="12" cy="5" r="3"/>
-            <path d="M10 8l-2 6h8l-2-6z"/>
-            <path d="M7 15l-1 3h12l-1-3z"/>
-          </svg>
-        </div>
-        <h1 className="text-4xl font-extrabold text-white tracking-tight">
-          OpeningsLab
-        </h1>
-        <p className="text-slate-400 mt-2 text-base">Choose your opening</p>
-      </div>
-
-      {/* Card grid — 1 col on mobile, 2 on tablet, 3 on large screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
-        {OPENINGS.map((opening) => (
-          <OpeningCard
-            key={opening.id}
-            opening={opening}
-            onSelect={() => onSelectOpening(opening)}
-          />
-        ))}
-
-        {/* Placeholder cards */}
-        {PLACEHOLDER_CARDS.map((card) => (
-          <div
-            key={card.id}
-            className="bg-brand-card border border-white/10 rounded-2xl p-4 text-left opacity-40 cursor-not-allowed"
+    <div className="min-h-screen bg-brand-bg px-4 py-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center">
+        <div className="relative mb-8 w-full max-w-5xl text-center">
+          <button
+            onClick={onSettingsClick}
+            title="Settings"
+            className="absolute right-0 top-0 text-slate-400 transition-colors hover:text-white cursor-pointer"
+            aria-label="Open settings"
           >
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 rounded-lg bg-slate-800/60 border border-slate-700/40" style={{ width: 130, height: 130 }} />
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h2 className="text-slate-400 font-bold text-base">{card.name}</h2>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-500 shrink-0">
-                    Coming Soon
-                  </span>
+            <Settings size={24} />
+          </button>
+
+          <div className="mb-3 flex justify-center">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="text-brand-accent"
+            >
+              <circle cx="12" cy="5" r="3" />
+              <path d="M10 8l-2 6h8l-2-6z" />
+              <path d="M7 15l-1 3h12l-1-3z" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-white">
+            OpeningsLab
+          </h1>
+          <p className="mt-2 text-base text-slate-400">Choose your opening</p>
+        </div>
+
+        <div className="grid w-full max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {OPENINGS.map((opening) => (
+            <OpeningCard
+              key={opening.id}
+              opening={opening}
+              onSelect={() => onSelectOpening(opening)}
+            />
+          ))}
+
+          {PLACEHOLDER_CARDS.map((card) => (
+            <div
+              key={card.id}
+              className="cursor-not-allowed rounded-[24px] border border-white/10 bg-brand-card p-4 text-left opacity-40"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="flex-shrink-0 rounded-[18px] border border-slate-700/40 bg-slate-800/60"
+                  style={{ width: MINI_BOARD_SIZE, height: MINI_BOARD_SIZE }}
+                />
+                <div className="flex-1 min-w-0 pt-1">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <h2 className="text-base font-bold text-slate-400">{card.name}</h2>
+                    <span className="shrink-0 rounded-full bg-slate-700/60 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">This opening is not yet available.</p>
                 </div>
-                <p className="text-slate-600 text-xs">This opening is not yet available.</p>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
