@@ -6,10 +6,11 @@ import { ChevronLeft, ChevronRight, Lightbulb, Sparkles } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
+import { getCoachingNote } from '../../data/coachingNotes';
 import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
-const SELECTED_HIGHLIGHT = 'rgba(91, 176, 255, 0.34)';
+const SELECTED_HIGHLIGHT = '#a9c7e2';
 const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
 const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
 const HINT_HIGHLIGHT = 'rgba(0, 216, 153, 0.74)';
@@ -50,6 +51,7 @@ function getBoardMessage({
   mode,
   expectedSan,
   selectedLineName,
+  coachingNote,
 }: {
   isReviewing: boolean;
   viewMoveIndex: number | null;
@@ -60,6 +62,7 @@ function getBoardMessage({
   mode: string;
   expectedSan: string | null;
   selectedLineName: string | null;
+  coachingNote: string | null;
 }) {
   if (isReviewing) {
     const moveNum = Math.floor((viewMoveIndex ?? 0) / 2) + 1;
@@ -83,8 +86,9 @@ function getBoardMessage({
     return {
       eyebrow: 'Setup',
       text: isAwaitingUserMove
-        ? 'Reach the shared opening position'
+        ? (coachingNote ?? 'Reach the shared opening position')
         : 'Hold the structure while the reply appears',
+      detail: isAwaitingUserMove && expectedSan ? `Play ${expectedSan}` : 'Shared opening moves',
       color: isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500',
     };
   }
@@ -111,7 +115,8 @@ function getBoardMessage({
     if (mode === 'full-line' && isAwaitingUserMove && expectedSan) {
       return {
         eyebrow: selectedLineName ? `Practice full line` : 'Practice full line',
-        text: `Guided move: play ${expectedSan}`,
+        text: coachingNote ?? `Guided move: play ${expectedSan}`,
+        detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
       };
     }
@@ -119,7 +124,8 @@ function getBoardMessage({
     if (mode === 'learn' && isAwaitingUserMove && expectedSan) {
       return {
         eyebrow: 'Learn line',
-        text: `Next move to learn: ${expectedSan}`,
+        text: coachingNote ?? `Next move to learn: ${expectedSan}`,
+        detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
       };
     }
@@ -127,7 +133,8 @@ function getBoardMessage({
     if (mode === 'step-by-step' && isAwaitingUserMove) {
       return {
         eyebrow: 'Practice step-by-step',
-        text: 'Recall the next move. Use hint or answer if you need support.',
+        text: coachingNote ?? 'Recall the next move. Use hint or answer if you need support.',
+        detail: expectedSan ? `Best move: ${expectedSan}` : 'Work from memory',
         color: 'text-emerald-300',
       };
     }
@@ -152,6 +159,7 @@ function getBoardMessage({
   return {
     eyebrow: '',
     text: '',
+    detail: '',
     color: 'text-stone-400',
   };
 }
@@ -412,6 +420,13 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     mode,
     expectedSan,
     selectedLineName: selectedLine?.name ?? null,
+    coachingNote: getCoachingNote(
+      opening,
+      selectedLine,
+      phase === 'setup' ? 'setup' : 'training',
+      currentMoveIndex,
+      expectedSan,
+    ),
   });
 
   const isDraggable =
@@ -432,6 +447,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         <div className={`mt-1 text-sm font-semibold tracking-wide ${boardMessage.color}`}>
           {boardMessage.text}
         </div>
+        {boardMessage.detail && (
+          <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            {boardMessage.detail}
+          </div>
+        )}
         {selectedLine && phase === 'training' && !postLine && (
           <div className="mt-1 text-xs text-stone-500">
             {mode === 'learn'
@@ -527,7 +547,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             />
             {wrongMoveSquare && !isReviewing && (() => {
               const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
-              const badge = Math.max(22, Math.min(34, size * 0.42));
+              const badge = Math.max(28, Math.min(38, size * 0.48));
               return (
                 <div
                   className="absolute pointer-events-none"
@@ -538,14 +558,14 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                     height: badge,
                   }}
                 >
-                  <div className="flex h-full w-full items-center justify-center rounded-full border border-white/10 bg-slate-950/94 shadow-[0_10px_24px_rgba(0,0,0,0.45)] ring-2 ring-rose-500/90">
+                  <div className="flex h-full w-full items-center justify-center rounded-full border border-rose-100/80 bg-rose-500 shadow-[0_10px_24px_rgba(244,63,94,0.45)] ring-4 ring-rose-200/35">
                     <svg
                       width="50%"
                       height="50%"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#f8fafc"
-                      strokeWidth="2.8"
+                      stroke="#fff7fb"
+                      strokeWidth="3.2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >

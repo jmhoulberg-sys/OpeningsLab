@@ -283,7 +283,7 @@ export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
       <SectionHeading
         eyebrow="Daily quests"
         title="Small targets that bring you back"
-        description={isLoggedIn ? 'Fast wins for today.' : 'Sign in to unlock daily quests and progress tracking.'}
+        description={isLoggedIn ? 'Fast wins for today.' : 'Log in to see details and save daily progress.'}
       />
       <div className="grid gap-3 md:grid-cols-3">
         {quests.map((quest) => {
@@ -296,14 +296,18 @@ export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-white">{quest.label}</div>
-                <span className={`text-xs font-semibold ${done ? 'text-emerald-300' : 'text-stone-400'}`}>
-                  {quest.progress}/{quest.target}
-                </span>
+                {isLoggedIn ? (
+                  <span className={`text-xs font-semibold ${done ? 'text-emerald-300' : 'text-stone-400'}`}>
+                    {quest.progress}/{quest.target}
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold text-stone-500">Log in to see details</span>
+                )}
               </div>
               <div className="mt-3 h-2 rounded-full bg-stone-800">
                 <div
                   className={`h-2 rounded-full transition-all duration-500 ${done ? 'bg-emerald-400' : 'bg-sky-400'}`}
-                  style={{ width: `${Math.min(100, pct)}%` }}
+                  style={{ width: `${Math.min(100, isLoggedIn ? pct : 100)}%` }}
                 />
               </div>
             </div>

@@ -46,7 +46,7 @@ export default function TrainingSetupModal() {
       window.setTimeout(() => {
         setMode(mode);
         selectLine(line);
-      }, 1100);
+      }, 1400);
       return;
     }
     setMode(mode);
@@ -61,7 +61,7 @@ export default function TrainingSetupModal() {
       onClick={() => setDismissed(true)}
     >
       <div
-        className="max-h-[calc(100vh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[28px] border border-stone-800/70 bg-stone-950/95 p-5 shadow-2xl shadow-black/60 sm:max-h-[calc(100vh-3rem)] sm:p-6"
+      className="max-h-[calc(100vh-1rem)] w-full max-w-[880px] overflow-y-auto rounded-[28px] border border-stone-800/70 bg-stone-950/95 p-4 shadow-2xl shadow-black/60 sm:max-h-[calc(100vh-2rem)] sm:p-5"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -96,29 +96,29 @@ export default function TrainingSetupModal() {
           </div>
         </div>
 
-        <div className="mt-5 space-y-5">
+        <div className="mt-4 space-y-4">
           {learnableLines.length > 0 && (
-            <section className="rounded-[22px] border border-sky-400/15 bg-sky-400/8 p-4">
+            <section className="rounded-[22px] border border-sky-400/15 bg-sky-400/8 p-3.5">
               <div className="flex items-center gap-2 text-sky-300">
                 <BookOpen size={18} />
                 <div className="text-sm font-semibold uppercase tracking-[0.18em]">Choose a line to unlock</div>
               </div>
-              <div className="mt-4 space-y-2.5">
+              <div className="mt-3 space-y-2">
                 {learnableLines.map((line) => (
-                  <div key={line.id} className={`relative flex items-center gap-4 rounded-2xl border border-stone-700/70 bg-stone-950/70 p-4 ${unlockingLineId === line.id ? 'star-pop ring-1 ring-sky-400/30 shadow-[0_14px_30px_rgba(14,165,233,0.18)]' : ''}`}>
-                    <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${unlockingLineId === line.id ? 'bg-sky-500/16 text-sky-300' : 'bg-stone-900 text-stone-500'}`}>
+                  <div key={line.id} className={`relative flex items-center gap-3 rounded-2xl border border-stone-700/70 bg-stone-950/70 p-3 ${unlockingLineId === line.id ? 'unlock-outline border-sky-400/45' : ''}`}>
+                    <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${unlockingLineId === line.id ? 'unlock-lock bg-sky-500/10 text-sky-300' : 'bg-stone-900 text-stone-500'}`}>
                       <Lock size={22} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-base font-bold leading-tight text-white">{line.name}</div>
-                      <div className="mt-1 text-sm text-stone-300">
+                      <div className="text-[1rem] font-bold leading-tight text-white">{line.name}</div>
+                      <div className="mt-0.5 text-sm text-stone-300">
                         {getPlainLanguageSummary(line)}
                       </div>
                     </div>
                     <button
                       disabled={unlockingLineId !== null}
                       onClick={() => launchLine(line, 'learn')}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     >
                       Unlock line
                       <ChevronRight size={16} />
@@ -129,7 +129,7 @@ export default function TrainingSetupModal() {
             </section>
           )}
 
-          <section className="rounded-[22px] border border-stone-800/70 bg-stone-900/75 p-4">
+          <section className="rounded-[22px] border border-stone-800/70 bg-stone-900/75 p-3.5">
             <div className="flex items-center gap-2 text-emerald-300">
               <Route size={18} />
               <div className="text-sm font-semibold uppercase tracking-[0.18em]">Practice unlocked lines</div>
@@ -139,11 +139,11 @@ export default function TrainingSetupModal() {
             </div>
 
             {practiceLines.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
+              <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
                 Finish the next line cleanly to open practice modes.
               </div>
             ) : (
-              <div className="mt-4 space-y-3">
+              <div className="mt-3 space-y-2.5">
                 {practiceLines.map((line) => (
                   <PracticeLineCard
                     key={line.id}
@@ -189,15 +189,15 @@ function PracticeLineCard({
   const dueBadge = enableDueBadge && isFavorite && isDue;
 
   return (
-    <div className={`rounded-2xl border border-stone-800/70 bg-stone-950/75 p-4 ${isNewlyUnlocked ? 'star-pop shadow-[0_14px_30px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/20' : ''}`}>
+    <div className={`rounded-2xl border border-stone-800/70 bg-stone-950/75 p-3.5 ${isNewlyUnlocked ? 'unlock-outline border-sky-400/45 shadow-[0_10px_24px_rgba(14,165,233,0.14)]' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-base font-bold text-white">{line.name}</div>
-          <div className="mt-1 text-sm text-stone-400">
+          <div className="mt-0.5 text-sm text-stone-400">
             {getPlainLanguageSummary(line)}
           </div>
           {isNewlyUnlocked && (
-            <div className="mt-2 inline-flex rounded-full bg-emerald-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+            <div className="mt-1.5 inline-flex rounded-full bg-sky-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-300">
               Newly unlocked
             </div>
           )}
@@ -222,17 +222,17 @@ function PracticeLineCard({
           </button>
         </div>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <button
           onClick={onStepByStep}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
         >
           <Layers size={16} />
           Practice step-by-step
         </button>
         <button
           onClick={onFullLine}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-400/20 bg-sky-500/12 px-4 py-3 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-500/18 cursor-pointer"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-sky-400/20 bg-sky-500/12 px-3.5 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-500/18 cursor-pointer"
         >
           <Route size={16} />
           Practice full line

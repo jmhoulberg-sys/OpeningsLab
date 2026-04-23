@@ -36,24 +36,26 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
             <path d="M10 8l-2 6h8l-2-6z" />
             <path d="M7 15l-1 3h12l-1-3z" />
           </svg>
-          <span className="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
+          <span className="text-[1.35rem] font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
             OpeningsLab
           </span>
         </button>
 
         <div className="hidden min-w-0 justify-self-center lg:block">
-          <div className="min-w-[430px] rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 py-3 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
+          <div className="flex h-[72px] min-w-[430px] items-center justify-center rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
+            <div>
             <div className="text-center text-lg font-bold leading-tight text-white">
               {headerTitle}
             </div>
             <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
               {headerSubtitle}
             </div>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5 justify-self-end">
-          <div className="hidden h-[74px] min-w-[122px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
+          <div className="hidden h-[62px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
             <div className="flex items-center gap-2">
               <Crown size={15} className="text-sky-300" />
               <span className="text-sm font-semibold text-white">
@@ -66,15 +68,14 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
                 style={{ width: `${isLoggedIn ? levelInfo.progressPct : 100}%` }}
               />
             </div>
-            <div className="mt-1 text-[11px] text-stone-500">
-              {isLoggedIn ? `${xpToNext} XP to next` : 'Track XP and streaks'}
-            </div>
+            {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
+            {isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">{xpToNext} XP to next</div>}
           </div>
           <PhaseBadge phase={phase} />
           {isLoggedIn ? (
             <button
               onClick={onSettingsClick}
-              className="hidden h-[42px] min-w-[162px] items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
+              className="hidden h-[62px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
               title="Account"
             >
               <UserCircle2 size={17} className="text-sky-300" />
@@ -83,7 +84,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           ) : (
             <button
               onClick={login}
-              className="hidden h-[42px] min-w-[162px] items-center justify-center gap-2 rounded-xl bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+              className="hidden h-[62px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
             >
               <LogIn size={16} />
               Sign in
@@ -91,7 +92,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           )}
           <button
             onClick={onSettingsClick}
-            className="h-[42px] rounded-xl border border-stone-700/45 bg-stone-800 px-3.5 py-2.5 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="h-[62px] rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
             title="Settings"
             aria-label="Open settings"
           >

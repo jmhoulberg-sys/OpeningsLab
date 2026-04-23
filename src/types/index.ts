@@ -44,6 +44,14 @@ export interface OpeningLine {
   children?: OpeningLine[];
 }
 
+export interface CoachingContext {
+  openingId: string;
+  lineId?: string;
+  san: string;
+  phase: 'setup' | 'training';
+  moveIndex: number;
+}
+
 /**
  * An opening (e.g. Stafford Gambit).
  * setupMoves defines the sequence leading to the "opening position".
