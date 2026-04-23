@@ -25,10 +25,8 @@ const EMPTY: LichessAnalysis = {
 
 export function useLichessAnalysis(
   fen: string | null,
-  playedMoves: string[],
   enabled: boolean,
   minRating = 0,
-  topMovesToInclude = 3,
 ): LichessAnalysis {
   const [state, setState] = useState<LichessAnalysis>(EMPTY);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,16 +45,20 @@ export function useLichessAnalysis(
       try {
         const enc = encodeURIComponent(fen);
         const [positionResult, evalResult] = await Promise.allSettled([
-          fetchLichessBookPosition(fen, { minRating, moveLimit: 12, playedMoves }),
+          fetchLichessBookPosition(fen, { minRating }),
           fetch(`https://lichess.org/api/cloud-eval?fen=${enc}&multiPv=1`),
         ]);
 
         let moves: LichessMove[] = [];
         let evalCp: number | null = null;
         let evalMate: number | null = null;
+        let error: string | null = null;
 
         if (positionResult.status === 'fulfilled') {
-          moves = getTopBookMoves(positionResult.value, topMovesToInclude);
+          moves = getTopBookMoves(positionResult.value, 3);
+          if (positionResult.value.status === 'api_error') {
+            error = positionResult.value.error ?? 'Could not reach Lichess';
+          }
         }
 
         if (evalResult.status === 'fulfilled' && evalResult.value.ok) {
@@ -68,7 +70,7 @@ export function useLichessAnalysis(
           }
         }
 
-        setState({ moves, evalCp, evalMate, loading: false, error: null });
+        setState({ moves, evalCp, evalMate, loading: false, error });
       } catch {
         setState((s) => ({ ...s, loading: false, error: 'Could not reach Lichess' }));
       }
@@ -77,7 +79,7 @@ export function useLichessAnalysis(
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [fen, playedMoves, enabled, minRating, topMovesToInclude]);
+  }, [fen, enabled, minRating]);
 
   return state;
 }

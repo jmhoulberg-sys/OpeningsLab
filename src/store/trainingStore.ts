@@ -14,13 +14,14 @@ import {
   validateStudentMove,
   getOpponentMoveSan,
   applyMove,
+  applyUciMove,
   dropToSan,
   isGameOver,
   repetitionTarget,
   getSetupFen,
 } from '../engine/chessEngine';
 import { useSettingsStore } from './settingsStore';
-import { pickLichessBookMove } from '../services/lichessBookService';
+import { logExplorerMoveAcceptance, pickLichessBookMove } from '../services/lichessBookService';
 import { useProgressionStore } from './progressionStore';
 
 // ─── State shape ────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ interface TrainingState {
   postLineMode: PostLineMode | null;
   postLineSource: 'lichess-db' | null;
   postLineOutOfBook: boolean;
+  postLineError: string | null;
   /** playedMoves.length at the moment postLine started — used for move list divider. */
   postLineStartMoveCount: number | null;
   /** Show position evaluation panel during free play. */
@@ -129,6 +131,7 @@ function buildInitialState(): TrainingState {
     postLineMode: null,
     postLineSource: null,
     postLineOutOfBook: false,
+    postLineError: null,
     postLineStartMoveCount: null,
     showEval: false,
     showTopMoves: true,
@@ -233,6 +236,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           postLine: false,
           postLineSource: null,
           postLineOutOfBook: false,
+          postLineError: null,
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
@@ -264,6 +268,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           postLine: false,
           postLineSource: null,
           postLineOutOfBook: false,
+          postLineError: null,
           postLineStartMoveCount: null,
           isAwaitingUserMove: false,
           repetitionBlock: 1,
@@ -352,6 +357,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           isAwaitingUserMove: false,
           wrongMoveSan: null,
           showingCorrectMove: false,
+          postLineError: null,
         });
 
         if (isGameOver(newFen)) {
@@ -452,6 +458,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   postLine: false,
                   postLineSource: null,
                   postLineOutOfBook: false,
+                  postLineError: null,
                   postLineStartMoveCount: null,
                   isAwaitingUserMove: false,
                   selectedLine: line,
@@ -479,6 +486,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
                   postLine: false,
                   postLineSource: null,
                   postLineOutOfBook: false,
+                  postLineError: null,
                   postLineStartMoveCount: null,
                   isAwaitingUserMove: false,
                   selectedLine: line,
@@ -553,20 +561,41 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         let opponentSan: string | null = null;
 
         if (state.postLineMode === 'top-moves') {
-          const { minRating, topMovesToInclude } = useSettingsStore.getState();
-          const { move } = await pickLichessBookMove(state.currentFen, {
+          const { minRating, explorerOpponentMode } = useSettingsStore.getState();
+          const decision = await pickLichessBookMove(state.currentFen, {
             minRating,
-            topMovesToInclude,
-            moveLimit: 12,
-            playedMoves: state.playedMoves,
+            mode: explorerOpponentMode,
           });
-          opponentSan = move?.san ?? null;
+
+          if (decision.move) {
+            const legalMove = applyUciMove(state.currentFen, decision.move.uci);
+            logExplorerMoveAcceptance(state.currentFen, decision.move, !!legalMove);
+
+            if (!legalMove) {
+              set({
+                isAwaitingUserMove: false,
+                postLineOutOfBook: false,
+                postLineError: `Lichess returned illegal move ${decision.move.san} for the current board`,
+              });
+              return;
+            }
+
+            opponentSan = legalMove.san;
+          } else if (decision.status === 'api_error') {
+            set({
+              isAwaitingUserMove: false,
+              postLineOutOfBook: false,
+              postLineError: decision.error ?? 'Could not reach Lichess explorer',
+            });
+            return;
+          }
         }
 
         if (!opponentSan) {
           set({
             isAwaitingUserMove: false,
             postLineOutOfBook: true,
+            postLineError: null,
           });
           return;
         }
@@ -596,6 +625,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             postLine: false,
             postLineSource: null,
             postLineOutOfBook: false,
+            postLineError: null,
             freePlayResult: result,
             showFreePlayResult: true,
           });
@@ -606,6 +636,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             fenHistory: [...state.fenHistory, newFen],
             currentMoveIndex: newIdx,
             postLineOutOfBook: false,
+            postLineError: null,
             isAwaitingUserMove: true,
           });
         }
@@ -726,6 +757,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             postLine: false,
             postLineSource: null,
             postLineOutOfBook: false,
+            postLineError: null,
             postLineStartMoveCount: null,
             isAwaitingUserMove: false,
             selectedLine: line,
@@ -757,6 +789,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             postLine: false,
             postLineSource: null,
             postLineOutOfBook: false,
+            postLineError: null,
             postLineStartMoveCount: null,
             isAwaitingUserMove: false,
             selectedLine: line,
@@ -788,6 +821,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLineMode: mode ?? null,
         postLineSource: mode === 'top-moves' ? 'lichess-db' : null,
         postLineOutOfBook: false,
+        postLineError: null,
         showEval,
         showTopMoves,
         viewMoveIndex: null,
@@ -823,6 +857,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLine: false,
         postLineSource: null,
         postLineOutOfBook: false,
+        postLineError: null,
         postLineStartMoveCount: null,
         repetitionBlock: 1,
         streak: 0,

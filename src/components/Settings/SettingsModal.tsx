@@ -18,8 +18,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setRestartFrom,
     minRating,
     setMinRating,
-    topMovesToInclude,
-    setTopMovesToInclude,
+    explorerOpponentMode,
+    setExplorerOpponentMode,
     enableSRReminders,
     setEnableSRReminders,
     showEvalBar,
@@ -170,24 +170,38 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           <section>
             <label className="mb-1 block text-sm font-semibold text-white">
-              Top moves to include
+              Lichess opponent mode
             </label>
-            <p className="mb-4 text-xs text-stone-400">
-              Use the top 1-5 Lichess database moves for post-line practice.
+            <p className="mb-3 text-xs text-stone-400">
+              Choose how the opponent reply is selected from the live explorer data.
             </p>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min={1}
-                max={5}
-                step={1}
-                value={topMovesToInclude}
-                onChange={(e) => setTopMovesToInclude(Number(e.target.value))}
-                className="flex-1 cursor-pointer accent-sky-500"
-              />
-              <span className="w-5 text-center text-sm font-bold text-white">
-                {topMovesToInclude}
-              </span>
+            <div className="grid gap-2">
+              <button
+                onClick={() => setExplorerOpponentMode('most_popular')}
+                className={`rounded-xl border px-3 py-3 text-left transition-colors cursor-pointer ${
+                  explorerOpponentMode === 'most_popular'
+                    ? 'border-sky-400/55 bg-sky-500/14 text-white'
+                    : 'border-stone-700/45 bg-stone-800 text-stone-300 hover:bg-stone-700'
+                }`}
+              >
+                <div className="text-sm font-semibold">Most popular move</div>
+                <div className="mt-1 text-xs text-stone-400">
+                  Always play the single most played Lichess reply.
+                </div>
+              </button>
+              <button
+                onClick={() => setExplorerOpponentMode('top3_weighted')}
+                className={`rounded-xl border px-3 py-3 text-left transition-colors cursor-pointer ${
+                  explorerOpponentMode === 'top3_weighted'
+                    ? 'border-sky-400/55 bg-sky-500/14 text-white'
+                    : 'border-stone-700/45 bg-stone-800 text-stone-300 hover:bg-stone-700'
+                }`}
+              >
+                <div className="text-sm font-semibold">Top 3 weighted by popularity</div>
+                <div className="mt-1 text-xs text-stone-400">
+                  Randomly choose among the top 3 replies using game-count weights.
+                </div>
+              </button>
             </div>
           </section>
 

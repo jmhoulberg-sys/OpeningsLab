@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { ExplorerOpponentMode } from '../types';
 
 // ─── Rating filter options ───────────────────────────────────────────
 // Matches Lichess explorer rating buckets.
@@ -34,7 +35,7 @@ interface SettingsState {
   restartFrom: 'start' | 'setup';
   /** Minimum average rating filter for Lichess explorer. 0 = all. */
   minRating: number;
-  topMovesToInclude: number;
+  explorerOpponentMode: ExplorerOpponentMode;
   enableSRReminders: boolean;
   showEvalBar: boolean;
 }
@@ -42,7 +43,7 @@ interface SettingsState {
 interface SettingsActions {
   setRestartFrom(v: 'start' | 'setup'): void;
   setMinRating(v: number): void;
-  setTopMovesToInclude(v: number): void;
+  setExplorerOpponentMode(v: ExplorerOpponentMode): void;
   setEnableSRReminders(v: boolean): void;
   setShowEvalBar(v: boolean): void;
 }
@@ -50,7 +51,7 @@ interface SettingsActions {
 interface PersistedSettingsState {
   restartFrom?: unknown;
   minRating?: unknown;
-  topMovesToInclude?: unknown;
+  explorerOpponentMode?: unknown;
   enableSRReminders?: unknown;
   showEvalBar?: unknown;
 }
@@ -67,11 +68,14 @@ function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
   const restartFrom = state?.restartFrom === 'start' || state?.restartFrom === 'setup'
     ? state.restartFrom
     : 'setup';
+  const explorerOpponentMode = state?.explorerOpponentMode === 'most_popular' || state?.explorerOpponentMode === 'top3_weighted'
+    ? state.explorerOpponentMode
+    : 'top3_weighted';
 
   return {
     restartFrom,
     minRating: asNumber(state?.minRating, 0),
-    topMovesToInclude: Math.min(5, Math.max(1, asNumber(state?.topMovesToInclude, 3))),
+    explorerOpponentMode,
     enableSRReminders: asBoolean(state?.enableSRReminders, true),
     showEvalBar: asBoolean(state?.showEvalBar, true),
   };
@@ -84,12 +88,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
     (set) => ({
       restartFrom: 'setup',
       minRating: 0,
-      topMovesToInclude: 3,
+      explorerOpponentMode: 'top3_weighted',
       enableSRReminders: true,
       showEvalBar: true,
       setRestartFrom: (v) => set({ restartFrom: v }),
       setMinRating: (v) => set({ minRating: v }),
-      setTopMovesToInclude: (v) => set({ topMovesToInclude: Math.min(5, Math.max(1, v)) }),
+      setExplorerOpponentMode: (v) => set({ explorerOpponentMode: v }),
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
       setShowEvalBar: (v) => set({ showEvalBar: v }),
     }),

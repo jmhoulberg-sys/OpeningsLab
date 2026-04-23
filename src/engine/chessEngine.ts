@@ -133,6 +133,29 @@ export function applyMove(fen: string, san: string): string | null {
   }
 }
 
+export function applyUciMove(
+  fen: string,
+  uci: string,
+): { fen: string; san: string } | null {
+  try {
+    const chess = new Chess(fen);
+    const result = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: (uci[4] as 'q' | 'r' | 'b' | 'n' | undefined) ?? undefined,
+    });
+
+    if (!result) return null;
+
+    return {
+      fen: chess.fen(),
+      san: result.san,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Try to convert a UCI move (e.g. "e2e4") to SAN in the given position.
  * Returns the SAN string, or null if the move is illegal.

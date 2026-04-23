@@ -3,15 +3,13 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export default function AnalysisPanel() {
-  const { currentFen, playedMoves, showTopMoves, postLineOutOfBook } = useTrainingStore();
-  const { minRating, topMovesToInclude } = useSettingsStore();
+  const { currentFen, showTopMoves, postLineOutOfBook, postLineError } = useTrainingStore();
+  const { minRating } = useSettingsStore();
 
   const { moves, loading } = useLichessAnalysis(
     showTopMoves ? currentFen : null,
-    playedMoves,
     showTopMoves,
     minRating,
-    topMovesToInclude,
   );
 
   if (!showTopMoves) return null;
@@ -22,20 +20,26 @@ export default function AnalysisPanel() {
         Based on Lichess games
       </div>
       <p className="mb-2 text-[11px] text-slate-500">
-        Top {topMovesToInclude} continuation{topMovesToInclude === 1 ? '' : 's'} by game count.
+        Top 3 continuations by game count.
       </p>
 
       {loading && (
         <p className="animate-pulse text-xs text-slate-500">Fetching...</p>
       )}
 
-      {!loading && postLineOutOfBook && (
+      {!loading && postLineError && (
         <p className="text-xs italic text-amber-300">
-          Live Lichess continuation data did not load for this position in this static build.
+          {postLineError}
         </p>
       )}
 
-      {!loading && !postLineOutOfBook && moves.length === 0 && (
+      {!loading && !postLineError && postLineOutOfBook && (
+        <p className="text-xs italic text-amber-300">
+          Out of database. Lichess returned no continuation moves for this position.
+        </p>
+      )}
+
+      {!loading && !postLineOutOfBook && !postLineError && moves.length === 0 && (
         <p className="text-xs italic text-slate-500">
           No Lichess game data found for this position.
         </p>
@@ -61,7 +65,7 @@ export default function AnalysisPanel() {
 }
 
 function MoveRow({ move }: { move: LichessMove }) {
-  const total = move.total;
+  const total = move.count;
   const games = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
   const drawPct = move.drawPct;
 

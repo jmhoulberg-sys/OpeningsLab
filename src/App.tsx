@@ -21,7 +21,7 @@ const BOARD_CHROME_H = 236;
 const EVAL_BAR_W = 24;
 
 export default function App() {
-  const { opening, phase, postLine, postLineOutOfBook, mode, streak, startOpening } = useTrainingStore();
+  const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
@@ -170,10 +170,12 @@ export default function App() {
                 </div>
 
                 {postLine && (
-                  <div className={`px-4 py-2.5 ${postLineOutOfBook ? 'bg-amber-400/8' : 'bg-emerald-400/8'}`}>
-                    <p className={`text-xs font-semibold ${postLineOutOfBook ? 'text-amber-300' : 'text-emerald-300'}`}>
-                      {postLineOutOfBook
-                        ? 'Live continuation unavailable here - retry the line or choose another'
+                  <div className={`px-4 py-2.5 ${postLineError || postLineOutOfBook ? 'bg-amber-400/8' : 'bg-emerald-400/8'}`}>
+                    <p className={`text-xs font-semibold ${postLineError || postLineOutOfBook ? 'text-amber-300' : 'text-emerald-300'}`}>
+                      {postLineError
+                        ? postLineError
+                        : postLineOutOfBook
+                        ? 'Out of database - retry the line or choose another'
                         : 'Practice top responses - based on Lichess games'}
                     </p>
                   </div>
