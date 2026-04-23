@@ -478,7 +478,7 @@ function OpeningCard({
   const isMastered = !isComingSoon && completedLines > 0 && completedLines === totalLines;
 
   return (
-    <article className="group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-colors duration-200 hover:bg-stone-900/78">
+    <article className="group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-all duration-200 hover:border-stone-700/70 hover:bg-stone-800/78 hover:shadow-[0_22px_56px_rgba(0,0,0,0.16)]">
       <button
         onClick={() => {
           if (firstLine) onStartLine(opening, firstLine);
@@ -576,7 +576,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${isClickable ? 'ring-1 ring-transparent transition-all duration-200 group-hover:ring-sky-400/30 group-hover:shadow-[0_14px_30px_rgba(14,165,233,0.18)] group-hover:bg-stone-800/25' : ''}`}
+      className={`relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${isClickable ? 'ring-1 ring-transparent transition-all duration-200 group-hover:ring-sky-400/35 group-hover:shadow-[0_14px_30px_rgba(14,165,233,0.16)]' : ''}`}
     >
       <Chessboard
         position={fen}
@@ -593,7 +593,10 @@ function BoardPreview({
         animationDuration={0}
       />
       {isClickable && (
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/6 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 rounded-[20px] border border-sky-300/0 transition-colors duration-200 group-hover:border-sky-300/25" />
+        </>
       )}
     </div>
   );
