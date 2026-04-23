@@ -2,6 +2,7 @@ import { Crown, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
+import BrandMark from '../Brand/BrandMark';
 
 interface HeaderProps {
   onSettingsClick: () => void;
@@ -31,14 +32,9 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
           onClick={onHomeClick}
           className="group flex items-center gap-3 justify-self-start cursor-pointer"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-sky-400 flex-shrink-0">
-            <circle cx="12" cy="5" r="3" />
-            <path d="M10 8l-2 6h8l-2-6z" />
-            <path d="M7 15l-1 3h12l-1-3z" />
-          </svg>
-          <span className="text-[1.35rem] font-bold tracking-tight text-white transition-colors group-hover:text-sky-300">
-            OpeningsLab
-          </span>
+          <div className="transition-transform duration-200 group-hover:translate-x-0.5">
+            <BrandMark />
+          </div>
         </button>
 
         <div className="hidden min-w-0 justify-self-center lg:block">

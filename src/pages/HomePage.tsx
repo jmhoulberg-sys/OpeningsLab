@@ -27,6 +27,7 @@ import {
   HOME_HERO,
   HOW_IT_WORKS_STEPS,
 } from '../components/Home/homeContent';
+import BrandMark from '../components/Brand/BrandMark';
 
 interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
@@ -142,9 +143,7 @@ export default function HomePage({
       <div className="sticky top-0 z-40 -mx-4 mb-5 border-b border-stone-800/70 bg-stone-950/98 shadow-[0_14px_40px_rgba(0,0,0,0.2)] backdrop-blur-md sm:-mx-5">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5">
           <div>
-            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-300/70">
-              OpeningsLab
-            </div>
+            <BrandMark />
             <div className="mt-1 text-base font-semibold text-white">Board-first opening training.</div>
           </div>
           <div className="flex items-center gap-2">

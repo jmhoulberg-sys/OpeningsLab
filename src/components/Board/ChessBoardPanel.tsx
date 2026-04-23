@@ -435,19 +435,19 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-2">
-      <div className="flex min-h-[104px] w-full max-w-[680px] flex-col items-center justify-center text-center">
+      <div className="flex min-h-[86px] w-full max-w-[680px] flex-col items-center justify-center text-center">
         {boardMessage.eyebrow && (
           <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
             {boardMessage.eyebrow}
           </div>
         )}
         {(boardMessage.text || boardMessage.detail) && (
-          <div className="mt-1 w-full rounded-[22px] border border-stone-800/70 bg-stone-900/80 px-4 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
-            <div className={`text-sm font-semibold leading-relaxed tracking-wide ${boardMessage.color}`}>
+          <div className="mt-1 w-full rounded-[22px] border border-stone-800/70 bg-stone-900/80 px-4 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
+            <div className="text-[1.02rem] font-semibold leading-relaxed text-white">
               {boardMessage.text}
             </div>
             {boardMessage.detail && (
-              <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+              <div className="mt-1 text-sm font-semibold tracking-[0.01em] text-sky-300">
                 {boardMessage.detail}
               </div>
             )}
@@ -475,7 +475,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      <div className="flex h-6 items-center justify-center">
+      <div className="flex h-5 items-center justify-center">
         {feedbackMsg ? (
           <span
             className={`rounded-full px-4 py-1 text-xs font-bold ${

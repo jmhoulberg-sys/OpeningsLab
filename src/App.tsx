@@ -17,7 +17,7 @@ import { useProgressStore } from './store/progressStore';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
-const BOARD_CHROME_H = 180;
+const BOARD_CHROME_H = 220;
 const EVAL_BAR_W = 24;
 
 export default function App() {
@@ -115,7 +115,7 @@ export default function App() {
       <main ref={mainRef} className="relative flex min-h-0 flex-1 overflow-hidden">
         <div
           ref={boardContainerRef}
-          className="flex flex-1 min-w-0 items-start justify-center overflow-hidden px-2 py-4 sm:px-3 sm:py-6"
+          className="flex flex-1 min-w-0 items-start justify-center overflow-hidden px-2 py-3 sm:px-3 sm:py-4"
         >
           <ChessBoardPanel boardSize={boardSize} />
         </div>

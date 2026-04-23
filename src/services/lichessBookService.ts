@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import { buildRatingsParam } from '../store/settingsStore';
-import { LICHESS_FALLBACKS } from '../data/lichessFallbacks';
+import { LICHESS_FALLBACKS, LICHESS_PATH_FALLBACKS } from '../data/lichessFallbacks';
 
 export interface LichessBookMove {
   san: string;
@@ -60,8 +60,9 @@ export function normalizeFenForLichessDatabase(fen: string): string | null {
   return parts.slice(0, 4).join(' ');
 }
 
-function getFallbackPosition(rawFen: string, normalizedFen: string): LichessBookPosition | null {
-  return LICHESS_FALLBACKS[normalizedFen] ?? LICHESS_FALLBACKS[rawFen] ?? null;
+function getFallbackPosition(rawFen: string, normalizedFen: string, playedMoves?: string[]): LichessBookPosition | null {
+  const pathKey = playedMoves?.join(' ') ?? '';
+  return LICHESS_PATH_FALLBACKS[pathKey] ?? LICHESS_FALLBACKS[normalizedFen] ?? LICHESS_FALLBACKS[rawFen] ?? null;
 }
 
 function sanMovesToUciPath(sans?: string[]): string[] {
@@ -208,7 +209,7 @@ export async function fetchLichessBookPosition(
       if (result) return result;
     }
 
-    return getFallbackPosition(rawFen, normalizedFen);
+    return getFallbackPosition(rawFen, normalizedFen, options.playedMoves);
   })();
 
   cache.set(key, request);
