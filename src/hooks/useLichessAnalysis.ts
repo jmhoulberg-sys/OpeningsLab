@@ -25,6 +25,7 @@ const EMPTY: LichessAnalysis = {
 
 export function useLichessAnalysis(
   fen: string | null,
+  playedMoves: string[],
   enabled: boolean,
   minRating = 0,
   topMovesToInclude = 3,
@@ -46,7 +47,7 @@ export function useLichessAnalysis(
       try {
         const enc = encodeURIComponent(fen);
         const [positionResult, evalResult] = await Promise.allSettled([
-          fetchLichessBookPosition(fen, { minRating, moveLimit: 12 }),
+          fetchLichessBookPosition(fen, { minRating, moveLimit: 12, playedMoves }),
           fetch(`https://lichess.org/api/cloud-eval?fen=${enc}&multiPv=1`),
         ]);
 
@@ -76,7 +77,7 @@ export function useLichessAnalysis(
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [fen, enabled, minRating, topMovesToInclude]);
+  }, [fen, playedMoves, enabled, minRating, topMovesToInclude]);
 
   return state;
 }

@@ -3,11 +3,12 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export default function AnalysisPanel() {
-  const { currentFen, showTopMoves, opening, postLineOutOfBook } = useTrainingStore();
+  const { currentFen, playedMoves, showTopMoves, postLineOutOfBook } = useTrainingStore();
   const { minRating, topMovesToInclude } = useSettingsStore();
 
   const { moves, loading } = useLichessAnalysis(
     showTopMoves ? currentFen : null,
+    playedMoves,
     showTopMoves,
     minRating,
     topMovesToInclude,
@@ -42,15 +43,16 @@ export default function AnalysisPanel() {
 
       {!loading && moves.length > 0 && (
         <div className="space-y-1.5">
-          <div className="mb-1 grid grid-cols-[36px_1fr_44px_44px_44px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+          <div className="mb-1 grid grid-cols-[46px_44px_1fr_46px_46px_46px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
             <span>Move</span>
+            <span className="text-center">Use</span>
             <span />
             <span className="text-center">W%</span>
             <span className="text-center">D%</span>
-            <span className="text-center">L%</span>
+            <span className="text-center">B%</span>
           </div>
           {moves.map((move) => (
-            <MoveRow key={move.san} move={move} playerColor={opening?.playerColor ?? 'white'} />
+            <MoveRow key={move.san} move={move} />
           ))}
         </div>
       )}
@@ -58,32 +60,32 @@ export default function AnalysisPanel() {
   );
 }
 
-function MoveRow({ move, playerColor }: { move: LichessMove; playerColor: string }) {
+function MoveRow({ move }: { move: LichessMove }) {
   const total = move.total;
   const games = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
-
-  const winPct = playerColor === 'white' ? move.whitePct : move.blackPct;
-  const lossPct = playerColor === 'white' ? move.blackPct : move.whitePct;
   const drawPct = move.drawPct;
 
   return (
-    <div className="grid grid-cols-[36px_1fr_44px_44px_44px] items-center gap-x-1">
+    <div className="grid grid-cols-[46px_44px_1fr_46px_46px_46px] items-center gap-x-1">
       <span className="font-mono text-xs font-bold text-white">{move.san}</span>
+      <span className="text-center text-[11px] font-semibold tabular-nums text-sky-300">
+        {move.playPct}%
+      </span>
 
       <div className="flex h-3 overflow-hidden rounded-sm" title={`${games} games`}>
-        <div className="bg-slate-100" style={{ width: `${winPct}%` }} />
+        <div className="bg-slate-100" style={{ width: `${move.whitePct}%` }} />
         <div className="bg-slate-500" style={{ width: `${drawPct}%` }} />
-        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${lossPct}%` }} />
+        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${move.blackPct}%` }} />
       </div>
 
       <span className="text-center text-[11px] font-semibold tabular-nums text-slate-200">
-        {winPct}%
+        {move.whitePct}%
       </span>
       <span className="text-center text-[11px] tabular-nums text-slate-400">
         {drawPct}%
       </span>
       <span className="text-center text-[11px] tabular-nums text-slate-500">
-        {lossPct}%
+        {move.blackPct}%
       </span>
     </div>
   );

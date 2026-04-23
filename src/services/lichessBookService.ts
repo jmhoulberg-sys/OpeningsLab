@@ -1,3 +1,4 @@
+import { Chess } from 'chess.js';
 import { buildRatingsParam } from '../store/settingsStore';
 
 export interface LichessBookMove {
@@ -9,12 +10,16 @@ export interface LichessBookMove {
   whitePct: number;
   drawPct: number;
   blackPct: number;
+  playPct: number;
 }
 
 export interface LichessBookPosition {
   fen: string;
   moves: LichessBookMove[];
   totalGames: number;
+  white: number;
+  draws: number;
+  black: number;
   source: 'lichess-db';
 }
 
@@ -25,9 +30,17 @@ interface ExplorerMove {
   black: number;
 }
 
+interface ExplorerResponse {
+  white?: number;
+  draws?: number;
+  black?: number;
+  moves?: ExplorerMove[];
+}
+
 interface FetchBookOptions {
   minRating?: number;
   moveLimit?: number;
+  playedMoves?: string[];
 }
 
 interface PickMoveOptions extends FetchBookOptions {
@@ -46,22 +59,47 @@ export function normalizeFenForLichessDatabase(fen: string): string | null {
   return parts.slice(0, 4).join(' ');
 }
 
-function toBookMove(move: ExplorerMove): LichessBookMove {
-  const total = move.white + move.draws + move.black;
-  return {
-    san: move.san,
-    white: move.white,
-    draws: move.draws,
-    black: move.black,
-    total,
-    whitePct: total ? Math.round((move.white / total) * 100) : 0,
-    drawPct: total ? Math.round((move.draws / total) * 100) : 0,
-    blackPct: total ? Math.round((move.black / total) * 100) : 0,
-  };
+function sanMovesToUciPath(sans?: string[]): string[] {
+  if (!sans || sans.length === 0) return [];
+
+  const chess = new Chess();
+  const path: string[] = [];
+
+  for (const san of sans) {
+    try {
+      const move = chess.move(san);
+      if (!move) break;
+      path.push(`${move.from}${move.to}${move.promotion ?? ''}`);
+    } catch {
+      break;
+    }
+  }
+
+  return path;
 }
 
-function getCacheKey(fen: string, minRating: number, moveLimit: number): string {
-  return `${fen}|${minRating}|${moveLimit}`;
+function toBookMoves(moves: ExplorerMove[], totalGames: number): LichessBookMove[] {
+  return moves
+    .map((move) => {
+      const total = move.white + move.draws + move.black;
+      return {
+        san: move.san,
+        white: move.white,
+        draws: move.draws,
+        black: move.black,
+        total,
+        whitePct: total ? Math.round((move.white / total) * 100) : 0,
+        drawPct: total ? Math.round((move.draws / total) * 100) : 0,
+        blackPct: total ? Math.round((move.black / total) * 100) : 0,
+        playPct: totalGames ? Math.round((total / totalGames) * 100) : 0,
+      };
+    })
+    .filter((move) => move.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
+function getCacheKey(fen: string, minRating: number, moveLimit: number, playedPath: string): string {
+  return `${fen}|${minRating}|${moveLimit}|${playedPath}`;
 }
 
 function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
@@ -71,15 +109,31 @@ function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
 }
 
 async function fetchFromExplorer(
-  fen: string,
+  query: { fen?: string; playedMoves?: string[] },
   minRating: number,
   moveLimit: number,
 ): Promise<LichessBookPosition | null> {
-  const enc = encodeURIComponent(fen);
   const ratingsParam = buildRatingsParam(minRating);
-  const url =
-    `https://explorer.lichess.ovh/lichess?variant=standard&speeds=${DEFAULT_SPEEDS}${ratingsParam}` +
-    `&topGames=0&recentGames=0&moves=${moveLimit}&fen=${enc}`;
+  const params = new URLSearchParams({
+    variant: 'standard',
+    speeds: DEFAULT_SPEEDS,
+    topGames: '0',
+    recentGames: '0',
+    moves: String(moveLimit),
+  });
+
+  if (ratingsParam) {
+    params.set('ratings', ratingsParam.replace('&ratings=', ''));
+  }
+
+  const playedPath = sanMovesToUciPath(query.playedMoves);
+  if (playedPath.length > 0) {
+    params.set('play', playedPath.join(','));
+  } else if (query.fen) {
+    params.set('fen', query.fen);
+  }
+
+  const url = `https://explorer.lichess.ovh/lichess?${params.toString()}`;
 
   return queueExplorerRequest(async () => {
     const controller = new AbortController();
@@ -93,22 +147,20 @@ async function fetchFromExplorer(
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        return null;
-      }
+      if (!response.ok) return null;
 
-      const data = await response.json() as { moves?: ExplorerMove[] };
-      const moves = (data.moves ?? [])
-        .map(toBookMove)
-        .filter((move) => move.total > 0)
-        .sort((a, b) => b.total - a.total);
-
+      const data = await response.json() as ExplorerResponse;
+      const totalGames = (data.white ?? 0) + (data.draws ?? 0) + (data.black ?? 0);
+      const moves = toBookMoves(data.moves ?? [], totalGames);
       if (moves.length === 0) return null;
 
       return {
-        fen,
+        fen: query.fen ?? '',
         moves,
-        totalGames: moves.reduce((sum, move) => sum + move.total, 0),
+        totalGames,
+        white: data.white ?? moves.reduce((sum, move) => sum + move.white, 0),
+        draws: data.draws ?? moves.reduce((sum, move) => sum + move.draws, 0),
+        black: data.black ?? moves.reduce((sum, move) => sum + move.black, 0),
         source: 'lichess-db' as const,
       };
     } finally {
@@ -127,21 +179,26 @@ export async function fetchLichessBookPosition(
 
   const minRating = options.minRating ?? 0;
   const moveLimit = options.moveLimit ?? DEFAULT_MOVE_LIMIT;
-  const key = getCacheKey(normalizedFen, minRating, moveLimit);
+  const playedPath = sanMovesToUciPath(options.playedMoves).join(',');
+  const key = getCacheKey(normalizedFen, minRating, moveLimit, playedPath);
 
   const cached = cache.get(key);
   if (cached) return cached;
 
   const request = (async () => {
     const candidates = [
-      { fen: rawFen, minRating },
-      { fen: normalizedFen, minRating },
-      { fen: rawFen, minRating: 0 },
-      { fen: normalizedFen, minRating: 0 },
+      { query: { playedMoves: options.playedMoves, fen: rawFen }, minRating },
+      { query: { playedMoves: options.playedMoves, fen: normalizedFen }, minRating },
+      { query: { fen: rawFen }, minRating },
+      { query: { fen: normalizedFen }, minRating },
+      { query: { playedMoves: options.playedMoves, fen: rawFen }, minRating: 0 },
+      { query: { playedMoves: options.playedMoves, fen: normalizedFen }, minRating: 0 },
+      { query: { fen: rawFen }, minRating: 0 },
+      { query: { fen: normalizedFen }, minRating: 0 },
     ];
 
     for (const candidate of candidates) {
-      const result = await fetchFromExplorer(candidate.fen, candidate.minRating, moveLimit)
+      const result = await fetchFromExplorer(candidate.query, candidate.minRating, moveLimit)
         .catch(() => null);
       if (result) return result;
     }

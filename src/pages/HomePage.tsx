@@ -148,7 +148,7 @@ export default function HomePage({
             <div className="mt-1 text-base font-semibold text-white">Board-first opening training.</div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden h-[62px] min-w-[150px] rounded-2xl bg-stone-900 px-4 py-2.5 sm:block">
+            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 sm:flex sm:flex-col sm:justify-center">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">
                 Level
               </div>
@@ -163,12 +163,12 @@ export default function HomePage({
               </div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
             </div>
-            <div className="hidden h-[62px] min-w-[150px] rounded-2xl bg-stone-900 px-4 py-2.5 md:block">
+            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 md:flex md:flex-col md:justify-center">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Weekly</div>
               <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${weeklyXp} XP` : '--'}</div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
             </div>
-            <div className="hidden h-[62px] min-w-[150px] rounded-2xl bg-stone-900 px-4 py-2.5 lg:block">
+            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 lg:flex lg:flex-col lg:justify-center">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Daily</div>
               <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${questsComplete}/${quests.length}` : '--'}</div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
@@ -176,7 +176,7 @@ export default function HomePage({
             {isLoggedIn ? (
               <button
                 onClick={onSettingsClick}
-                className="hidden h-[62px] items-center gap-2 rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700/80 hover:text-white sm:flex cursor-pointer"
+                className="hidden h-[72px] items-center gap-2 rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700/80 hover:text-white sm:flex cursor-pointer"
               >
                 <UserCircle2 size={18} className="text-sky-300" />
                 <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
@@ -184,7 +184,7 @@ export default function HomePage({
             ) : (
               <button
                 onClick={login}
-                className="hidden h-[62px] items-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+                className="hidden h-[72px] items-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
               >
                 <LogIn size={18} />
                 Sign in
@@ -193,7 +193,7 @@ export default function HomePage({
             <button
               onClick={onSettingsClick}
               title="Settings"
-              className="h-[62px] rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
+              className="h-[72px] rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
               aria-label="Open settings"
             >
               <Settings size={20} />

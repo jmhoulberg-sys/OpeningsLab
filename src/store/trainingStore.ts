@@ -558,6 +558,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             minRating,
             topMovesToInclude,
             moveLimit: 12,
+            playedMoves: state.playedMoves,
           });
           opponentSan = move?.san ?? null;
         }
