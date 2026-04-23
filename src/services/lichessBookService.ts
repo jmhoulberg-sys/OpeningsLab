@@ -65,6 +65,7 @@ export interface LichessMoveDecision {
 const DEFAULT_SPEEDS = 'bullet,blitz,rapid,classical,correspondence';
 const DEFAULT_MOVE_LIMIT = 12;
 const EXPLORER_TIMEOUT_MS = 8000;
+const EXPLORER_BASE_URL = 'https://explorer.lichess.org/lichess';
 const cache = new Map<string, Promise<LichessBookFetchResult>>();
 let requestQueue = Promise.resolve();
 
@@ -169,7 +170,7 @@ function buildExplorerUrl(fen: string, minRating: number) {
     params.set('ratings', ratingsParam.replace('&ratings=', ''));
   }
 
-  return `https://explorer.lichess.ovh/lichess?${params.toString()}`;
+  return `${EXPLORER_BASE_URL}?${params.toString()}`;
 }
 
 export async function fetchLichessBookPosition(
