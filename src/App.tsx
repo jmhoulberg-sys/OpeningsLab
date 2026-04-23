@@ -169,10 +169,6 @@ export default function App() {
                   <OpeningInfoPanel opening={opening} isLineUnlocked={isLineUnlocked} />
                 </div>
 
-                {phase === 'setup' && (
-                  <SetupBanner opening={opening} />
-                )}
-
                 {postLine && (
                   <div className={`px-4 py-2.5 ${postLineOutOfBook ? 'bg-amber-400/8' : 'bg-emerald-400/8'}`}>
                     <p className={`text-xs font-semibold ${postLineOutOfBook ? 'text-amber-300' : 'text-emerald-300'}`}>
@@ -254,30 +250,6 @@ function OpeningInfoPanel({
       )}
       <div className="text-xs leading-relaxed text-stone-400">
         {opening.description}
-      </div>
-    </div>
-  );
-}
-
-function SetupBanner({ opening }: { opening: { setupMoves: string[] } }) {
-  const { currentMoveIndex } = useTrainingStore();
-  const total = opening.setupMoves.length;
-  const done = Math.min(currentMoveIndex, total);
-  const pct = Math.round((done / total) * 100);
-
-  return (
-    <div className="mx-4 rounded-[20px] border border-sky-400/12 bg-sky-400/8 px-4 py-3">
-      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-300">
-        Step 1 of 2
-      </div>
-      <div className="mb-1.5 text-xs font-semibold text-stone-100">
-        Learn setup position ({done}/{total})
-      </div>
-      <div className="h-1.5 w-full rounded-full bg-stone-700/50">
-        <div
-          className="h-1.5 rounded-full bg-sky-400 transition-all duration-300"
-          style={{ width: `${pct}%` }}
-        />
       </div>
     </div>
   );

@@ -50,7 +50,6 @@ function getBoardMessage({
   postLine,
   mode,
   expectedSan,
-  selectedLineName,
   coachingNote,
 }: {
   isReviewing: boolean;
@@ -61,7 +60,6 @@ function getBoardMessage({
   postLine: boolean;
   mode: string;
   expectedSan: string | null;
-  selectedLineName: string | null;
   coachingNote: string | null;
 }) {
   if (isReviewing) {
@@ -84,7 +82,7 @@ function getBoardMessage({
 
   if (phase === 'setup') {
     return {
-      eyebrow: 'Setup',
+      eyebrow: '',
       text: isAwaitingUserMove
         ? (coachingNote ?? 'Reach the shared opening position')
         : 'Hold the structure while the reply appears',
@@ -114,7 +112,7 @@ function getBoardMessage({
 
     if (mode === 'full-line' && isAwaitingUserMove && expectedSan) {
       return {
-        eyebrow: selectedLineName ? `Practice full line` : 'Practice full line',
+        eyebrow: '',
         text: coachingNote ?? `Guided move: play ${expectedSan}`,
         detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
@@ -123,7 +121,7 @@ function getBoardMessage({
 
     if (mode === 'learn' && isAwaitingUserMove && expectedSan) {
       return {
-        eyebrow: 'Learn line',
+        eyebrow: '',
         text: coachingNote ?? `Next move to learn: ${expectedSan}`,
         detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
@@ -132,7 +130,7 @@ function getBoardMessage({
 
     if (mode === 'step-by-step' && isAwaitingUserMove) {
       return {
-        eyebrow: 'Practice step-by-step',
+        eyebrow: '',
         text: coachingNote ?? 'Recall the next move. Use hint or answer if you need support.',
         detail: expectedSan ? `Best move: ${expectedSan}` : 'Work from memory',
         color: 'text-emerald-300',
@@ -419,7 +417,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     postLine,
     mode,
     expectedSan,
-    selectedLineName: selectedLine?.name ?? null,
     coachingNote: getCoachingNote(
       opening,
       selectedLine,
@@ -438,27 +435,22 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-2">
-      <div className="flex min-h-[52px] flex-col items-center justify-center text-center">
+      <div className="flex min-h-[104px] w-full max-w-[680px] flex-col items-center justify-center text-center">
         {boardMessage.eyebrow && (
           <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
             {boardMessage.eyebrow}
           </div>
         )}
-        <div className={`mt-1 text-sm font-semibold tracking-wide ${boardMessage.color}`}>
-          {boardMessage.text}
-        </div>
-        {boardMessage.detail && (
-          <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-            {boardMessage.detail}
-          </div>
-        )}
-        {selectedLine && phase === 'training' && !postLine && (
-          <div className="mt-1 text-xs text-stone-500">
-            {mode === 'learn'
-              ? 'Follow the guided move prompts to unlock this line.'
-              : mode === 'full-line'
-                ? 'Play through the full line with move-by-move guidance.'
-                : 'Build the line from memory and use help if needed.'}
+        {(boardMessage.text || boardMessage.detail) && (
+          <div className="mt-1 w-full rounded-[22px] border border-stone-800/70 bg-stone-900/80 px-4 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
+            <div className={`text-sm font-semibold leading-relaxed tracking-wide ${boardMessage.color}`}>
+              {boardMessage.text}
+            </div>
+            {boardMessage.detail && (
+              <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                {boardMessage.detail}
+              </div>
+            )}
           </div>
         )}
       </div>

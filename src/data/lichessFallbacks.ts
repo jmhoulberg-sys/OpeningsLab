@@ -1,6 +1,6 @@
 import type { LichessBookPosition } from '../services/lichessBookService';
 
-const STAFFORD_QH4_FEN = 'r1b1k2r/ppp2ppp/2p5/4P3/7q/8/PPPP1PPP/R1BQKB1R w kq -';
+const STAFFORD_QH4_FEN = 'r1b1k2r/ppp2ppp/2p2p2/3P4/7q/8/PPP3PP/R1BQKBNR w kq -';
 
 export const LICHESS_FALLBACKS: Record<string, LichessBookPosition> = {
   [STAFFORD_QH4_FEN]: {

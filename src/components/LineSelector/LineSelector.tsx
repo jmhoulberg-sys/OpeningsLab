@@ -70,10 +70,10 @@ function SetupRow({
   return (
     <div className={`rounded-xl border px-3 py-3 text-left text-sm ${
       active
-        ? 'border-sky-500/45 bg-sky-500/10 text-white'
+        ? 'border-sky-500/35 bg-sky-500/6 text-white'
         : complete
-          ? 'border-emerald-500/25 bg-emerald-500/10 text-stone-100'
-          : 'border-stone-700/60 bg-stone-900/85 text-stone-200'
+          ? 'border-emerald-500/18 bg-emerald-500/6 text-stone-100'
+          : 'border-stone-700/50 bg-stone-900/60 text-stone-200'
     }`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -82,18 +82,9 @@ function SetupRow({
           </span>
           <span className="font-semibold">Setup</span>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-          complete
-            ? 'bg-emerald-400 text-slate-950'
-            : active
-              ? 'bg-sky-400 text-slate-950'
-              : 'bg-stone-800 text-stone-400'
-        }`}>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
           {complete ? 'Done' : active ? 'Current step' : 'Open'}
         </span>
-      </div>
-      <div className="mt-1 text-xs text-stone-400">
-        Play the shared setup moves before choosing a line.
       </div>
     </div>
   );

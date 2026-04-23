@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
-  const { opening, selectedLine, phase } = useTrainingStore();
+  const { opening, selectedLine } = useTrainingStore();
   const { isLoggedIn, displayName, login } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
@@ -71,7 +71,6 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
             {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
             {isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">{xpToNext} XP to next</div>}
           </div>
-          <PhaseBadge phase={phase} />
           {isLoggedIn ? (
             <button
               onClick={onSettingsClick}
@@ -101,23 +100,5 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
         </div>
       </div>
     </header>
-  );
-}
-
-function PhaseBadge({ phase }: { phase: string }) {
-  const config: Record<string, { label: string; color: string }> = {
-    idle: { label: 'Idle', color: 'border-stone-700/45 bg-stone-800 text-stone-400' },
-    setup: { label: 'Setup', color: 'border-sky-400/15 bg-sky-400/10 text-sky-300' },
-    'line-select': { label: 'Pick Line', color: 'border-sky-400/18 bg-sky-400/10 text-sky-300' },
-    training: { label: 'Training', color: 'border-emerald-300/15 bg-emerald-300/10 text-emerald-300' },
-    completed: { label: 'Done', color: 'border-emerald-300/15 bg-emerald-300/10 text-emerald-300' },
-  };
-
-  const { label, color } = config[phase] ?? config.idle;
-
-  return (
-    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${color}`}>
-      {label}
-    </span>
   );
 }
