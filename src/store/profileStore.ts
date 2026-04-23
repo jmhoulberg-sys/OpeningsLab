@@ -14,6 +14,8 @@ interface ProfileState {
   displayName: string;
   isLoggedIn: boolean;
   setDisplayName: (name: string) => void;
+  setAuthenticatedProfile: (name: string) => void;
+  clearAuthenticatedProfile: () => void;
   login: () => void;
   logout: () => void;
   /** Returns a base64 sync code containing all progress + settings. */
@@ -52,6 +54,12 @@ export const useProfileStore = create<ProfileState>()(
       isLoggedIn: false,
 
       setDisplayName: (name) => set({ displayName: name }),
+      setAuthenticatedProfile: (name) =>
+        set({
+          isLoggedIn: true,
+          displayName: name.trim() || 'Lichess Player',
+        }),
+      clearAuthenticatedProfile: () => set({ isLoggedIn: false }),
       login: () =>
         set((state) => ({
           isLoggedIn: true,

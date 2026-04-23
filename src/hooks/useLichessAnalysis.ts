@@ -4,6 +4,7 @@ import {
   getTopBookMoves,
   type LichessBookMove as LichessMove,
 } from '../services/lichessBookService';
+import { useLichessAuthStore } from '../store/lichessAuthStore';
 
 export type { LichessMove };
 
@@ -25,11 +26,13 @@ const EMPTY: LichessAnalysis = {
 
 export function useLichessAnalysis(
   fen: string | null,
+  playedSans: string[],
   enabled: boolean,
   minRating = 0,
 ): LichessAnalysis {
   const [state, setState] = useState<LichessAnalysis>(EMPTY);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accessToken = useLichessAuthStore((store) => store.accessToken);
 
   useEffect(() => {
     if (!enabled || !fen) {
@@ -45,7 +48,11 @@ export function useLichessAnalysis(
       try {
         const enc = encodeURIComponent(fen);
         const [positionResult, evalResult] = await Promise.allSettled([
-          fetchLichessBookPosition(fen, { minRating }),
+          fetchLichessBookPosition(fen, {
+            minRating,
+            accessToken,
+            playedSans,
+          }),
           fetch(`https://lichess.org/api/cloud-eval?fen=${enc}&multiPv=1`),
         ]);
 
@@ -79,7 +86,7 @@ export function useLichessAnalysis(
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [fen, enabled, minRating]);
+  }, [accessToken, enabled, fen, minRating, playedSans]);
 
   return state;
 }

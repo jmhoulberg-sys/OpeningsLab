@@ -1,13 +1,16 @@
 import { useLichessAnalysis, type LichessMove } from '../../hooks/useLichessAnalysis';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useLichessAuthStore } from '../../store/lichessAuthStore';
 
 export default function AnalysisPanel() {
-  const { currentFen, showTopMoves, postLineOutOfBook, postLineError } = useTrainingStore();
+  const { currentFen, playedMoves, showTopMoves, postLineOutOfBook, postLineError } = useTrainingStore();
   const { minRating } = useSettingsStore();
+  const accessToken = useLichessAuthStore((state) => state.accessToken);
 
   const { moves, loading } = useLichessAnalysis(
     showTopMoves ? currentFen : null,
+    playedMoves,
     showTopMoves,
     minRating,
   );
@@ -20,7 +23,7 @@ export default function AnalysisPanel() {
         Based on Lichess games
       </div>
       <p className="mb-2 text-[11px] text-slate-500">
-        Top 3 continuations by game count.
+        {accessToken ? 'Top 3 continuations by game count.' : 'Sign in with Lichess to load live player moves.'}
       </p>
 
       {loading && (

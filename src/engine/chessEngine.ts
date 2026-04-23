@@ -28,6 +28,26 @@ export function fenAfterMoves(sans: string[]): string {
   return chess ? chess.fen() : STARTING_FEN;
 }
 
+export function sansToUciMoves(
+  sans: string[],
+  initialFen = STARTING_FEN,
+): string[] | null {
+  try {
+    const chess = new Chess(initialFen);
+    const uciMoves: string[] = [];
+
+    for (const san of sans) {
+      const result = chess.move(san);
+      if (!result) return null;
+      uciMoves.push(`${result.from}${result.to}${result.promotion ?? ''}`);
+    }
+
+    return uciMoves;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Return the FEN reached after completing the setup sequence.
  */

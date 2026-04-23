@@ -4,6 +4,7 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore, RATING_OPTIONS } from '../../store/settingsStore';
 import { useProfileStore } from '../../store/profileStore';
+import { useLichessAuthStore } from '../../store/lichessAuthStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,7 +26,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     showEvalBar,
     setShowEvalBar,
   } = useSettingsStore();
-  const { displayName, setDisplayName, isLoggedIn, login, logout } = useProfileStore();
+  const { displayName, isLoggedIn } = useProfileStore();
+  const { login, logout, error: authError, status: authStatus } = useLichessAuthStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -73,7 +75,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <section>
             <div className="mb-1 text-sm font-semibold text-white">Account</div>
             <p className="mb-3 text-xs leading-relaxed text-stone-400">
-              Local sign-in for now. Email auth can plug in later.
+              Connect a Lichess session to unlock live player-move continuation.
             </p>
 
             <div className="mb-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
@@ -81,12 +83,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
                     <ShieldCheck size={16} className="text-sky-300" />
-                    {isLoggedIn ? 'Signed in locally' : 'Guest mode'}
+                    {isLoggedIn ? 'Connected to Lichess' : 'Not connected'}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-stone-400">
                     {isLoggedIn
-                      ? 'Your name and progress stay on this device until full auth is added.'
-                      : 'Sign in locally to give the app an account state before full auth ships.'}
+                      ? 'Explorer lookups now use your authenticated Lichess session.'
+                      : 'Lichess now requires authentication for opening explorer access.'}
                   </p>
                 </div>
                 <button
@@ -98,22 +100,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
                 >
                   {isLoggedIn ? <LogOut size={14} /> : <LogIn size={14} />}
-                  {isLoggedIn ? 'Sign out' : 'Sign in'}
+                  {isLoggedIn ? 'Sign out' : authStatus === 'authenticating' ? 'Connecting...' : 'Sign in'}
                 </button>
               </div>
             </div>
 
-            <div className="mb-3">
-              <label className="mb-1 block text-xs text-stone-400">Display name</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. ChessKid42"
-                maxLength={32}
-                className="w-full rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
-              />
+            <div className="rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2">
+              <div className="text-xs text-stone-400">Account name</div>
+              <div className="mt-1 text-sm font-semibold text-white">
+                {isLoggedIn ? displayName || 'Lichess Player' : 'Connect Lichess to continue'}
+              </div>
             </div>
+
+            {authError && (
+              <p className="mt-3 text-xs text-amber-300">{authError}</p>
+            )}
           </section>
 
           <section>

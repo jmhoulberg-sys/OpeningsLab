@@ -2,6 +2,7 @@ import { Crown, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
+import { useLichessAuthStore } from '../../store/lichessAuthStore';
 import BrandMark from '../Brand/BrandMark';
 
 interface HeaderProps {
@@ -11,7 +12,8 @@ interface HeaderProps {
 
 export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
   const { opening, selectedLine } = useTrainingStore();
-  const { isLoggedIn, displayName, login } = useProfileStore();
+  const { isLoggedIn, displayName } = useProfileStore();
+  const { login, status } = useLichessAuthStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
     ? displayName.trim()
@@ -82,7 +84,7 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
               className="hidden h-[62px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
             >
               <LogIn size={16} />
-              Sign in
+              {status === 'authenticating' ? 'Connecting...' : 'Sign in'}
             </button>
           )}
           <button

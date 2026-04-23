@@ -23,6 +23,7 @@ import {
 import { useSettingsStore } from './settingsStore';
 import { logExplorerMoveAcceptance, pickLichessBookMove } from '../services/lichessBookService';
 import { useProgressionStore } from './progressionStore';
+import { useLichessAuthStore } from './lichessAuthStore';
 
 // ─── State shape ────────────────────────────────────────────────────
 
@@ -562,9 +563,13 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
         if (state.postLineMode === 'top-moves') {
           const { minRating, explorerOpponentMode } = useSettingsStore.getState();
+          const accessToken = useLichessAuthStore.getState().accessToken;
           const decision = await pickLichessBookMove(state.currentFen, {
             minRating,
             mode: explorerOpponentMode,
+            accessToken,
+            playedSans: state.playedMoves,
+            rootFen: state.fenHistory[0] ?? STARTING_FEN,
           });
 
           if (decision.move) {

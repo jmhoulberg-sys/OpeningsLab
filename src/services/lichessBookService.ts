@@ -1,5 +1,6 @@
 import { buildRatingsParam } from '../store/settingsStore';
 import type { ExplorerOpponentMode } from '../types';
+import { sansToUciMoves, STARTING_FEN } from '../engine/chessEngine';
 
 export interface ExplorerMove {
   uci: string;
@@ -48,6 +49,9 @@ export interface LichessBookFetchResult {
 
 interface FetchBookOptions {
   minRating?: number;
+  accessToken?: string | null;
+  playedSans?: string[];
+  rootFen?: string;
 }
 
 interface PickMoveOptions extends FetchBookOptions {
@@ -145,8 +149,8 @@ function toBookMoves(moves: ExplorerMove[], totalGames: number): LichessBookMove
     .filter((move) => move.count > 0);
 }
 
-function getCacheKey(fen: string, minRating: number): string {
-  return `${fen}|${minRating}`;
+function getCacheKey(fen: string, minRating: number, playPath: string): string {
+  return `${fen}|${minRating}|${playPath}`;
 }
 
 function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
@@ -155,7 +159,7 @@ function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
   return next;
 }
 
-function buildExplorerUrl(fen: string, minRating: number) {
+function buildExplorerUrl(fen: string, minRating: number, playPath: string[]) {
   const ratingsParam = buildRatingsParam(minRating);
   const params = new URLSearchParams({
     variant: 'standard',
@@ -170,6 +174,10 @@ function buildExplorerUrl(fen: string, minRating: number) {
     params.set('ratings', ratingsParam.replace('&ratings=', ''));
   }
 
+  if (playPath.length > 0) {
+    params.set('play', playPath.join(','));
+  }
+
   return `${EXPLORER_BASE_URL}?${params.toString()}`;
 }
 
@@ -177,7 +185,11 @@ export async function fetchLichessBookPosition(
   fen: string,
   options: FetchBookOptions = {},
 ): Promise<LichessBookFetchResult> {
-  const normalizedFen = normalizeFenForLichessDatabase(fen);
+  const normalizedFen = normalizeFenForLichessDatabase(fen) ?? fen.trim();
+  const rootFen = options.rootFen?.trim() || STARTING_FEN;
+  const playPath = options.playedSans ? sansToUciMoves(options.playedSans, rootFen) : [];
+  const accessToken = options.accessToken ?? null;
+
   if (!normalizedFen) {
     return {
       status: 'api_error',
@@ -187,19 +199,31 @@ export async function fetchLichessBookPosition(
     };
   }
 
+  if (!accessToken) {
+    return {
+      status: 'api_error',
+      position: null,
+      raw: null,
+      error: 'Sign in with Lichess to load live player moves',
+    };
+  }
+
   const minRating = options.minRating ?? 0;
-  const key = getCacheKey(normalizedFen, minRating);
+  const key = getCacheKey(normalizedFen, minRating, playPath?.join(',') ?? '');
   const cached = cache.get(key);
   if (cached) return cached;
 
   const request = queueExplorerRequest(async () => {
-    const url = buildExplorerUrl(normalizedFen, minRating);
+    const url = buildExplorerUrl(rootFen, minRating, playPath ?? []);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), EXPLORER_TIMEOUT_MS);
 
     try {
       const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         signal: controller.signal,
       });
 
@@ -273,6 +297,9 @@ export function getTopBookMoves(
 function debugExplorerDecision(input: {
   mode: ExplorerOpponentMode;
   queriedFen: string;
+  rootFen?: string;
+  playedSans?: string[];
+  playedUci?: string[];
   raw: ExplorerResponse | null;
   parsedMoves: LichessBookMove[];
   sortedMoves: LichessBookMove[];
@@ -287,6 +314,9 @@ function debugExplorerDecision(input: {
   console.groupCollapsed(`[Lichess Explorer] ${input.mode} :: ${input.queriedFen}`);
   console.log('selectedMode', input.mode);
   console.log('currentFen', input.queriedFen);
+  console.log('rootFen', input.rootFen);
+  console.log('playedSans', input.playedSans);
+  console.log('playedUci', input.playedUci);
   console.log('rawExplorerJson', input.raw);
   console.log('parsedMoves', input.parsedMoves);
   console.table(
@@ -317,6 +347,8 @@ export async function pickLichessBookMove(
   options: PickMoveOptions,
 ): Promise<LichessMoveDecision> {
   const normalizedFen = normalizeFenForLichessDatabase(fen) ?? fen.trim();
+  const rootFen = options.rootFen?.trim() || STARTING_FEN;
+  const playedUci = options.playedSans ? sansToUciMoves(options.playedSans, rootFen) ?? [] : [];
   const result = await fetchLichessBookPosition(normalizedFen, options);
   const parsedMoves = result.status === 'ok' && result.position ? result.position.moves : [];
   const sortedMoves = sortMovesByPopularity(parsedMoves);
@@ -325,6 +357,9 @@ export async function pickLichessBookMove(
     debugExplorerDecision({
       mode: options.mode,
       queriedFen: normalizedFen,
+      rootFen,
+      playedSans: options.playedSans,
+      playedUci,
       raw: result.raw,
       parsedMoves,
       sortedMoves,
@@ -364,6 +399,9 @@ export async function pickLichessBookMove(
   debugExplorerDecision({
     mode: options.mode,
     queriedFen: normalizedFen,
+    rootFen,
+    playedSans: options.playedSans,
+    playedUci,
     raw: result.raw,
     parsedMoves,
     sortedMoves,
