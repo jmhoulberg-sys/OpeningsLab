@@ -596,6 +596,14 @@ function BoardPreview({
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           <div className="pointer-events-none absolute inset-0 rounded-[20px] border border-sky-300/0 transition-colors duration-200 group-hover:border-sky-300/25" />
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-1 items-center justify-between rounded-2xl border border-sky-300/0 bg-stone-950/0 px-3 py-2 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:border-sky-300/20 group-hover:bg-stone-950/72 group-hover:opacity-100">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">
+              Click board to start
+            </span>
+            <span className="rounded-full bg-sky-400 px-2.5 py-1 text-[11px] font-bold text-slate-950">
+              Start
+            </span>
+          </div>
         </>
       )}
     </div>
