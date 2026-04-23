@@ -563,7 +563,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
         if (state.postLineMode === 'top-moves') {
           const { minRating, explorerOpponentMode } = useSettingsStore.getState();
-          const accessToken = useLichessAuthStore.getState().accessToken;
+          const { accessToken, invalidate } = useLichessAuthStore.getState();
           const decision = await pickLichessBookMove(state.currentFen, {
             minRating,
             mode: explorerOpponentMode,
@@ -587,10 +587,15 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
             opponentSan = legalMove.san;
           } else if (decision.status === 'api_error') {
+            if ((decision.error ?? '').includes('401')) {
+              invalidate('Your Lichess session was rejected. Sign in again to use live player moves.');
+            }
             set({
               isAwaitingUserMove: false,
               postLineOutOfBook: false,
-              postLineError: decision.error ?? 'Could not reach Lichess explorer',
+              postLineError: (decision.error ?? '').includes('401')
+                ? 'Sign in with Lichess to continue live player moves.'
+                : decision.error ?? 'Could not reach Lichess explorer',
             });
             return;
           }

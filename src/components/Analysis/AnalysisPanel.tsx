@@ -32,7 +32,7 @@ export default function AnalysisPanel() {
 
       {!loading && postLineError && (
         <p className="text-xs italic text-amber-300">
-          {postLineError}
+          {postLineError.includes('401') ? 'Sign in with Lichess to continue live player moves.' : postLineError}
         </p>
       )}
 

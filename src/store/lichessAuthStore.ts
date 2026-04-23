@@ -23,6 +23,7 @@ interface LichessAuthState {
   initialize: () => Promise<void>;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  invalidate: (message?: string) => void;
 }
 
 interface PersistedLichessAuthState {
@@ -280,6 +281,16 @@ export const useLichessAuthStore = create<LichessAuthState>()(
         if (accessToken) {
           await revokeToken(accessToken);
         }
+      },
+
+      invalidate: (message) => {
+        set({
+          accessToken: null,
+          username: '',
+          status: 'error',
+          error: message ?? 'Your Lichess session expired. Sign in again.',
+        });
+        useProfileStore.getState().clearAuthenticatedProfile();
       },
     }),
     {
