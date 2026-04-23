@@ -141,13 +141,26 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
       <div className="sticky top-0 z-40 -mx-4 mb-5 border-b border-stone-800/70 bg-stone-950/98 shadow-[0_14px_40px_rgba(0,0,0,0.2)] backdrop-blur-md sm:-mx-5">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <div>
+        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="justify-self-start">
             <BrandMark />
-            <div className="mt-1 text-base font-semibold text-white">Board-first opening training.</div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 sm:flex sm:flex-col sm:justify-center">
+
+          <div className="hidden min-w-0 justify-self-center lg:block">
+            <div className="flex h-[72px] min-w-[430px] items-center justify-center rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
+              <div>
+                <div className="text-center text-lg font-bold leading-tight text-white">
+                  OpeningsLab
+                </div>
+                <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
+                  Board-first opening training
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 justify-self-end">
+            <div className="hidden h-[62px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:block">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">
                 Level
               </div>
@@ -162,12 +175,12 @@ export default function HomePage({
               </div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
             </div>
-            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 md:flex md:flex-col md:justify-center">
+            <div className="hidden h-[62px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 md:block">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Weekly</div>
               <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${weeklyXp} XP` : '--'}</div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
             </div>
-            <div className="hidden h-[72px] min-w-[150px] overflow-hidden rounded-2xl bg-stone-900 px-4 py-2.5 lg:flex lg:flex-col lg:justify-center">
+            <div className="hidden h-[62px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 lg:block">
               <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Daily</div>
               <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${questsComplete}/${quests.length}` : '--'}</div>
               {!isLoggedIn && <div className="mt-1 text-[11px] text-stone-500">Log in to see details</div>}
@@ -175,7 +188,7 @@ export default function HomePage({
             {isLoggedIn ? (
               <button
                 onClick={onSettingsClick}
-                className="hidden h-[72px] items-center gap-2 rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700/80 hover:text-white sm:flex cursor-pointer"
+                className="hidden h-[62px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
               >
                 <UserCircle2 size={18} className="text-sky-300" />
                 <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
@@ -183,7 +196,7 @@ export default function HomePage({
             ) : (
               <button
                 onClick={login}
-                className="hidden h-[72px] items-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+                className="hidden h-[62px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
               >
                 <LogIn size={18} />
                 Sign in
@@ -192,7 +205,7 @@ export default function HomePage({
             <button
               onClick={onSettingsClick}
               title="Settings"
-              className="h-[72px] rounded-2xl border border-stone-700/40 bg-stone-800/80 px-4 text-slate-300 transition-colors hover:bg-stone-700/80 hover:text-white cursor-pointer"
+              className="h-[62px] rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-slate-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
               aria-label="Open settings"
             >
               <Settings size={20} />

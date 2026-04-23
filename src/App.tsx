@@ -17,7 +17,7 @@ import { useProgressStore } from './store/progressStore';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
-const BOARD_CHROME_H = 220;
+const BOARD_CHROME_H = 236;
 const EVAL_BAR_W = 24;
 
 export default function App() {
@@ -115,7 +115,7 @@ export default function App() {
       <main ref={mainRef} className="relative flex min-h-0 flex-1 overflow-hidden">
         <div
           ref={boardContainerRef}
-          className="flex flex-1 min-w-0 items-start justify-center overflow-hidden px-2 py-3 sm:px-3 sm:py-4"
+          className="flex flex-1 min-w-0 items-start justify-center overflow-hidden px-2 py-2 sm:px-3 sm:py-2.5"
         >
           <ChessBoardPanel boardSize={boardSize} />
         </div>
@@ -173,7 +173,7 @@ export default function App() {
                   <div className={`px-4 py-2.5 ${postLineOutOfBook ? 'bg-amber-400/8' : 'bg-emerald-400/8'}`}>
                     <p className={`text-xs font-semibold ${postLineOutOfBook ? 'text-amber-300' : 'text-emerald-300'}`}>
                       {postLineOutOfBook
-                        ? 'Out of book - retry the line or choose another'
+                        ? 'Live continuation unavailable here - retry the line or choose another'
                         : 'Practice top responses - based on Lichess games'}
                     </p>
                   </div>

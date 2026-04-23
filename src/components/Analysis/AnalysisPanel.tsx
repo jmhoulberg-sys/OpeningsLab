@@ -31,7 +31,7 @@ export default function AnalysisPanel() {
 
       {!loading && postLineOutOfBook && (
         <p className="text-xs italic text-amber-300">
-          Out of book. No Lichess game data for this position.
+          Live Lichess continuation data did not load for this position in this static build.
         </p>
       )}
 

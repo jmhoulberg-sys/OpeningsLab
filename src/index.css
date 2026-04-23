@@ -74,6 +74,15 @@
   user-select: none;
 }
 
+.board-preview-clickable,
+.board-preview-clickable *,
+.board-preview-clickable [data-square],
+.board-preview-clickable svg,
+.board-preview-clickable piece,
+.board-preview-clickable img {
+  cursor: pointer !important;
+}
+
 @keyframes board-flash-green {
   0% { box-shadow: 0 0 0 0 rgba(16, 216, 153, 0); }
   25% { box-shadow: 0 0 0 8px rgba(16, 216, 153, 0.72); }

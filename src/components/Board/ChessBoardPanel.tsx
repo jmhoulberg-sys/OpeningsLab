@@ -434,20 +434,20 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const boardColumnWidth = `${boardSize}px`;
 
   return (
-    <div className="flex w-full max-w-full flex-col items-center gap-2">
-      <div className="flex min-h-[86px] w-full max-w-[680px] flex-col items-center justify-center text-center">
+    <div className="flex w-full max-w-full flex-col items-center gap-1.5">
+      <div className="flex min-h-[72px] w-full max-w-[680px] flex-col items-center justify-center text-center">
         {boardMessage.eyebrow && (
           <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
             {boardMessage.eyebrow}
           </div>
         )}
         {(boardMessage.text || boardMessage.detail) && (
-          <div className="mt-1 w-full rounded-[22px] border border-stone-800/70 bg-stone-900/80 px-4 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
+          <div className="mt-1 w-full rounded-[20px] border border-stone-800/70 bg-stone-900/80 px-4 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
             <div className="text-[1.02rem] font-semibold leading-relaxed text-white">
               {boardMessage.text}
             </div>
             {boardMessage.detail && (
-              <div className="mt-1 text-sm font-semibold tracking-[0.01em] text-sky-300">
+              <div className="mt-1 text-base font-semibold tracking-[0.01em] text-sky-300">
                 {boardMessage.detail}
               </div>
             )}
@@ -643,13 +643,13 @@ function BoardNavRow({
   const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
 
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
-      <div className="flex min-w-0 items-center justify-start">
-        {!hideHint && showHintBtn && (
-          <button
-            onClick={showHint}
-            title="Hint"
-            className="inline-flex h-12 min-w-[118px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 px-5 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.34)] ring-1 ring-emerald-100/10 transition-all hover:-translate-y-0.5 hover:from-emerald-200 hover:via-emerald-300 hover:to-emerald-200 cursor-pointer"
+      <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-2.5">
+        <div className="flex min-w-0 items-center justify-start">
+          {!hideHint && showHintBtn && (
+            <button
+              onClick={showHint}
+              title="Hint"
+              className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 px-4 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.34)] ring-1 ring-emerald-100/10 transition-all hover:-translate-y-0.5 hover:from-emerald-200 hover:via-emerald-300 hover:to-emerald-200 cursor-pointer"
           >
             <Lightbulb size={15} />
             Hint
@@ -659,7 +659,7 @@ function BoardNavRow({
           <button
             onClick={showAnswer}
             title="Show answer"
-            className="inline-flex h-12 min-w-[118px] items-center justify-center gap-2 rounded-2xl border border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 px-5 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 ring-sky-100/10 transition-all hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300 cursor-pointer"
+            className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 px-4 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 ring-sky-100/10 transition-all hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300 cursor-pointer"
           >
             <Sparkles size={15} />
             Answer
@@ -688,8 +688,8 @@ function BoardNavRow({
         )}
       </div>
 
-      <div className="flex min-w-0 items-center justify-end">
-        <div className={`inline-flex h-11 min-w-[112px] items-center justify-center rounded-2xl px-4 text-sm font-semibold ${
+        <div className="flex min-w-0 items-center justify-end">
+        <div className={`inline-flex h-10 min-w-[100px] items-center justify-center rounded-2xl px-4 text-sm font-semibold ${
           mistakes > 0
             ? 'bg-rose-500/12 text-rose-300'
             : 'bg-stone-900/75 text-stone-400'
@@ -717,7 +717,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-stone-700/45 bg-stone-900/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-700/45 bg-stone-900/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
     >
       {children}
     </button>
