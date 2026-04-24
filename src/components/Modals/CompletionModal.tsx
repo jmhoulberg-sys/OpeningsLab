@@ -4,7 +4,6 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
 import { isGameOver } from '../../engine/chessEngine';
-import { useLichessAuthStore } from '../../store/lichessAuthStore';
 
 export default function CompletionModal() {
   const {
@@ -22,7 +21,6 @@ export default function CompletionModal() {
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
-  const { accessToken, login, status: authStatus } = useLichessAuthStore();
   const [earnedXp, setEarnedXp] = useState(0);
   const [lineJustUnlocked, setLineJustUnlocked] = useState(false);
 
@@ -125,21 +123,12 @@ export default function CompletionModal() {
             Retry line
           </button>
 
-          {canContinue && accessToken && (
+          {canContinue && (
             <button
               onClick={() => startPostLine('top-moves', false, true)}
               className="w-full rounded-xl border border-emerald-600/40 bg-emerald-700/70 py-2.5 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-600/70 cursor-pointer"
             >
               Practice top responses (Lichess)
-            </button>
-          )}
-
-          {canContinue && !accessToken && (
-            <button
-              onClick={login}
-              className="w-full rounded-xl border border-sky-400/40 bg-sky-500/18 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/24 cursor-pointer"
-            >
-              {authStatus === 'authenticating' ? 'Connecting to Lichess...' : 'Sign in with Lichess to continue'}
             </button>
           )}
 

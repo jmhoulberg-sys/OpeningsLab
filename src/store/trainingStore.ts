@@ -23,7 +23,6 @@ import {
 import { useSettingsStore } from './settingsStore';
 import { logExplorerMoveAcceptance, pickLichessBookMove } from '../services/lichessBookService';
 import { useProgressionStore } from './progressionStore';
-import { useLichessAuthStore } from './lichessAuthStore';
 
 // ─── State shape ────────────────────────────────────────────────────
 
@@ -562,14 +561,13 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         let opponentSan: string | null = null;
 
         if (state.postLineMode === 'top-moves') {
-          const { minRating, explorerOpponentMode } = useSettingsStore.getState();
-          const { accessToken, invalidate } = useLichessAuthStore.getState();
+          const { lichessTopMoves, lichessSpeeds, lichessRatings, lichessVariant } = useSettingsStore.getState();
           const decision = await pickLichessBookMove(state.currentFen, {
-            minRating,
-            mode: explorerOpponentMode,
-            accessToken,
+            topMoves: lichessTopMoves,
+            speeds: lichessSpeeds,
+            ratings: lichessRatings,
+            variant: lichessVariant,
             playedSans: state.playedMoves,
-            rootFen: state.fenHistory[0] ?? STARTING_FEN,
           });
 
           if (decision.move) {
@@ -586,16 +584,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             }
 
             opponentSan = legalMove.san;
-          } else if (decision.status === 'api_error') {
-            if ((decision.error ?? '').includes('401')) {
-              invalidate('Your Lichess session was rejected. Sign in again to use live player moves.');
-            }
+          } else if (decision.status === 'api_error' || decision.status === 'rate_limited') {
             set({
               isAwaitingUserMove: false,
               postLineOutOfBook: false,
-              postLineError: (decision.error ?? '').includes('401')
-                ? 'Sign in with Lichess to continue live player moves.'
-                : decision.error ?? 'Could not reach Lichess explorer',
+              postLineError: decision.error ?? 'Could not reach Lichess explorer',
             });
             return;
           }

@@ -4,7 +4,6 @@ import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
 import { useProfileStore } from '../store/profileStore';
-import { useLichessAuthStore } from '../store/lichessAuthStore';
 import {
   getLevelInfo,
   getQuestProgress,
@@ -45,8 +44,7 @@ export default function HomePage({
   const isDue = useProgressStore((state) => state.isDue);
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const daily = useProgressionStore((state) => state.daily);
-  const { isLoggedIn, displayName } = useProfileStore();
-  const { login, status: authStatus } = useLichessAuthStore();
+  const { isLoggedIn, displayName, login } = useProfileStore();
   const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
@@ -201,7 +199,7 @@ export default function HomePage({
                 className="hidden h-[62px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
               >
                 <LogIn size={18} />
-                {authStatus === 'authenticating' ? 'Connecting...' : 'Sign in'}
+                Sign in
               </button>
             )}
             <button

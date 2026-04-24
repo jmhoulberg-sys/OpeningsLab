@@ -1,57 +1,36 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ExplorerOpponentMode } from '../types';
 
-// ─── Rating filter options ───────────────────────────────────────────
-// Matches Lichess explorer rating buckets.
-// 0 = all ratings (omit the ratings param entirely for max coverage).
-export const RATING_OPTIONS: { label: string; value: number }[] = [
-  { label: 'All ratings', value: 0 },
-  { label: '1000+',       value: 1000 },
-  { label: '1200+',       value: 1200 },
-  { label: '1400+',       value: 1400 },
-  { label: '1600+',       value: 1600 },
-  { label: '1800+',       value: 1800 },
-  { label: '2000+',       value: 2000 },
-  { label: '2200+',       value: 2200 },
-];
-
-// All Lichess rating buckets used to build the API param string
-const ALL_BUCKETS = [400, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2500];
-
-/**
- * Build the `ratings` query-string fragment for the Lichess explorer API.
- * Returns '' when minRating = 0 (include all games; omit param for max coverage).
- */
-export function buildRatingsParam(minRating: number): string {
-  if (minRating === 0) return '';
-  const buckets = ALL_BUCKETS.filter((r) => r >= minRating);
-  return `&ratings=${buckets.join(',')}`;
-}
-
-// ─── State ──────────────────────────────────────────────────────────
+export const LICHESS_SPEED_OPTIONS = ['bullet', 'blitz', 'rapid', 'classical', 'correspondence'] as const;
+export const LICHESS_RATING_OPTIONS = [1600, 1800, 2000, 2200, 2500] as const;
+export const DEFAULT_LICHESS_SPEEDS = ['blitz', 'rapid', 'classical'] as const;
+export const DEFAULT_LICHESS_RATINGS = [1600, 1800, 2000, 2200, 2500] as const;
 
 interface SettingsState {
   restartFrom: 'start' | 'setup';
-  /** Minimum average rating filter for Lichess explorer. 0 = all. */
-  minRating: number;
-  explorerOpponentMode: ExplorerOpponentMode;
+  lichessTopMoves: number;
+  lichessSpeeds: string[];
+  lichessRatings: number[];
+  lichessVariant: 'standard';
   enableSRReminders: boolean;
   showEvalBar: boolean;
 }
 
 interface SettingsActions {
   setRestartFrom(v: 'start' | 'setup'): void;
-  setMinRating(v: number): void;
-  setExplorerOpponentMode(v: ExplorerOpponentMode): void;
+  setLichessTopMoves(v: number): void;
+  toggleLichessSpeed(v: (typeof LICHESS_SPEED_OPTIONS)[number]): void;
+  toggleLichessRating(v: (typeof LICHESS_RATING_OPTIONS)[number]): void;
   setEnableSRReminders(v: boolean): void;
   setShowEvalBar(v: boolean): void;
 }
 
 interface PersistedSettingsState {
   restartFrom?: unknown;
-  minRating?: unknown;
-  explorerOpponentMode?: unknown;
+  lichessTopMoves?: unknown;
+  lichessSpeeds?: unknown;
+  lichessRatings?: unknown;
+  lichessVariant?: unknown;
   enableSRReminders?: unknown;
   showEvalBar?: unknown;
 }
@@ -68,32 +47,58 @@ function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
   const restartFrom = state?.restartFrom === 'start' || state?.restartFrom === 'setup'
     ? state.restartFrom
     : 'setup';
-  const explorerOpponentMode = state?.explorerOpponentMode === 'most_popular' || state?.explorerOpponentMode === 'top3_weighted'
-    ? state.explorerOpponentMode
-    : 'top3_weighted';
+
+  const lichessSpeeds = Array.isArray(state?.lichessSpeeds)
+    ? [...new Set(state.lichessSpeeds.filter((value): value is string =>
+      typeof value === 'string' && LICHESS_SPEED_OPTIONS.includes(value as (typeof LICHESS_SPEED_OPTIONS)[number])))]
+    : [...DEFAULT_LICHESS_SPEEDS];
+
+  const lichessRatings = Array.isArray(state?.lichessRatings)
+    ? [...new Set(state.lichessRatings.filter((value): value is number =>
+      typeof value === 'number' && LICHESS_RATING_OPTIONS.includes(value as (typeof LICHESS_RATING_OPTIONS)[number])))]
+    : [...DEFAULT_LICHESS_RATINGS];
 
   return {
     restartFrom,
-    minRating: asNumber(state?.minRating, 0),
-    explorerOpponentMode,
+    lichessTopMoves: Math.max(1, Math.min(10, Math.floor(asNumber(state?.lichessTopMoves, 3)))),
+    lichessSpeeds: lichessSpeeds.length > 0 ? lichessSpeeds : [...DEFAULT_LICHESS_SPEEDS],
+    lichessRatings: lichessRatings.length > 0 ? lichessRatings : [...DEFAULT_LICHESS_RATINGS],
+    lichessVariant: state?.lichessVariant === 'standard' ? 'standard' : 'standard',
     enableSRReminders: asBoolean(state?.enableSRReminders, true),
-    showEvalBar: asBoolean(state?.showEvalBar, true),
+    showEvalBar: asBoolean(state?.showEvalBar, false),
   };
 }
-
-// ─── Store ──────────────────────────────────────────────────────────
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
   persist(
     (set) => ({
       restartFrom: 'setup',
-      minRating: 0,
-      explorerOpponentMode: 'top3_weighted',
+      lichessTopMoves: 3,
+      lichessSpeeds: [...DEFAULT_LICHESS_SPEEDS],
+      lichessRatings: [...DEFAULT_LICHESS_RATINGS],
+      lichessVariant: 'standard',
       enableSRReminders: true,
-      showEvalBar: true,
+      showEvalBar: false,
       setRestartFrom: (v) => set({ restartFrom: v }),
-      setMinRating: (v) => set({ minRating: v }),
-      setExplorerOpponentMode: (v) => set({ explorerOpponentMode: v }),
+      setLichessTopMoves: (v) => set({ lichessTopMoves: Math.max(1, Math.min(10, Math.floor(v))) }),
+      toggleLichessSpeed: (value) => set((state) => {
+        const exists = state.lichessSpeeds.includes(value);
+        const next = exists
+          ? state.lichessSpeeds.filter((speed) => speed !== value)
+          : [...state.lichessSpeeds, value];
+        return {
+          lichessSpeeds: next.length > 0 ? next : [...DEFAULT_LICHESS_SPEEDS],
+        };
+      }),
+      toggleLichessRating: (value) => set((state) => {
+        const exists = state.lichessRatings.includes(value);
+        const next = exists
+          ? state.lichessRatings.filter((rating) => rating !== value)
+          : [...state.lichessRatings, value];
+        return {
+          lichessRatings: next.length > 0 ? next.sort((a, b) => a - b) : [...DEFAULT_LICHESS_RATINGS],
+        };
+      }),
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
       setShowEvalBar: (v) => set({ showEvalBar: v }),
     }),

@@ -14,7 +14,6 @@ import TimerDisplay from './components/Timer/TimerDisplay';
 import HomePage from './pages/HomePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
-import { useLichessAuthStore } from './store/lichessAuthStore';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
@@ -24,7 +23,6 @@ const EVAL_BAR_W = 24;
 export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
-  const initializeLichessAuth = useLichessAuthStore((state) => state.initialize);
 
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -50,10 +48,6 @@ export default function App() {
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
   }, []);
-
-  useEffect(() => {
-    void initializeLichessAuth();
-  }, [initializeLichessAuth]);
 
   useEffect(() => {
     const mainEl = mainRef.current;

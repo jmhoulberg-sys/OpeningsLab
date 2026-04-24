@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { LogIn, LogOut, ShieldCheck, X } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
-import { useSettingsStore, RATING_OPTIONS } from '../../store/settingsStore';
+import {
+  DEFAULT_LICHESS_RATINGS,
+  DEFAULT_LICHESS_SPEEDS,
+  LICHESS_RATING_OPTIONS,
+  LICHESS_SPEED_OPTIONS,
+  useSettingsStore,
+} from '../../store/settingsStore';
 import { useProfileStore } from '../../store/profileStore';
-import { useLichessAuthStore } from '../../store/lichessAuthStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,17 +22,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const {
     restartFrom,
     setRestartFrom,
-    minRating,
-    setMinRating,
-    explorerOpponentMode,
-    setExplorerOpponentMode,
+    lichessTopMoves,
+    setLichessTopMoves,
+    lichessSpeeds,
+    toggleLichessSpeed,
+    lichessRatings,
+    toggleLichessRating,
+    lichessVariant,
     enableSRReminders,
     setEnableSRReminders,
     showEvalBar,
     setShowEvalBar,
   } = useSettingsStore();
-  const { displayName, isLoggedIn } = useProfileStore();
-  const { login, logout, error: authError, status: authStatus } = useLichessAuthStore();
+  const { displayName, setDisplayName, isLoggedIn, login, logout } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -75,7 +82,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <section>
             <div className="mb-1 text-sm font-semibold text-white">Account</div>
             <p className="mb-3 text-xs leading-relaxed text-stone-400">
-              Connect a Lichess session to unlock live player-move continuation.
+              Local sign-in for now. Email auth can plug in later.
             </p>
 
             <div className="mb-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
@@ -83,12 +90,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
                     <ShieldCheck size={16} className="text-sky-300" />
-                    {isLoggedIn ? 'Connected to Lichess' : 'Not connected'}
+                    {isLoggedIn ? 'Signed in locally' : 'Guest mode'}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-stone-400">
                     {isLoggedIn
-                      ? 'Explorer lookups now use your authenticated Lichess session.'
-                      : 'Lichess now requires authentication for opening explorer access.'}
+                      ? 'Your name and progress stay on this device until full auth is added.'
+                      : 'Sign in locally to give the app an account state before full auth ships.'}
                   </p>
                 </div>
                 <button
@@ -100,21 +107,22 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
                 >
                   {isLoggedIn ? <LogOut size={14} /> : <LogIn size={14} />}
-                  {isLoggedIn ? 'Sign out' : authStatus === 'authenticating' ? 'Connecting...' : 'Sign in'}
+                  {isLoggedIn ? 'Sign out' : 'Sign in'}
                 </button>
               </div>
             </div>
 
-            <div className="rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2">
-              <div className="text-xs text-stone-400">Account name</div>
-              <div className="mt-1 text-sm font-semibold text-white">
-                {isLoggedIn ? displayName || 'Lichess Player' : 'Connect Lichess to continue'}
-              </div>
+            <div className="mb-3">
+              <label className="mb-1 block text-xs text-stone-400">Display name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. ChessKid42"
+                maxLength={32}
+                className="w-full rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
+              />
             </div>
-
-            {authError && (
-              <p className="mt-3 text-xs text-amber-300">{authError}</p>
-            )}
           </section>
 
           <section>
@@ -171,59 +179,89 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           <section>
             <label className="mb-1 block text-sm font-semibold text-white">
-              Lichess opponent mode
+              Lichess response settings
             </label>
             <p className="mb-3 text-xs text-stone-400">
-              Choose how the opponent reply is selected from the live explorer data.
+              Default behaviour is top 3 Lichess replies weighted by popularity.
             </p>
-            <div className="grid gap-2">
-              <button
-                onClick={() => setExplorerOpponentMode('most_popular')}
-                className={`rounded-xl border px-3 py-3 text-left transition-colors cursor-pointer ${
-                  explorerOpponentMode === 'most_popular'
-                    ? 'border-sky-400/55 bg-sky-500/14 text-white'
-                    : 'border-stone-700/45 bg-stone-800 text-stone-300 hover:bg-stone-700'
-                }`}
-              >
-                <div className="text-sm font-semibold">Most popular move</div>
-                <div className="mt-1 text-xs text-stone-400">
-                  Always play the single most played Lichess reply.
-                </div>
-              </button>
-              <button
-                onClick={() => setExplorerOpponentMode('top3_weighted')}
-                className={`rounded-xl border px-3 py-3 text-left transition-colors cursor-pointer ${
-                  explorerOpponentMode === 'top3_weighted'
-                    ? 'border-sky-400/55 bg-sky-500/14 text-white'
-                    : 'border-stone-700/45 bg-stone-800 text-stone-300 hover:bg-stone-700'
-                }`}
-              >
-                <div className="text-sm font-semibold">Top 3 weighted by popularity</div>
-                <div className="mt-1 text-xs text-stone-400">
-                  Randomly choose among the top 3 replies using game-count weights.
-                </div>
-              </button>
-            </div>
-          </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
-              Analysis rating filter
-            </label>
-            <p className="mb-3 text-xs text-stone-400">
-              Minimum average rating for Lichess database moves.
-            </p>
-            <select
-              value={minRating}
-              onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full cursor-pointer rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm text-stone-200 focus:outline-none focus:border-sky-400/55"
-            >
-              {RATING_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div className="rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Top moves used</div>
+                  <div className="mt-1 text-xs text-stone-400">
+                    Choose how many of the most popular moves can be sampled.
+                  </div>
+                </div>
+                <div className="text-lg font-bold text-sky-300">{lichessTopMoves}</div>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={1}
+                value={lichessTopMoves}
+                onChange={(e) => setLichessTopMoves(Number(e.target.value))}
+                className="mt-3 w-full cursor-pointer accent-sky-500"
+              />
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+              <div className="text-sm font-semibold text-white">Speeds</div>
+              <div className="mt-1 text-xs text-stone-400">
+                Current default: {DEFAULT_LICHESS_SPEEDS.join(', ')}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {LICHESS_SPEED_OPTIONS.map((speed) => {
+                  const active = lichessSpeeds.includes(speed);
+                  return (
+                    <button
+                      key={speed}
+                      onClick={() => toggleLichessSpeed(speed)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-sky-500 text-slate-950'
+                          : 'border border-stone-700/45 bg-stone-900 text-stone-300 hover:bg-stone-700'
+                      }`}
+                    >
+                      {speed}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+              <div className="text-sm font-semibold text-white">Ratings</div>
+              <div className="mt-1 text-xs text-stone-400">
+                Current default: {DEFAULT_LICHESS_RATINGS.join(', ')}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {LICHESS_RATING_OPTIONS.map((rating) => {
+                  const active = lichessRatings.includes(rating);
+                  return (
+                    <button
+                      key={rating}
+                      onClick={() => toggleLichessRating(rating)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'border border-stone-700/45 bg-stone-900 text-stone-300 hover:bg-stone-700'
+                      }`}
+                    >
+                      {rating}+
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+              <div className="text-sm font-semibold text-white">Variant</div>
+              <div className="mt-1 text-xs text-stone-400">
+                {lichessVariant}
+              </div>
+            </div>
           </section>
 
           <section>

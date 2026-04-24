@@ -1,33 +1,21 @@
-import { buildRatingsParam } from '../store/settingsStore';
-import type { ExplorerOpponentMode } from '../types';
-import { sansToUciMoves, STARTING_FEN } from '../engine/chessEngine';
+import { sansToUciMoves } from '../engine/chessEngine';
+import {
+  DEFAULT_RATINGS,
+  DEFAULT_SPEEDS,
+  DEFAULT_TOP_MOVES,
+  DEFAULT_VARIANT,
+  type BackendErrorReason,
+} from '../server/lichessResponseCore';
 
-export interface ExplorerMove {
+export interface LichessBookMove {
   uci: string;
   san: string;
-  averageRating: number;
+  popularity: number;
+  weight: number;
   white: number;
   draws: number;
   black: number;
-}
-
-interface ExplorerResponse {
-  opening?: unknown;
-  white?: number;
-  draws?: number;
-  black?: number;
-  moves?: ExplorerMove[];
-  topGames?: unknown[];
-  recentGames?: unknown[];
-  history?: unknown[];
-}
-
-export interface LichessBookMove extends ExplorerMove {
-  count: number;
-  whitePct: number;
-  drawPct: number;
-  blackPct: number;
-  playPct: number;
+  averageRating?: number;
 }
 
 export interface LichessBookPosition {
@@ -37,384 +25,158 @@ export interface LichessBookPosition {
   white: number;
   draws: number;
   black: number;
-  source: 'lichess-db';
+  source: 'lichess-opening-explorer';
+  cached: boolean;
 }
 
 export interface LichessBookFetchResult {
-  status: 'ok' | 'out_of_database' | 'api_error';
+  status: 'ok' | 'out_of_database' | 'rate_limited' | 'api_error';
   position: LichessBookPosition | null;
-  raw: ExplorerResponse | null;
+  raw: null;
   error?: string;
+  reason?: BackendErrorReason;
 }
 
 interface FetchBookOptions {
-  minRating?: number;
-  accessToken?: string | null;
+  topMoves?: number;
+  speeds?: string[];
+  ratings?: number[];
+  variant?: string;
   playedSans?: string[];
-  rootFen?: string;
-}
-
-interface PickMoveOptions extends FetchBookOptions {
-  playedMoves?: string[];
-  mode: ExplorerOpponentMode;
 }
 
 export interface LichessMoveDecision {
-  status: 'ok' | 'out_of_database' | 'api_error';
+  status: LichessBookFetchResult['status'];
   move: LichessBookMove | null;
   position: LichessBookPosition | null;
   error?: string;
+  reason?: BackendErrorReason;
 }
 
-const DEFAULT_SPEEDS = 'bullet,blitz,rapid,classical,correspondence';
-const DEFAULT_MOVE_LIMIT = 12;
-const EXPLORER_TIMEOUT_MS = 8000;
-const EXPLORER_BASE_URL = 'https://explorer.lichess.org/lichess';
-const cache = new Map<string, Promise<LichessBookFetchResult>>();
-let requestQueue = Promise.resolve();
-
-export function normalizeFenForLichessDatabase(fen: string): string | null {
-  const parts = fen.trim().split(/\s+/);
-  if (parts.length < 4) return null;
-  return parts.slice(0, 4).join(' ');
-}
-
-export function moveCount(move: ExplorerMove): number {
-  return move.white + move.draws + move.black;
-}
-
-export function sortMovesByPopularity<T extends ExplorerMove>(moves: T[]): T[] {
-  return [...moves].sort((a, b) => moveCount(b) - moveCount(a));
-}
-
-export function pickMostPopularMove<T extends ExplorerMove>(moves: T[]): T | null {
-  const sorted = sortMovesByPopularity(moves);
-  return sorted[0] ?? null;
-}
-
-export function pickWeightedTop3Move<T extends ExplorerMove>(
-  moves: T[],
-): { move: T | null; totalWeight: number; randomRoll: number | null; candidates: T[] } {
-  const candidates = sortMovesByPopularity(moves).slice(0, 3);
-
-  if (!candidates.length) {
-    return { move: null, totalWeight: 0, randomRoll: null, candidates };
-  }
-
-  if (candidates.length === 1) {
-    return { move: candidates[0], totalWeight: moveCount(candidates[0]), randomRoll: null, candidates };
-  }
-
-  const totalWeight = candidates.reduce((sum, move) => sum + moveCount(move), 0);
-  if (totalWeight <= 0) {
-    return { move: candidates[0] ?? null, totalWeight, randomRoll: 0, candidates };
-  }
-
-  const randomRoll = Math.random() * totalWeight;
-  let cumulative = 0;
-
-  for (const move of candidates) {
-    cumulative += moveCount(move);
-    if (randomRoll < cumulative) {
-      return { move, totalWeight, randomRoll, candidates };
-    }
-  }
-
-  return {
-    move: candidates[candidates.length - 1] ?? null,
-    totalWeight,
-    randomRoll,
-    candidates,
+interface BackendSuccessPayload {
+  ok: true;
+  selectedMove: {
+    uci: string;
+    san: string;
+    popularity: number;
+    weight: number;
+    averageRating?: number;
   };
+  candidateMoves: LichessBookMove[];
+  source: 'lichess-opening-explorer';
+  cached: boolean;
 }
 
-function isExplorerResponse(data: unknown): data is ExplorerResponse {
-  if (!data || typeof data !== 'object') return false;
-  return Array.isArray((data as ExplorerResponse).moves);
+interface BackendErrorPayload {
+  ok: false;
+  reason: BackendErrorReason;
+  message: string;
 }
 
-function toBookMoves(moves: ExplorerMove[], totalGames: number): LichessBookMove[] {
-  return sortMovesByPopularity(moves)
-    .map((move) => {
-      const count = moveCount(move);
-      return {
-        ...move,
-        count,
-        whitePct: count ? Math.round((move.white / count) * 100) : 0,
-        drawPct: count ? Math.round((move.draws / count) * 100) : 0,
-        blackPct: count ? Math.round((move.black / count) * 100) : 0,
-        playPct: totalGames ? Math.round((count / totalGames) * 100) : 0,
-      };
-    })
-    .filter((move) => move.count > 0);
+function buildTotals(moves: LichessBookMove[]) {
+  return moves.reduce(
+    (totals, move) => ({
+      white: totals.white + move.white,
+      draws: totals.draws + move.draws,
+      black: totals.black + move.black,
+    }),
+    { white: 0, draws: 0, black: 0 },
+  );
 }
 
-function getCacheKey(fen: string, minRating: number, playPath: string): string {
-  return `${fen}|${minRating}|${playPath}`;
-}
-
-function queueExplorerRequest<T>(task: () => Promise<T>): Promise<T> {
-  const next = requestQueue.catch(() => undefined).then(task);
-  requestQueue = next.catch(() => undefined).then(() => undefined);
-  return next;
-}
-
-function buildExplorerUrl(fen: string, minRating: number, playPath: string[]) {
-  const ratingsParam = buildRatingsParam(minRating);
-  const params = new URLSearchParams({
-    variant: 'standard',
-    speeds: DEFAULT_SPEEDS,
-    fen,
-    moves: String(DEFAULT_MOVE_LIMIT),
-    topGames: '0',
-    recentGames: '0',
-  });
-
-  if (ratingsParam) {
-    params.set('ratings', ratingsParam.replace('&ratings=', ''));
-  }
-
-  if (playPath.length > 0) {
-    params.set('play', playPath.join(','));
-  }
-
-  return `${EXPLORER_BASE_URL}?${params.toString()}`;
+function mapErrorStatus(reason: BackendErrorReason): LichessBookFetchResult['status'] {
+  if (reason === 'out_of_database' || reason === 'no_moves') return 'out_of_database';
+  if (reason === 'lichess_rate_limited') return 'rate_limited';
+  return 'api_error';
 }
 
 export async function fetchLichessBookPosition(
   fen: string,
   options: FetchBookOptions = {},
 ): Promise<LichessBookFetchResult> {
-  const normalizedFen = normalizeFenForLichessDatabase(fen) ?? fen.trim();
-  const rootFen = options.rootFen?.trim() || STARTING_FEN;
-  const playPath = options.playedSans ? sansToUciMoves(options.playedSans, rootFen) : [];
-  const accessToken = options.accessToken ?? null;
+  const play = options.playedSans ? sansToUciMoves(options.playedSans) ?? [] : [];
+  const payload = {
+    fen,
+    play,
+    topMoves: options.topMoves ?? DEFAULT_TOP_MOVES,
+    speeds: options.speeds ?? [...DEFAULT_SPEEDS],
+    ratings: options.ratings ?? [...DEFAULT_RATINGS],
+    variant: options.variant ?? DEFAULT_VARIANT,
+  };
 
-  if (!normalizedFen) {
-    return {
-      status: 'api_error',
-      position: null,
-      raw: null,
-      error: 'Invalid FEN for Lichess explorer',
-    };
-  }
+  try {
+    const response = await fetch('/api/lichess-response', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!accessToken) {
-    return {
-      status: 'api_error',
-      position: null,
-      raw: null,
-      error: 'Sign in with Lichess to load live player moves',
-    };
-  }
-
-  const minRating = options.minRating ?? 0;
-  const key = getCacheKey(normalizedFen, minRating, playPath?.join(',') ?? '');
-  const cached = cache.get(key);
-  if (cached) return cached;
-
-  const request = queueExplorerRequest(async () => {
-    const url = buildExplorerUrl(rootFen, minRating, playPath ?? []);
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), EXPLORER_TIMEOUT_MS);
-
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        return {
-          status: 'api_error' as const,
-          position: null,
-          raw: null,
-          error: `Lichess explorer returned ${response.status}`,
-        };
-      }
-
-      const raw = await response.json() as unknown;
-      if (!isExplorerResponse(raw)) {
-        return {
-          status: 'api_error' as const,
-          position: null,
-          raw: null,
-          error: 'Lichess explorer payload did not match the expected schema',
-        };
-      }
-
-      const totalGames = (raw.white ?? 0) + (raw.draws ?? 0) + (raw.black ?? 0);
-      const moves = toBookMoves(raw.moves ?? [], totalGames);
-
-      if (!moves.length) {
-        return {
-          status: 'out_of_database' as const,
-          position: null,
-          raw,
-        };
-      }
-
+    const data = (await response.json()) as BackendSuccessPayload | BackendErrorPayload;
+    if (!data.ok) {
       return {
-        status: 'ok' as const,
-        position: {
-          fen: normalizedFen,
-          moves,
-          totalGames,
-          white: raw.white ?? 0,
-          draws: raw.draws ?? 0,
-          black: raw.black ?? 0,
-          source: 'lichess-db' as const,
-        },
-        raw,
-      };
-    } catch (error) {
-      return {
-        status: 'api_error' as const,
+        status: mapErrorStatus(data.reason),
         position: null,
         raw: null,
-        error: error instanceof Error ? error.message : 'Unknown Lichess explorer error',
+        error: data.message,
+        reason: data.reason,
       };
-    } finally {
-      clearTimeout(timeout);
     }
-  });
 
-  cache.set(key, request);
-  return request;
+    const totals = buildTotals(data.candidateMoves);
+    return {
+      status: 'ok',
+      position: {
+        fen,
+        moves: data.candidateMoves,
+        totalGames: data.candidateMoves.reduce((sum, move) => sum + move.popularity, 0),
+        white: totals.white,
+        draws: totals.draws,
+        black: totals.black,
+        source: data.source,
+        cached: data.cached,
+      },
+      raw: null,
+    };
+  } catch {
+    return {
+      status: 'api_error',
+      position: null,
+      raw: null,
+      error: 'Opening database unavailable.',
+      reason: 'lichess_unavailable',
+    };
+  }
 }
 
 export function getTopBookMoves(
   result: LichessBookFetchResult,
-  limit = 3,
+  limit = DEFAULT_TOP_MOVES,
 ): LichessBookMove[] {
   if (result.status !== 'ok' || !result.position) return [];
   return result.position.moves.slice(0, Math.max(1, limit));
 }
 
-function debugExplorerDecision(input: {
-  mode: ExplorerOpponentMode;
-  queriedFen: string;
-  rootFen?: string;
-  playedSans?: string[];
-  playedUci?: string[];
-  raw: ExplorerResponse | null;
-  parsedMoves: LichessBookMove[];
-  sortedMoves: LichessBookMove[];
-  top3: LichessBookMove[];
-  totalWeight: number;
-  randomRoll: number | null;
-  selectedMove: LichessBookMove | null;
-  status: LichessMoveDecision['status'];
-  legalAccepted?: boolean;
-  error?: string;
-}) {
-  console.groupCollapsed(`[Lichess Explorer] ${input.mode} :: ${input.queriedFen}`);
-  console.log('selectedMode', input.mode);
-  console.log('currentFen', input.queriedFen);
-  console.log('rootFen', input.rootFen);
-  console.log('playedSans', input.playedSans);
-  console.log('playedUci', input.playedUci);
-  console.log('rawExplorerJson', input.raw);
-  console.log('parsedMoves', input.parsedMoves);
-  console.table(
-    input.parsedMoves.map((move) => ({
-      san: move.san,
-      uci: move.uci,
-      averageRating: move.averageRating,
-      white: move.white,
-      draws: move.draws,
-      black: move.black,
-      count: move.count,
-      playPct: move.playPct,
-    })),
-  );
-  console.log('sortedMoves', input.sortedMoves);
-  console.log('top3Candidates', input.top3);
-  console.log('totalWeight', input.totalWeight);
-  console.log('randomNumber', input.randomRoll);
-  console.log('finalSelectedMove', input.selectedMove);
-  console.log('legalAccepted', input.legalAccepted);
-  console.log('status', input.status);
-  if (input.error) console.warn('explorerError', input.error);
-  console.groupEnd();
-}
-
 export async function pickLichessBookMove(
   fen: string,
-  options: PickMoveOptions,
+  options: FetchBookOptions = {},
 ): Promise<LichessMoveDecision> {
-  const normalizedFen = normalizeFenForLichessDatabase(fen) ?? fen.trim();
-  const rootFen = options.rootFen?.trim() || STARTING_FEN;
-  const playedUci = options.playedSans ? sansToUciMoves(options.playedSans, rootFen) ?? [] : [];
-  const result = await fetchLichessBookPosition(normalizedFen, options);
-  const parsedMoves = result.status === 'ok' && result.position ? result.position.moves : [];
-  const sortedMoves = sortMovesByPopularity(parsedMoves);
-
+  const result = await fetchLichessBookPosition(fen, options);
   if (result.status !== 'ok' || !result.position) {
-    debugExplorerDecision({
-      mode: options.mode,
-      queriedFen: normalizedFen,
-      rootFen,
-      playedSans: options.playedSans,
-      playedUci,
-      raw: result.raw,
-      parsedMoves,
-      sortedMoves,
-      top3: [],
-      totalWeight: 0,
-      randomRoll: null,
-      selectedMove: null,
-      status: result.status,
-      error: result.error,
-    });
-
     return {
       status: result.status,
       move: null,
       position: null,
       error: result.error,
+      reason: result.reason,
     };
   }
 
-  let selectedMove: LichessBookMove | null = null;
-  let totalWeight = 0;
-  let randomRoll: number | null = null;
-  let top3 = sortedMoves.slice(0, 3);
-
-  if (options.mode === 'most_popular') {
-    selectedMove = pickMostPopularMove(sortedMoves);
-    totalWeight = selectedMove ? selectedMove.count : 0;
-    top3 = selectedMove ? [selectedMove] : [];
-  } else {
-    const weighted = pickWeightedTop3Move(sortedMoves);
-    selectedMove = weighted.move;
-    totalWeight = weighted.totalWeight;
-    randomRoll = weighted.randomRoll;
-    top3 = weighted.candidates;
-  }
-
-  debugExplorerDecision({
-    mode: options.mode,
-    queriedFen: normalizedFen,
-    rootFen,
-    playedSans: options.playedSans,
-    playedUci,
-    raw: result.raw,
-    parsedMoves,
-    sortedMoves,
-    top3,
-    totalWeight,
-    randomRoll,
-    selectedMove,
-    status: 'ok',
-  });
-
   return {
     status: 'ok',
-    move: selectedMove,
+    move: result.position.moves[0] ?? null,
     position: result.position,
   };
 }

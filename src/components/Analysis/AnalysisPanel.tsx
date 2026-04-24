@@ -1,18 +1,18 @@
 import { useLichessAnalysis, type LichessMove } from '../../hooks/useLichessAnalysis';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
-import { useLichessAuthStore } from '../../store/lichessAuthStore';
 
 export default function AnalysisPanel() {
   const { currentFen, playedMoves, showTopMoves, postLineOutOfBook, postLineError } = useTrainingStore();
-  const { minRating } = useSettingsStore();
-  const accessToken = useLichessAuthStore((state) => state.accessToken);
+  const { lichessTopMoves, lichessSpeeds, lichessRatings } = useSettingsStore();
 
   const { moves, loading } = useLichessAnalysis(
     showTopMoves ? currentFen : null,
     playedMoves,
     showTopMoves,
-    minRating,
+    lichessTopMoves,
+    lichessSpeeds,
+    lichessRatings,
   );
 
   if (!showTopMoves) return null;
@@ -23,7 +23,7 @@ export default function AnalysisPanel() {
         Based on Lichess games
       </div>
       <p className="mb-2 text-[11px] text-slate-500">
-        {accessToken ? 'Top 3 continuations by game count.' : 'Sign in with Lichess to load live player moves.'}
+        Top {lichessTopMoves} continuations by game count.
       </p>
 
       {loading && (
@@ -32,7 +32,7 @@ export default function AnalysisPanel() {
 
       {!loading && postLineError && (
         <p className="text-xs italic text-amber-300">
-          {postLineError.includes('401') ? 'Sign in with Lichess to continue live player moves.' : postLineError}
+          {postLineError}
         </p>
       )}
 
@@ -68,31 +68,34 @@ export default function AnalysisPanel() {
 }
 
 function MoveRow({ move }: { move: LichessMove }) {
-  const total = move.count;
+  const total = move.popularity;
   const games = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
-  const drawPct = move.drawPct;
+  const whitePct = total ? Math.round((move.white / total) * 100) : 0;
+  const drawPct = total ? Math.round((move.draws / total) * 100) : 0;
+  const blackPct = total ? Math.round((move.black / total) * 100) : 0;
+  const playPct = Math.round(move.weight * 100);
 
   return (
     <div className="grid grid-cols-[46px_44px_1fr_46px_46px_46px] items-center gap-x-1">
       <span className="font-mono text-xs font-bold text-white">{move.san}</span>
       <span className="text-center text-[11px] font-semibold tabular-nums text-sky-300">
-        {move.playPct}%
+        {playPct}%
       </span>
 
       <div className="flex h-3 overflow-hidden rounded-sm" title={`${games} games`}>
-        <div className="bg-slate-100" style={{ width: `${move.whitePct}%` }} />
+        <div className="bg-slate-100" style={{ width: `${whitePct}%` }} />
         <div className="bg-slate-500" style={{ width: `${drawPct}%` }} />
-        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${move.blackPct}%` }} />
+        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${blackPct}%` }} />
       </div>
 
       <span className="text-center text-[11px] font-semibold tabular-nums text-slate-200">
-        {move.whitePct}%
+        {whitePct}%
       </span>
       <span className="text-center text-[11px] tabular-nums text-slate-400">
         {drawPct}%
       </span>
       <span className="text-center text-[11px] tabular-nums text-slate-500">
-        {move.blackPct}%
+        {blackPct}%
       </span>
     </div>
   );
