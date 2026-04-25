@@ -202,8 +202,9 @@ export default function HomePage({
             </button>
             {isLoggedIn ? (
               <button
-                onClick={onSettingsClick}
+                onClick={onProfileClick}
                 className="hidden h-[68px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
+                title="My Profile"
               >
                 <UserCircle2 size={18} className="text-sky-300" />
                 <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
