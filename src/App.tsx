@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Flame, PanelRight, X } from 'lucide-react';
 import Header from './components/Header/Header';
+import AuthModal from './components/Auth/AuthModal';
 import ChessBoardPanel from './components/Board/ChessBoardPanel';
 import MoveList from './components/MoveList/MoveList';
 import LineSelector from './components/LineSelector/LineSelector';
@@ -112,6 +113,7 @@ export default function App() {
           onSettingsClick={() => setShowSettings(true)}
           onProfileClick={() => ProfileModule.open()}
         />
+        <AuthModal />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       </>
     );
@@ -222,6 +224,7 @@ export default function App() {
       <TrainingSetupModal key={`setup-modal-${phase}`} />
       <CompletionModal />
       <FreePlayEndModal />
+      <AuthModal />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );

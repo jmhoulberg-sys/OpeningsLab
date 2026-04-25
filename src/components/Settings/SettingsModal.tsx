@@ -34,7 +34,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     showEvalBar,
     setShowEvalBar,
   } = useSettingsStore();
-  const { displayName, setDisplayName, isLoggedIn, login, logout } = useProfileStore();
+  const {
+    displayName,
+    setDisplayName,
+    isLoggedIn,
+    openAuthModal,
+    logout,
+  } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -99,7 +105,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </p>
                 </div>
                 <button
-                  onClick={isLoggedIn ? logout : login}
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      logout();
+                    } else {
+                      openAuthModal('signup');
+                      onClose();
+                    }
+                  }}
                   className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                     isLoggedIn
                       ? 'border border-stone-700/45 bg-stone-900 text-stone-200 hover:bg-stone-700'

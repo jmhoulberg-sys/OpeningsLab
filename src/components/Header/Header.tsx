@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({ onSettingsClick, onHomeClick, onProfileClick }: HeaderProps) {
   const { opening, selectedLine } = useTrainingStore();
-  const { isLoggedIn, displayName, login } = useProfileStore();
+  const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
     ? displayName.trim()
@@ -88,7 +88,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
             </button>
           ) : (
             <button
-              onClick={login}
+              onClick={() => openAuthModal('signup')}
               className="hidden h-[68px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
             >
               <LogIn size={16} />
