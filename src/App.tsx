@@ -17,7 +17,6 @@ import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import { useProfileStore } from './store/profileStore';
-import { ProfileModule } from './profile/profile';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
@@ -27,7 +26,7 @@ const EVAL_BAR_W = 24;
 export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
-  const { isLoggedIn, displayName } = useProfileStore();
+  const { } = useProfileStore();
 
   const [showHome, setShowHome] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
@@ -54,14 +53,6 @@ export default function App() {
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
   }, []);
-
-  useEffect(() => {
-    ProfileModule.init();
-  }, []);
-
-  useEffect(() => {
-    ProfileModule.syncIdentity(isLoggedIn ? displayName : 'Player');
-  }, [displayName, isLoggedIn]);
 
   useEffect(() => {
     const mainEl = mainRef.current;
