@@ -13,6 +13,7 @@ import TrainingSetupModal from './components/Modals/TrainingSetupModal';
 import SettingsModal from './components/Settings/SettingsModal';
 import TimerDisplay from './components/Timer/TimerDisplay';
 import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import { useProfileStore } from './store/profileStore';
@@ -29,6 +30,7 @@ export default function App() {
   const { isLoggedIn, displayName } = useProfileStore();
 
   const [showHome, setShowHome] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth < SIDEBAR_BREAK);
@@ -101,7 +103,23 @@ export default function App() {
 
   function handleGoHome() {
     setShowHome(true);
+    setShowProfile(false);
     startedRef.current = false;
+  }
+
+  function handleProfileClick() {
+    setShowProfile(true);
+    setShowHome(false);
+  }
+
+  // Remember where the user came from when they opened the profile
+  if (showProfile) {
+    return (
+      <>
+        <ProfilePage onBack={() => setShowProfile(false)} />
+        <AuthModal />
+      </>
+    );
   }
 
   if (showHome) {
@@ -111,7 +129,7 @@ export default function App() {
           onSelectOpening={handleSelectOpening}
           onStartOpeningLine={handleStartOpeningLine}
           onSettingsClick={() => setShowSettings(true)}
-          onProfileClick={() => ProfileModule.open()}
+          onProfileClick={handleProfileClick}
         />
         <AuthModal />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
@@ -124,7 +142,7 @@ export default function App() {
       <Header
         onSettingsClick={() => setShowSettings(true)}
         onHomeClick={handleGoHome}
-        onProfileClick={() => ProfileModule.open()}
+        onProfileClick={handleProfileClick}
       />
 
       <main ref={mainRef} className="relative flex min-h-0 flex-1 overflow-hidden">

@@ -69,14 +69,6 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
               {isLoggedIn ? `${xpToNext} XP to next` : 'Log in to see details'}
             </div>
           </div>
-          <button
-            onClick={onProfileClick}
-            className="hidden h-[68px] min-w-[156px] items-center justify-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-stone-100 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
-            title="My Profile"
-          >
-            <UserCircle2 size={17} className="text-sky-300" />
-            My Profile
-          </button>
           {isLoggedIn ? (
             <button
               onClick={onProfileClick}
@@ -84,12 +76,17 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
               title="My Profile"
             >
               <UserCircle2 size={17} className="text-sky-300" />
-              <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
+              <div className="min-w-0">
+                <div className="max-w-[120px] truncate text-left font-semibold text-white">
+                  {accountLabel}
+                </div>
+                <div className="text-left text-[11px] text-stone-500">My Profile</div>
+              </div>
             </button>
           ) : (
             <button
               onClick={() => openAuthModal('signup')}
-              className="hidden h-[68px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+              className="hidden h-[68px] min-w-[156px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
             >
               <LogIn size={16} />
               Sign in
