@@ -7,9 +7,10 @@ import BrandMark from '../Brand/BrandMark';
 interface HeaderProps {
   onSettingsClick: () => void;
   onHomeClick: () => void;
+  onProfileClick: () => void;
 }
 
-export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
+export default function Header({ onSettingsClick, onHomeClick, onProfileClick }: HeaderProps) {
   const { opening, selectedLine } = useTrainingStore();
   const { isLoggedIn, displayName, login } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
@@ -68,6 +69,14 @@ export default function Header({ onSettingsClick, onHomeClick }: HeaderProps) {
               {isLoggedIn ? `${xpToNext} XP to next` : 'Log in to see details'}
             </div>
           </div>
+          <button
+            onClick={onProfileClick}
+            className="hidden h-[68px] min-w-[156px] items-center justify-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-stone-100 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
+            title="My Profile"
+          >
+            <UserCircle2 size={17} className="text-sky-300" />
+            My Profile
+          </button>
           {isLoggedIn ? (
             <button
               onClick={onSettingsClick}

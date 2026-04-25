@@ -14,6 +14,8 @@ import TimerDisplay from './components/Timer/TimerDisplay';
 import HomePage from './pages/HomePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
+import { useProfileStore } from './store/profileStore';
+import { ProfileModule } from './profile/profile';
 import type { Opening, OpeningLine } from './types';
 
 const SIDEBAR_BREAK = 650;
@@ -23,6 +25,7 @@ const EVAL_BAR_W = 24;
 export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, streak, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
+  const { isLoggedIn, displayName } = useProfileStore();
 
   const [showHome, setShowHome] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -48,6 +51,14 @@ export default function App() {
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
   }, []);
+
+  useEffect(() => {
+    ProfileModule.init();
+  }, []);
+
+  useEffect(() => {
+    ProfileModule.syncIdentity(isLoggedIn ? displayName : 'Player');
+  }, [displayName, isLoggedIn]);
 
   useEffect(() => {
     const mainEl = mainRef.current;
@@ -99,6 +110,7 @@ export default function App() {
           onSelectOpening={handleSelectOpening}
           onStartOpeningLine={handleStartOpeningLine}
           onSettingsClick={() => setShowSettings(true)}
+          onProfileClick={() => ProfileModule.open()}
         />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       </>
@@ -110,6 +122,7 @@ export default function App() {
       <Header
         onSettingsClick={() => setShowSettings(true)}
         onHomeClick={handleGoHome}
+        onProfileClick={() => ProfileModule.open()}
       />
 
       <main ref={mainRef} className="relative flex min-h-0 flex-1 overflow-hidden">

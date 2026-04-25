@@ -181,6 +181,15 @@ function getExpectedUserSan(state: {
   return null;
 }
 
+function dispatchChessEvent<T>(name: string, detail: T) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(name, { detail }));
+}
+
+function countStudentMovesInLine(opening: Opening, line: OpeningLine) {
+  return line.moves.filter((_, index) => isStudentMove(opening, index)).length;
+}
+
 // ─── Store ──────────────────────────────────────────────────────────
 
 export const useTrainingStore = create<TrainingState & TrainingActions>()(
@@ -307,6 +316,10 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         if (!expectedSan || normalise(san) !== normalise(expectedSan)) {
           const wrongMoveFen = applyMove(state.currentFen, san) ?? null;
           set({ wrongMoveSan: expectedSan, wrongMoveSquare: to, wrongMoveFen, showingCorrectMove: false });
+          dispatchChessEvent('chess:move_wrong', {
+            lineId: 'setup',
+            openingId: state.opening.id,
+          });
           return 'wrong';
         }
 
@@ -327,6 +340,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           showingCorrectMove: false,
           isAwaitingUserMove: false,
           ...(done ? { phase: 'line-select' as TrainingPhase } : {}),
+        });
+        dispatchChessEvent('chess:move_correct', {
+          san,
+          lineId: 'setup',
+          openingId: state.opening.id,
         });
 
         if (!done) {
@@ -400,6 +418,10 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           streak: 0,
           hintSquare: null,
         }));
+        dispatchChessEvent('chess:move_wrong', {
+          lineId: line.id,
+          openingId: state.opening.id,
+        });
         return 'wrong';
       }
 
@@ -425,6 +447,20 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         streak: s.streak + 1,
         ...(lineComplete ? { phase: 'completed' as TrainingPhase } : {}),
       }));
+      dispatchChessEvent('chess:move_correct', {
+        san,
+        lineId: line.id,
+        openingId: state.opening.id,
+      });
+
+      if (lineComplete) {
+        dispatchChessEvent('chess:session_complete', {
+          errors: state.mistakes,
+          moves: countStudentMovesInLine(state.opening, line),
+          lineId: line.id,
+          openingId: state.opening.id,
+        });
+      }
 
       if (state.mode === 'time-trial') {
         get().addTimerBonus();
@@ -684,6 +720,15 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         ...(lineComplete ? { phase: 'completed' as TrainingPhase } : {}),
       });
 
+      if (lineComplete) {
+        dispatchChessEvent('chess:session_complete', {
+          errors: state.mistakes,
+          moves: countStudentMovesInLine(opening, line),
+          lineId: line.id,
+          openingId: opening.id,
+        });
+      }
+
       if (!lineComplete) {
         if (isStudentMove(opening, newIdx)) {
           set({ isAwaitingUserMove: true });
@@ -704,6 +749,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
       const expected = getExpectedUserSan(state);
 
       set({ wrongMoveSan: expected, showingCorrectMove: true, hintSquare: null });
+      dispatchChessEvent('chess:hint_used', {
+        type: 'answer',
+        lineId: state.selectedLine?.id,
+        openingId: state.opening?.id,
+      });
     },
 
     // ── showHint ──────────────────────────────────────────────────
@@ -724,6 +774,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         );
         if (found) {
           set({ hintSquare: found.from });
+          dispatchChessEvent('chess:hint_used', {
+            type: 'hint',
+            lineId: state.selectedLine?.id,
+            openingId: state.opening?.id,
+          });
         }
       } catch { /* ignore */ }
     },

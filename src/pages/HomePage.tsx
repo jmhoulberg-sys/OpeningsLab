@@ -33,12 +33,14 @@ interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
   onStartOpeningLine: (opening: Opening, line: OpeningLine) => void;
   onSettingsClick: () => void;
+  onProfileClick: () => void;
 }
 
 export default function HomePage({
   onSelectOpening,
   onStartOpeningLine,
   onSettingsClick,
+  onProfileClick,
 }: HomePageProps) {
   const openingProgress = useProgressStore((state) => state.openings);
   const isDue = useProgressStore((state) => state.isDue);
@@ -191,6 +193,13 @@ export default function HomePage({
                 {!isLoggedIn ? 'Log in to see details' : ''}
               </div>
             </div>
+            <button
+              onClick={onProfileClick}
+              className="hidden h-[68px] min-w-[156px] items-center justify-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
+            >
+              <UserCircle2 size={18} className="text-sky-300" />
+              My Profile
+            </button>
             {isLoggedIn ? (
               <button
                 onClick={onSettingsClick}
