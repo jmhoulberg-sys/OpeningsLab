@@ -434,20 +434,20 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const boardColumnWidth = `${boardSize}px`;
 
   return (
-    <div className="flex w-full max-w-full flex-col items-center gap-1.5">
-      <div className="flex min-h-[72px] w-full max-w-[680px] flex-col items-center justify-center text-center">
+    <div className="flex w-full max-w-full flex-col items-center gap-1">
+      <div className="flex min-h-[92px] w-full max-w-[680px] flex-col items-center justify-center text-center">
         {boardMessage.eyebrow && (
           <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
             {boardMessage.eyebrow}
           </div>
         )}
         {(boardMessage.text || boardMessage.detail) && (
-          <div className="mt-1 w-full rounded-[20px] border border-stone-800/70 bg-stone-900/80 px-4 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
-            <div className="text-[1.02rem] font-semibold leading-relaxed text-white">
+          <div className="mt-1 w-full rounded-[20px] border border-stone-800/70 bg-stone-900/88 px-4 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
+            <div className="min-h-[3.4rem] text-[1.02rem] font-semibold leading-relaxed text-white">
               {boardMessage.text}
             </div>
             {boardMessage.detail && (
-              <div className="mt-1 text-base font-semibold tracking-[0.01em] text-sky-300">
+              <div className="mt-0.5 text-[1.08rem] font-semibold tracking-normal text-sky-300">
                 {boardMessage.detail}
               </div>
             )}
@@ -475,7 +475,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
 
-      <div className="flex h-5 items-center justify-center">
+      <div className="flex h-4 items-center justify-center">
         {feedbackMsg ? (
           <span
             className={`rounded-full px-4 py-1 text-xs font-bold ${
@@ -489,10 +489,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         ) : wrongMoveFen && !showingCorrectMove ? (
           <span className="rounded-full bg-rose-500/85 px-3 py-1 text-xs font-semibold text-white">
             Play it again
-          </span>
-        ) : wrongMoveSan && showingCorrectMove ? (
-          <span className="rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-slate-950">
-            Follow the arrow
           </span>
         ) : null}
       </div>
@@ -640,7 +636,8 @@ function BoardNavRow({
   const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
 
   const showHintBtn = canHint && !hintSquare && !showingCorrectMove;
-  const showAnswerBtn = canHint && !!hintSquare && !showingCorrectMove;
+  const showAnswerBtn = canHint && (!!hintSquare || showingCorrectMove);
+  const answerDisabled = showingCorrectMove;
 
   return (
       <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-2.5">
@@ -658,8 +655,13 @@ function BoardNavRow({
         {!hideHint && showAnswerBtn && (
           <button
             onClick={showAnswer}
+            disabled={answerDisabled}
             title="Show answer"
-            className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 px-4 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 ring-sky-100/10 transition-all hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300 cursor-pointer"
+            className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 transition-all ${
+              answerDisabled
+                ? 'cursor-not-allowed border-stone-700/45 bg-stone-800/90 text-stone-400 ring-stone-600/20'
+                : 'cursor-pointer border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 text-slate-950 ring-sky-100/10 hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300'
+            }`}
           >
             <Sparkles size={15} />
             Answer
