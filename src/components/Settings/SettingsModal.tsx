@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogIn, LogOut, ShieldCheck, X } from 'lucide-react';
+import { LogIn, LogOut, UserCircle2, X } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import {
@@ -36,7 +36,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   } = useSettingsStore();
   const {
     displayName,
-    setDisplayName,
     isLoggedIn,
     openAuthModal,
     logout,
@@ -88,53 +87,58 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <section>
             <div className="mb-1 text-sm font-semibold text-white">Account</div>
             <p className="mb-3 text-xs leading-relaxed text-stone-400">
-              Local sign-in for now. Email auth can plug in later.
+              Use the sign-in flow to create a local account or log back in.
             </p>
 
             <div className="mb-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <ShieldCheck size={16} className="text-sky-300" />
-                    {isLoggedIn ? 'Signed in locally' : 'Guest mode'}
+                    <UserCircle2 size={16} className="text-sky-300" />
+                    {isLoggedIn ? displayName || 'Opening Player' : 'No account connected'}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-stone-400">
                     {isLoggedIn
-                      ? 'Your name and progress stay on this device until full auth is added.'
-                      : 'Sign in locally to give the app an account state before full auth ships.'}
+                      ? 'This browser is signed in locally. Open your profile from the header to see progress.'
+                      : 'Create an account or log in from the popup to save your identity on this browser.'}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    if (isLoggedIn) {
-                      logout();
-                    } else {
-                      openAuthModal('signup');
-                      onClose();
-                    }
-                  }}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                    isLoggedIn
-                      ? 'border border-stone-700/45 bg-stone-900 text-stone-200 hover:bg-stone-700'
-                      : 'bg-sky-500 text-slate-950 hover:bg-sky-400'
-                  }`}
-                >
-                  {isLoggedIn ? <LogOut size={14} /> : <LogIn size={14} />}
-                  {isLoggedIn ? 'Sign out' : 'Sign in'}
-                </button>
               </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="mb-1 block text-xs text-stone-400">Display name</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. ChessKid42"
-                maxLength={32}
-                className="w-full rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-400/55"
-              />
+              <div className="mt-4 flex gap-2">
+                {!isLoggedIn ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        openAuthModal('signup');
+                        onClose();
+                      }}
+                      className="flex-1 rounded-xl bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+                    >
+                      Create account
+                    </button>
+                    <button
+                      onClick={() => {
+                        openAuthModal('login');
+                        onClose();
+                      }}
+                      className="flex-1 rounded-xl border border-stone-700/45 bg-stone-900 px-3 py-2 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 cursor-pointer"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <LogIn size={14} />
+                        Log in
+                      </span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={logout}
+                    className="inline-flex items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 py-2 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 cursor-pointer"
+                  >
+                    <LogOut size={14} />
+                    Sign out
+                  </button>
+                )}
+              </div>
             </div>
           </section>
 
