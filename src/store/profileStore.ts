@@ -38,6 +38,7 @@ interface ProfileState {
   signUp: (username: string, password: string) => AuthResult;
   signIn: (username: string, password: string) => AuthResult;
   logout: () => void;
+  resetProfile: () => void;
   exportData: () => string;
   importData: (code: string) => boolean;
 }
@@ -171,6 +172,14 @@ export const useProfileStore = create<ProfileState>()(
       },
 
       logout: () => set({ isLoggedIn: false }),
+      resetProfile: () => set({
+        profileId: generateId(),
+        displayName: '',
+        isLoggedIn: false,
+        accounts: [],
+        isAuthModalOpen: false,
+        authMode: 'signup',
+      }),
 
       exportData: () => {
         try {
