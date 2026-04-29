@@ -91,8 +91,9 @@ export default function HomePage({
       if (b.completedLines !== a.completedLines) return b.completedLines - a.completedLines;
       return b.totalLines - a.totalLines;
     });
+  const showFeaturedOpenings = !isLoggedIn || learningOpenings.length > 0;
   const featuredOpenings = isLoggedIn && learningOpenings.length > 0
-    ? learningOpenings.slice(0, 3)
+    ? learningOpenings.slice(0, 4)
     : defaultFeaturedOpenings;
 
   const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
@@ -210,7 +211,7 @@ export default function HomePage({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-[1500px]">
 
         {!isLoggedIn ? (
           <>
@@ -246,16 +247,18 @@ export default function HomePage({
           />
         )}
 
-        <div className="mt-5" ref={featuredRef}>
-          <FeaturedOpeningsSection
-            openings={featuredOpenings}
-            eyebrow={isLoggedIn && learningOpenings.length > 0 ? 'Continue courses' : undefined}
-            title={isLoggedIn && learningOpenings.length > 0 ? 'Keep building your repertoire' : undefined}
-            description={isLoggedIn && learningOpenings.length > 0 ? 'Openings you have already started, sorted by progress.' : undefined}
-            onOpenOpening={onSelectOpening}
-            onStartLine={onStartOpeningLine}
-          />
-        </div>
+        {showFeaturedOpenings && (
+          <div className="mt-5" ref={featuredRef}>
+            <FeaturedOpeningsSection
+              openings={featuredOpenings}
+              eyebrow={isLoggedIn && learningOpenings.length > 0 ? 'Continue courses' : undefined}
+              title={isLoggedIn && learningOpenings.length > 0 ? 'Keep building your repertoire' : undefined}
+              description={isLoggedIn && learningOpenings.length > 0 ? 'Openings you have already started, sorted by progress.' : undefined}
+              onOpenOpening={onSelectOpening}
+              onStartLine={onStartOpeningLine}
+            />
+          </div>
+        )}
 
         {isLoggedIn && (
           <div className="mt-5">

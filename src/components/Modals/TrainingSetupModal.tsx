@@ -85,7 +85,7 @@ export default function TrainingSetupModal() {
       onClick={() => setDismissed(true)}
     >
       <div
-        className="max-h-[calc(100vh-1rem)] w-full max-w-[560px] overflow-hidden rounded-[26px] border border-stone-800/70 bg-stone-950 shadow-2xl shadow-black/70 sm:max-h-[calc(100vh-2rem)]"
+        className="max-h-[calc(100vh-1rem)] w-full max-w-[560px] overflow-hidden rounded-[26px] border border-stone-800/70 bg-stone-950 shadow-2xl shadow-black/70 sm:max-h-[calc(100vh-2rem)] lg:max-w-[760px] 2xl:max-w-[860px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-stone-800/70 px-5 py-4">
@@ -148,7 +148,7 @@ export default function TrainingSetupModal() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="grid gap-2 lg:grid-cols-2">
               {visibleLines.map(({ line, unlocked }) => (
                 <LineChoice
                   key={line.id}
