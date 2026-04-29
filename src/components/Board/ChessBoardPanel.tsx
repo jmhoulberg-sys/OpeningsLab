@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, ChevronsRight, Lightbulb, Sparkles } from 'l
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
-import { getCoachingNote } from '../../data/coachingNotes';
 import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
@@ -39,127 +38,6 @@ function squareToXY(
   const x = orientation === 'white' ? file * size : (7 - file) * size;
   const y = orientation === 'white' ? (7 - rank) * size : rank * size;
   return { x, y, size };
-}
-
-function getBoardMessage({
-  isReviewing,
-  viewMoveIndex,
-  wrongMoveFen,
-  phase,
-  isAwaitingUserMove,
-  postLine,
-  mode,
-  expectedSan,
-  coachingNote,
-}: {
-  isReviewing: boolean;
-  viewMoveIndex: number | null;
-  wrongMoveFen: string | null;
-  phase: string;
-  isAwaitingUserMove: boolean;
-  postLine: boolean;
-  mode: string;
-  expectedSan: string | null;
-  coachingNote: string | null;
-}) {
-  if (isReviewing) {
-    const moveNum = Math.floor((viewMoveIndex ?? 0) / 2) + 1;
-    const side = (viewMoveIndex ?? 0) % 2 === 0 ? 'W' : 'B';
-    return {
-      eyebrow: 'Review',
-      text: `Move ${moveNum}${side} from the line`,
-      color: 'text-sky-300',
-    };
-  }
-
-  if (wrongMoveFen) {
-    return {
-      eyebrow: 'Off book',
-      text: 'That move leaves the line. Use the board marker to reset and try the book move.',
-      color: 'text-rose-300',
-    };
-  }
-
-  if (phase === 'setup') {
-    return {
-      eyebrow: '',
-      text: isAwaitingUserMove
-        ? (coachingNote ?? 'Build the shared opening position before choosing a line.')
-        : 'Opponent reply incoming. Watch how the structure takes shape.',
-      detail: isAwaitingUserMove && expectedSan ? `Play ${expectedSan}` : 'Shared opening moves',
-      color: isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500',
-    };
-  }
-
-  if (phase === 'line-select') {
-    return {
-      eyebrow: 'Pick your route',
-      text: 'Choose a line, then walk it through or test it from memory.',
-      color: 'text-sky-300',
-    };
-  }
-
-  if (phase === 'training') {
-    if (postLine) {
-      return {
-        eyebrow: 'Play on',
-        text: isAwaitingUserMove
-          ? 'Find the practical continuation and keep the pressure alive.'
-          : 'Opponent is choosing from real response data.',
-        color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
-      };
-    }
-
-    if (mode === 'full-line' && isAwaitingUserMove && expectedSan) {
-      return {
-        eyebrow: '',
-        text: coachingNote ?? `Play ${expectedSan} and keep the line connected.`,
-        detail: `Play ${expectedSan}`,
-        color: 'text-sky-300',
-      };
-    }
-
-    if (mode === 'learn' && isAwaitingUserMove && expectedSan) {
-      return {
-        eyebrow: 'Guided walkthrough',
-        text: coachingNote ?? 'Follow the highlighted answer on the board.',
-        detail: `Play ${expectedSan}`,
-        color: 'text-sky-300',
-      };
-    }
-
-    if (mode === 'step-by-step' && isAwaitingUserMove) {
-      return {
-        eyebrow: '',
-        text: coachingNote ?? 'Recall the plan, then play the book move from memory.',
-        detail: expectedSan ? `Target: ${expectedSan}` : 'Work from memory',
-        color: 'text-emerald-300',
-      };
-    }
-
-    return {
-      eyebrow: 'Training',
-      text: isAwaitingUserMove
-        ? 'Find the next book move and explain the idea to yourself.'
-        : 'Read the reply, then prepare the next idea.',
-      color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
-    };
-  }
-
-  if (phase === 'completed') {
-    return {
-      eyebrow: 'Complete',
-      text: 'Line complete. Practice another line or keep playing',
-      color: 'text-emerald-300',
-    };
-  }
-
-  return {
-    eyebrow: '',
-    text: '',
-    detail: '',
-    color: 'text-stone-400',
-  };
 }
 
 export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: number }) {
@@ -431,24 +309,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     [handleBoardMove, promotionPending],
   );
 
-  const boardMessage = getBoardMessage({
-    isReviewing,
-    viewMoveIndex,
-    wrongMoveFen,
-    phase,
-    isAwaitingUserMove,
-    postLine,
-    mode,
-    expectedSan,
-    coachingNote: getCoachingNote(
-      opening,
-      selectedLine,
-      phase === 'setup' ? 'setup' : 'training',
-      currentMoveIndex,
-      expectedSan,
-    ),
-  });
-
   const isDraggable =
     !isReviewing &&
     !wrongMoveFen &&
@@ -457,28 +317,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const boardColumnWidth = `${boardSize}px`;
 
   return (
-    <div className="flex w-full max-w-full flex-col items-center gap-1">
-      <div className="flex h-[132px] w-full max-w-[720px] flex-col items-center justify-center text-center">
-        {boardMessage.eyebrow && (
-          <div className={`text-[11px] font-black uppercase tracking-[0.28em] ${boardMessage.color}`}>
-            {boardMessage.eyebrow}
-          </div>
-        )}
-        {(boardMessage.text || boardMessage.detail) && (
-          <div className="mt-1 w-full rounded-[22px] border border-sky-300/18 bg-stone-950/92 px-4 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.28),0_0_24px_rgba(14,165,233,0.08)]">
-            {boardMessage.detail && (
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-400/12 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-sky-200">
-                <Sparkles size={13} />
-                {boardMessage.detail}
-              </div>
-            )}
-            <div className="line-clamp-2 min-h-[3.1rem] text-[1rem] font-extrabold leading-snug text-white sm:text-[1.08rem]">
-              {boardMessage.text}
-            </div>
-          </div>
-        )}
-      </div>
-
+    <div className="flex w-full max-w-full flex-col items-center gap-2">
       <div
         className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`}
         style={{ maxWidth: boardSize }}

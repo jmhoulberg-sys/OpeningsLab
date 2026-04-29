@@ -73,29 +73,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       )}
 
       <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-[21rem] flex-col bg-stone-900 shadow-2xl shadow-black/60 transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed left-1/2 top-1/2 z-50 flex max-h-[86vh] w-[min(92vw,30rem)] -translate-x-1/2 flex-col overflow-hidden rounded-[24px] border border-stone-700/55 bg-stone-950 shadow-2xl shadow-black/70 transition-all duration-200 ${
+          isOpen ? '-translate-y-1/2 scale-100 opacity-100' : 'pointer-events-none -translate-y-[46%] scale-95 opacity-0'
         }`}
       >
-        <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center justify-between border-b border-stone-800/70 px-5 py-4">
           <h2 className="text-lg font-bold text-white">Settings</h2>
           <button
             onClick={handleClose}
-            className="rounded-xl border border-stone-700/45 bg-stone-800 px-2.5 py-2 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="rounded-xl border border-stone-700/45 bg-stone-900 px-2.5 py-2 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
             aria-label="Close settings"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-6 py-6">
-          <section>
-            <div className="mb-1 text-sm font-semibold text-white">Account</div>
-            <p className="mb-3 text-xs leading-relaxed text-stone-400">
-              Use the sign-in flow to create a local account or log back in.
-            </p>
-
-            <div className="mb-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5">
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Account</div>
+            <div>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -147,13 +143,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
-              Restart Line from
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+              Restart line from
             </label>
-            <p className="mb-3 text-xs text-stone-400">
-              Choose where restart begins.
-            </p>
             <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
               {(
                 [
@@ -176,13 +169,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
-              Opponent Depth
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+              Opponent depth
             </label>
-            <p className="mb-4 text-xs text-stone-400">
-              How many top moves the opponent can choose from.
-            </p>
             <div className="flex items-center gap-4">
               <input
                 type="range"
@@ -199,15 +189,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Lichess response settings
             </label>
-            <p className="mb-3 text-xs text-stone-400">
-              Default behaviour is top 3 Lichess replies weighted by popularity.
-            </p>
 
-            <div className="rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-white">Top moves used</div>
@@ -228,7 +215,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               />
             </div>
 
-            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Speeds</div>
               <div className="mt-1 text-xs text-stone-400">
                 Current default: {DEFAULT_LICHESS_SPEEDS.join(', ')}
@@ -253,7 +240,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Ratings</div>
               <div className="mt-1 text-xs text-stone-400">
                 Current default: {DEFAULT_LICHESS_RATINGS.join(', ')}
@@ -278,7 +265,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-stone-700/45 bg-stone-800 p-4">
+            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Variant</div>
               <div className="mt-1 text-xs text-stone-400">
                 {lichessVariant}
@@ -286,35 +273,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Evaluation Bar
             </label>
-            <p className="mb-3 text-xs text-stone-400">
-              Show the evaluation bar beside the board.
-            </p>
             <ToggleButton active={showEvalBar} onClick={() => setShowEvalBar(!showEvalBar)}>
               {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
             </ToggleButton>
           </section>
 
-          <section>
-            <label className="mb-1 block text-sm font-semibold text-white">
+          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Spaced Repetition
             </label>
-            <p className="mb-3 text-xs text-stone-400">
-              Show review reminders on favourited lines.
-            </p>
             <ToggleButton active={enableSRReminders} onClick={() => setEnableSRReminders(!enableSRReminders)}>
               {enableSRReminders ? 'Reminders On' : 'Reminders Off'}
             </ToggleButton>
           </section>
 
-          <section>
-            <div className="mb-1 text-sm font-semibold text-white">Reset Profile</div>
-            <p className="mb-4 text-xs text-stone-400">
-              Temporary testing button. Clears local account, XP, level, daily stats, and line progress.
-            </p>
+          <section className="rounded-2xl border border-rose-400/15 bg-rose-400/5 p-4">
+            <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-rose-200/80">Reset profile</div>
             {!confirmReset ? (
               <button
                 onClick={() => setConfirmReset(true)}

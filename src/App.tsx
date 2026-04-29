@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Flame, PanelRight, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  ChevronDown,
+  House,
+  Lock,
+  PanelRight,
+  RotateCcw,
+  Sparkles,
+  Target,
+  Timer,
+  Trophy,
+  X,
+} from 'lucide-react';
 import Header from './components/Header/Header';
 import AuthModal from './components/Auth/AuthModal';
 import ChessBoardPanel from './components/Board/ChessBoardPanel';
-import MoveList from './components/MoveList/MoveList';
-import LineSelector from './components/LineSelector/LineSelector';
-import ControlPanel from './components/Controls/ControlPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import CompletionModal from './components/Modals/CompletionModal';
 import FreePlayEndModal from './components/Modals/FreePlayEndModal';
@@ -16,17 +26,16 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
-import { useProfileStore } from './store/profileStore';
-import type { Opening, OpeningLine } from './types';
+import { getCoachingNote } from './data/coachingNotes';
+import type { Opening, OpeningLine, TrainingMode } from './types';
 
 const SIDEBAR_BREAK = 1100;
-const BOARD_CHROME_H = 236;
+const BOARD_CHROME_H = 104;
 const EVAL_BAR_W = 24;
 
 export default function App() {
-  const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, streak, startOpening } = useTrainingStore();
+  const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, startOpening } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
-  const { } = useProfileStore();
 
   const [showHome, setShowHome] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
@@ -140,11 +149,9 @@ export default function App() {
               <TrainingPanelContent
                 opening={opening}
                 mode={mode}
-                phase={phase}
                 postLine={postLine}
                 postLineError={postLineError}
                 postLineOutOfBook={postLineOutOfBook}
-                streak={streak}
                 isLineUnlocked={isLineUnlocked}
                 onHomeClick={handleGoHome}
               />
@@ -185,11 +192,9 @@ export default function App() {
               <TrainingPanelContent
                 opening={opening}
                 mode={mode}
-                phase={phase}
                 postLine={postLine}
                 postLineError={postLineError}
                 postLineOutOfBook={postLineOutOfBook}
-                streak={streak}
                 isLineUnlocked={isLineUnlocked}
                 onHomeClick={handleGoHome}
               />
@@ -208,76 +213,37 @@ export default function App() {
   );
 }
 
-function OpeningInfoPanel({
-  opening,
-  isLineUnlocked,
-}: {
-  opening: Opening;
-  isLineUnlocked: (openingId: string, lineId: string) => boolean;
-}) {
-  const totalLines = opening.lines.length;
-  const completedLines = opening.lines.filter((line) =>
-    isLineUnlocked(opening.id, line.id),
-  ).length;
-  const pct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
-
-  return (
-    <div className="rounded-[20px] border border-stone-800/60 bg-stone-950/55 px-4 pb-4 pt-4">
-      <div className="mb-1 text-xs font-bold uppercase tracking-widest text-stone-500">
-        Opening
-      </div>
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <div className="truncate text-sm font-bold text-white">{opening.name}</div>
-        {totalLines > 0 && (
-          <span className="shrink-0 text-xs text-stone-500">
-            <span className={completedLines > 0 ? 'font-semibold text-emerald-300' : ''}>
-              {completedLines}
-            </span>/{totalLines}
-          </span>
-        )}
-      </div>
-      {totalLines > 0 && (
-        <div className="mb-2 h-1 rounded-full bg-stone-700/50">
-          <div
-            className="h-1 rounded-full bg-emerald-400 transition-all duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      )}
-      <div className="text-xs leading-relaxed text-stone-400">
-        {opening.description}
-      </div>
-    </div>
-  );
-}
-
 function TrainingPanelContent({
   opening,
   mode,
-  phase,
   postLine,
   postLineError,
   postLineOutOfBook,
-  streak,
   isLineUnlocked,
   onHomeClick,
 }: {
   opening: Opening;
   mode: string;
-  phase: string;
   postLine: boolean;
   postLineError: string | null;
   postLineOutOfBook: boolean;
-  streak: number;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
   onHomeClick: () => void;
 }) {
   return (
-    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 py-4">
-      <ControlPanel onHomeClick={onHomeClick} />
+      <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 py-4">
+      <CoachCard />
 
-      <div className="mt-4">
-        <OpeningInfoPanel opening={opening} isLineUnlocked={isLineUnlocked} />
+      <div className="mt-3">
+        <ModeSelector opening={opening} isLineUnlocked={isLineUnlocked} />
+      </div>
+
+      <div className="mt-3">
+        <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
+      </div>
+
+      <div className="mt-3">
+        <CompactActions onHomeClick={onHomeClick} />
       </div>
 
       {postLine && (
@@ -298,23 +264,309 @@ function TrainingPanelContent({
         </div>
       )}
 
-      {streak >= 3 && phase === 'training' && !postLine && (
-        <div className="mt-3 rounded-2xl border border-emerald-300/18 bg-emerald-300/8 px-4 py-2">
-          <p className="flex items-center gap-1 text-xs font-semibold text-emerald-300">
-            <Flame size={14} className="text-emerald-300" /> {streak} move streak
-          </p>
-        </div>
-      )}
-
-      <div className="mt-4 flex-shrink-0">
-        <LineSelector opening={opening} />
-      </div>
-
-      <div className="mt-3 flex h-44 flex-shrink-0 flex-col">
-        <MoveList />
-      </div>
-
       {postLine && <AnalysisPanel />}
     </div>
+  );
+}
+
+function CoachCard() {
+  const {
+    opening,
+    selectedLine,
+    phase,
+    mode,
+    currentMoveIndex,
+    isAwaitingUserMove,
+    wrongMoveFen,
+    viewMoveIndex,
+    postLine,
+  } = useTrainingStore();
+  const isReviewing = viewMoveIndex !== null;
+  const expectedSan = !isReviewing && isAwaitingUserMove
+    ? (phase === 'setup'
+      ? opening?.setupMoves[currentMoveIndex] ?? null
+      : selectedLine?.moves[currentMoveIndex]?.san ?? null)
+    : null;
+  const coachingNote = getCoachingNote(
+    opening,
+    selectedLine,
+    phase === 'setup' ? 'setup' : 'training',
+    currentMoveIndex,
+    expectedSan,
+  );
+  const message = getCoachMessage({
+    phase,
+    mode,
+    isAwaitingUserMove,
+    wrongMoveFen,
+    isReviewing,
+    postLine,
+    expectedSan,
+    coachingNote,
+  });
+
+  return (
+    <section className="rounded-[20px] border border-stone-800/55 bg-stone-950/70 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-black text-white">
+          <BookOpen size={17} className="text-sky-300" />
+          Coach
+        </div>
+        <span className="text-xs font-semibold text-stone-500">
+          {selectedLine?.name ?? opening?.name ?? 'Training'}
+        </span>
+      </div>
+      <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
+        {message.text}
+      </div>
+      {message.action && (
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-sky-200">
+          <Sparkles size={13} />
+          {message.action}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function getCoachMessage({
+  phase,
+  mode,
+  isAwaitingUserMove,
+  wrongMoveFen,
+  isReviewing,
+  postLine,
+  expectedSan,
+  coachingNote,
+}: {
+  phase: string;
+  mode: string;
+  isAwaitingUserMove: boolean;
+  wrongMoveFen: string | null;
+  isReviewing: boolean;
+  postLine: boolean;
+  expectedSan: string | null;
+  coachingNote: string | null;
+}) {
+  if (isReviewing) {
+    return { text: 'You are reviewing the move history. Jump back live when you are ready to continue.' };
+  }
+  if (wrongMoveFen) {
+    return { text: 'That move stepped out of the line. Reset the marker, then play the book idea again.' };
+  }
+  if (phase === 'setup') {
+    return {
+      text: isAwaitingUserMove
+        ? (coachingNote ?? 'Build the starting position carefully. This is the foundation for every line.')
+        : 'Watch the reply and notice what it changes before you make the next move.',
+      action: isAwaitingUserMove && expectedSan ? `Play ${expectedSan}` : undefined,
+    };
+  }
+  if (phase === 'line-select') {
+    return { text: 'Pick the line you want to train. Start with Learn if it is new, then prove it in practice.' };
+  }
+  if (postLine) {
+    return {
+      text: isAwaitingUserMove
+        ? 'The book line is over. Now choose a practical move that keeps your position easy to play.'
+        : 'Your opponent is choosing from real game responses. Read the position, then continue.',
+    };
+  }
+  if (phase === 'training' && isAwaitingUserMove) {
+    if (mode === 'learn') {
+      return {
+        text: coachingNote ?? 'I am showing the answer this time. Play it, then notice why that square matters.',
+        action: expectedSan ? `Play ${expectedSan}` : 'Answer shown',
+      };
+    }
+    if (mode === 'step-by-step') {
+      return {
+        text: coachingNote ?? 'You know the idea now. Find the next move from memory and keep the plan intact.',
+        action: expectedSan ? `Target ${expectedSan}` : 'From memory',
+      };
+    }
+    if (mode === 'full-line') {
+      return {
+        text: coachingNote ?? 'Run the full line without help. One clean sequence is what unlocks the course.',
+        action: expectedSan ? `Find ${expectedSan}` : 'Full line',
+      };
+    }
+    return { text: coachingNote ?? 'Play fast, but keep the idea clear. Accuracy first, speed second.' };
+  }
+  if (phase === 'completed') {
+    return { text: 'Line complete. Repeat it once more or choose another line while the pattern is fresh.' };
+  }
+  return { text: 'Stay calm, read the position, and make the move that fits the opening plan.' };
+}
+
+function ModeSelector({
+  opening,
+  isLineUnlocked,
+}: {
+  opening: Opening;
+  isLineUnlocked: (openingId: string, lineId: string) => boolean;
+}) {
+  const { mode, selectedLine, setMode } = useTrainingStore();
+  const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
+  const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
+  const modes: Array<{
+    value: TrainingMode;
+    label: string;
+    icon: React.ReactNode;
+    unlocked: boolean;
+    lockLabel?: string;
+  }> = [
+    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, unlocked: true },
+    { value: 'step-by-step', label: 'Step', icon: <Target size={16} />, unlocked: setupDone, lockLabel: 'Finish setup' },
+    { value: 'full-line', label: 'Full line', icon: <Trophy size={16} />, unlocked: setupDone && !!selectedLine, lockLabel: 'Pick a line' },
+    { value: 'time-trial', label: 'Speed', icon: <Timer size={16} />, unlocked: completedLines >= 3, lockLabel: 'Master 3 lines' },
+  ];
+
+  return (
+    <section className="rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+      <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Mode</div>
+      <div className="grid grid-cols-2 gap-2">
+        {modes.map((item) => {
+          const active = mode === item.value;
+          return (
+            <button
+              key={item.value}
+              onClick={() => {
+                if (item.unlocked) setMode(item.value);
+              }}
+              disabled={!item.unlocked}
+              className={`min-h-[58px] rounded-2xl border px-3 py-2 text-left transition-colors ${
+                active
+                  ? 'border-sky-300/45 bg-sky-500/16 text-white'
+                  : item.unlocked
+                    ? 'border-stone-800/70 bg-stone-900/80 text-stone-200 hover:bg-stone-800 cursor-pointer'
+                    : 'border-stone-800/45 bg-stone-900/35 text-stone-600 cursor-not-allowed'
+              }`}
+              title={item.unlocked ? item.label : item.lockLabel}
+            >
+              <div className="flex items-center gap-2 text-sm font-black">
+                <span className={active ? 'text-sky-300' : item.unlocked ? 'text-stone-300' : 'text-stone-600'}>
+                  {item.unlocked ? item.icon : <Lock size={15} />}
+                </span>
+                {item.label}
+              </div>
+              {!item.unlocked && (
+                <div className="mt-1 text-[11px] font-semibold text-stone-600">{item.lockLabel}</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function OpeningLineDropdown({
+  opening,
+  isLineUnlocked,
+}: {
+  opening: Opening;
+  isLineUnlocked: (openingId: string, lineId: string) => boolean;
+}) {
+  const { selectedLine, selectLine, phase } = useTrainingStore();
+  const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
+  const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section className="relative rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+      <button
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
+      >
+        <div className="min-w-0">
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Opening</div>
+          <div className="mt-1 truncate text-sm font-black text-white">{opening.name}</div>
+          <div className="mt-0.5 truncate text-xs text-stone-400">
+            {selectedLine?.name ?? (phase === 'setup' ? 'Setup position' : 'Choose a line')}
+          </div>
+        </div>
+        <ChevronDown size={18} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-80 overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+          <div className="mb-1 flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-500">
+            <span>{completedLines}/{opening.lines.length} mastered</span>
+            <span>{setupDone ? 'Ready' : 'Setup first'}</span>
+          </div>
+          {opening.lines.map((line) => {
+            const mastered = isLineUnlocked(opening.id, line.id);
+            const available = setupDone;
+            const active = selectedLine?.id === line.id;
+            return (
+              <button
+                key={line.id}
+                onClick={() => {
+                  if (!available) return;
+                  selectLine(line);
+                  setOpen(false);
+                }}
+                disabled={!available}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                  active
+                    ? 'bg-sky-500/16 text-sky-100'
+                    : available
+                      ? 'text-stone-200 hover:bg-stone-800 cursor-pointer'
+                      : 'text-stone-600 cursor-not-allowed'
+                }`}
+              >
+                {mastered ? <Sparkles size={14} className="text-emerald-300" /> : <Lock size={14} />}
+                <span className="min-w-0 flex-1 truncate font-semibold">{line.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CompactActions({ onHomeClick }: { onHomeClick: () => void }) {
+  const { phase, selectedLine, restart, backToLineSelect } = useTrainingStore();
+  const canRestart = !!selectedLine || phase === 'training' || phase === 'completed';
+  const canGoBack = phase === 'training' || phase === 'completed';
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <IconAction onClick={backToLineSelect} disabled={!canGoBack} title="Choose line">
+        <ArrowLeft size={16} />
+      </IconAction>
+      <IconAction onClick={restart} disabled={!canRestart} title="Restart line">
+        <RotateCcw size={16} />
+      </IconAction>
+      <IconAction onClick={onHomeClick} title="Front page">
+        <House size={16} />
+      </IconAction>
+    </div>
+  );
+}
+
+function IconAction({
+  onClick,
+  disabled,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className="flex h-11 items-center justify-center rounded-2xl border border-stone-800/70 bg-stone-900/80 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+    >
+      {children}
+    </button>
   );
 }
