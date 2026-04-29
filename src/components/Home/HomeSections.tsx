@@ -205,28 +205,28 @@ export function ProgressOverview({
   totalQuests,
 }: ProgressOverviewProps) {
   return (
-    <section className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr]">
-      <div className="rounded-[24px] border border-stone-800/55 bg-stone-900/70 p-5">
+    <section className="grid gap-3 lg:grid-cols-[1.35fr_1fr_1fr]">
+      <div className="rounded-[20px] border border-sky-300/15 bg-stone-900/75 p-4 shadow-[0_18px_42px_rgba(14,165,233,0.08)]">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/80">
-              Level Progress
+            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">
+              Level progress
             </div>
-            <div className="mt-2 text-3xl font-extrabold text-white">
+            <div className="mt-1 text-3xl font-black text-white">
               {isLoggedIn ? `Level ${level}` : 'Sign in to see level'}
             </div>
           </div>
-          <div className="rounded-2xl bg-sky-500/15 p-3 text-sky-300">
+          <div className="rounded-2xl bg-sky-400/18 p-3 text-sky-200 shadow-[0_0_28px_rgba(56,189,248,0.22)]">
             <Crown size={24} />
           </div>
         </div>
-        <div className="mt-4 h-2 rounded-full bg-stone-800">
+        <div className="mt-3 h-2 rounded-full bg-stone-800">
           <div
-            className="h-2 rounded-full bg-sky-400 transition-all duration-500"
+            className="h-2 rounded-full bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 transition-all duration-500"
             style={{ width: `${isLoggedIn ? progressPct : 100}%` }}
           />
         </div>
-        <div className="mt-2 text-sm text-stone-400">
+        <div className="mt-2 text-xs font-semibold text-stone-400">
           {isLoggedIn ? `${xpToNextLevel} XP to the next level` : 'Save XP, streaks, and progress to your account'}
         </div>
       </div>
@@ -251,38 +251,35 @@ export function ProgressOverview({
 
 export function TodayPanel({ today, onContinue, onReview, onStartNew }: TodayPanelProps) {
   return (
-    <section className="space-y-3">
-      <SectionHeading
-        eyebrow="Today"
-        title="Pick up momentum fast"
-        description="Continue, review, or start a fresh line."
-      />
-      <div className="grid gap-4 lg:grid-cols-3">
-        <TodayActionCard
-          eyebrow="Continue"
-          title={today.continueSummary?.opening.name ?? 'Resume your latest line'}
-          description={today.continueLabel ?? 'Jump back into your most recent opening.'}
-          buttonLabel={today.continueSummary ? 'Continue training' : 'Start featured line'}
+    <section className="rounded-[22px] border border-stone-800/55 bg-stone-900/55 p-3">
+      <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] lg:items-center">
+        <div className="px-1">
+          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Today</div>
+          <h2 className="mt-1 text-xl font-black text-white">Choose your next run</h2>
+          <p className="mt-0.5 text-sm text-stone-400">Continue, review, or learn something fresh.</p>
+        </div>
+        <TodayActionButton
+          label="Continue"
+          title={today.continueSummary?.opening.name ?? 'Resume training'}
+          meta={today.continueLabel ?? 'Latest course'}
+          icon={<Play size={17} />}
           tone="sky"
-          icon={<Play size={18} />}
           onClick={onContinue}
         />
-        <TodayActionCard
-          eyebrow="Review"
+        <TodayActionButton
+          label="Review"
           title={today.reviewOpening?.name ?? 'No reviews due'}
-          description={today.reviewLabel ?? `${today.dueCount} due today`}
-          buttonLabel={today.reviewLine ? 'Review due line' : 'Browse openings'}
+          meta={today.reviewLine ? today.reviewLine.name : today.reviewLabel ?? 'Nothing waiting'}
+          icon={<CalendarClock size={17} />}
           tone="emerald"
-          icon={<CalendarClock size={18} />}
           onClick={onReview}
         />
-        <TodayActionCard
-          eyebrow="New"
-          title={today.newOpening?.name ?? 'Start a new opening'}
-          description={today.newOpening ? `${today.newOpening.lines.length} lines ready to learn` : 'Pick a fresh course and begin.'}
-          buttonLabel="Try first line"
-          tone="sky"
-          icon={<Sparkles size={18} />}
+        <TodayActionButton
+          label="New"
+          title={today.newOpening?.name ?? 'Start new'}
+          meta={today.newOpening ? `${today.newOpening.lines.length} lines ready` : 'Pick a course'}
+          icon={<Sparkles size={17} />}
+          tone="amber"
           onClick={onStartNew}
         />
       </div>
@@ -446,61 +443,58 @@ function MetricCard({
   tone: 'sky' | 'emerald';
 }) {
   const toneClasses = tone === 'sky'
-    ? 'bg-sky-500/15 text-sky-300'
-    : 'bg-emerald-500/15 text-emerald-300';
+    ? 'border-sky-300/15 bg-sky-400/16 text-sky-200 shadow-[0_0_28px_rgba(56,189,248,0.14)]'
+    : 'border-emerald-300/15 bg-emerald-400/16 text-emerald-200 shadow-[0_0_28px_rgba(52,211,153,0.14)]';
 
   return (
-    <div className="rounded-[24px] border border-stone-800/55 bg-stone-900/70 p-5">
+    <div className="rounded-[20px] border border-stone-800/55 bg-stone-900/75 p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-stone-400">
+        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">
           {eyebrow}
         </div>
-        <div className={`rounded-2xl p-3 ${toneClasses}`}>
+        <div className={`rounded-2xl border p-3 ${toneClasses}`}>
           {icon}
         </div>
       </div>
-      <div className="mt-3 text-3xl font-extrabold text-white">{value}</div>
-      <div className="mt-1 text-sm text-stone-400">{description}</div>
+      <div className="mt-2 text-3xl font-black text-white">{value}</div>
+      <div className="mt-0.5 text-xs font-semibold text-stone-400">{description}</div>
     </div>
   );
 }
 
-function TodayActionCard({
-  eyebrow,
+function TodayActionButton({
+  label,
   title,
-  description,
-  buttonLabel,
   tone,
   icon,
+  meta,
   onClick,
 }: {
-  eyebrow: string;
+  label: string;
   title: string;
-  description: string;
-  buttonLabel: string;
-  tone: 'sky' | 'emerald';
+  meta: string;
+  tone: 'sky' | 'emerald' | 'amber';
   icon: ReactNode;
   onClick: () => void;
 }) {
-  const toneClasses = tone === 'sky'
-    ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
-    : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400';
+  const toneClasses = {
+    sky: 'border-sky-300/25 bg-sky-500/14 text-sky-100 hover:bg-sky-500/22',
+    emerald: 'border-emerald-300/25 bg-emerald-400/12 text-emerald-100 hover:bg-emerald-400/18',
+    amber: 'border-amber-300/25 bg-amber-300/12 text-amber-100 hover:bg-amber-300/18',
+  }[tone];
 
   return (
-    <div className="flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/70 p-5">
-      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-stone-400">
-        {eyebrow}
-      </div>
-      <div className="mt-3 text-2xl font-bold leading-tight text-white">{title}</div>
-      <div className="mt-2 flex-1 text-sm text-stone-400">{description}</div>
-      <button
-        onClick={onClick}
-        className={`mt-4 inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors cursor-pointer ${toneClasses}`}
-      >
+    <button
+      onClick={onClick}
+      className={`min-w-0 rounded-2xl border px-4 py-3 text-left transition-colors cursor-pointer lg:w-[250px] ${toneClasses}`}
+    >
+      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] opacity-80">
         {icon}
-        {buttonLabel}
-      </button>
-    </div>
+        {label}
+      </div>
+      <div className="mt-2 truncate text-base font-black text-white">{title}</div>
+      <div className="mt-0.5 truncate text-xs font-semibold text-stone-400">{meta}</div>
+    </button>
   );
 }
 

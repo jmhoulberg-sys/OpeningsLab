@@ -103,16 +103,24 @@ export default function TrainingSetupModal() {
         </div>
 
         <div className="max-h-[calc(100vh-7rem)] overflow-y-auto px-5 py-5">
-          <section className="rounded-[20px] border border-stone-800/55 bg-stone-950/70 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-black text-white">
-                <BookOpen size={17} className="text-sky-300" />
-                Coach
+          <section className="rounded-[20px] border border-sky-300/15 bg-stone-950/70 p-4 shadow-[0_18px_42px_rgba(14,165,233,0.08)]">
+            <div className="grid gap-3 lg:grid-cols-[1.15fr_1fr] lg:items-stretch">
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm font-black text-white">
+                    <BookOpen size={17} className="text-sky-300" />
+                    Coach
+                  </div>
+                  <span className="text-xs font-semibold text-stone-500">{opening.name}</span>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
+                  {getCoachCopy(selectedMode, learnableLines.length)}
+                </div>
               </div>
-              <span className="text-xs font-semibold text-stone-500">{opening.name}</span>
-            </div>
-            <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
-              {getCoachCopy(selectedMode, learnableLines.length)}
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <StepPill number="1" title="Pick a mode" text="Learn shows the answer. Step and Full line test memory." />
+                <StepPill number="2" title="Pick a line" text="Use the sentence on each card to choose the idea you want." />
+              </div>
             </div>
           </section>
 
@@ -186,13 +194,15 @@ function ModePicker({
     value: SetupMode;
     label: string;
     icon: React.ReactNode;
+    tone: string;
+    help: string;
     locked?: boolean;
     lockLabel?: string;
   }> = [
-    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} /> },
-    { value: 'step-by-step', label: 'Step', icon: <Target size={16} /> },
-    { value: 'full-line', label: 'Full line', icon: <Trophy size={16} /> },
-    { value: 'time-trial', label: 'Speed', icon: <Timer size={16} />, locked: !speedUnlocked, lockLabel: 'Master 3' },
+    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, tone: 'sky', help: 'Answer shown' },
+    { value: 'step-by-step', label: 'Step', icon: <Target size={16} />, tone: 'emerald', help: 'Move by move' },
+    { value: 'full-line', label: 'Full line', icon: <Trophy size={16} />, tone: 'amber', help: 'No training wheels' },
+    { value: 'time-trial', label: 'Speed', icon: <Timer size={16} />, tone: 'rose', help: 'Beat the clock', locked: !speedUnlocked, lockLabel: 'Master 3' },
   ];
 
   return (
@@ -208,29 +218,74 @@ function ModePicker({
                 if (!mode.locked) setSelectedMode(mode.value);
               }}
               disabled={mode.locked}
-              className={`min-h-[58px] rounded-2xl border px-3 py-2 text-left transition-colors ${
+              className={`min-h-[64px] rounded-2xl border px-3 py-2 text-left transition-all ${
                 active
-                  ? 'border-sky-300/45 bg-sky-500/16 text-white'
+                  ? getActiveModeClasses(mode.tone)
                   : mode.locked
                     ? 'border-stone-800/45 bg-stone-900/35 text-stone-600 cursor-not-allowed'
-                    : 'border-stone-800/70 bg-stone-900/80 text-stone-200 hover:bg-stone-800 cursor-pointer'
+                    : `${getInactiveModeClasses(mode.tone)} cursor-pointer`
               }`}
             >
               <div className="flex items-center gap-2 text-sm font-black">
-                <span className={active ? 'text-sky-300' : mode.locked ? 'text-stone-600' : 'text-stone-300'}>
+                <span className={active ? 'text-white' : mode.locked ? 'text-stone-600' : getModeIconClass(mode.tone)}>
                   {mode.locked ? <Lock size={15} /> : mode.icon}
                 </span>
                 {mode.label}
               </div>
-              {mode.locked && (
-                <div className="mt-1 text-[11px] font-semibold text-stone-600">{mode.lockLabel}</div>
-              )}
+              <div className={`mt-1 text-[11px] font-bold ${mode.locked ? 'text-stone-600' : active ? 'text-white/80' : 'text-stone-400'}`}>
+                {mode.locked ? mode.lockLabel : mode.help}
+              </div>
             </button>
           );
         })}
       </div>
     </section>
   );
+}
+
+function StepPill({
+  number,
+  title,
+  text,
+}: {
+  number: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-stone-800/70 bg-stone-900/70 p-3">
+      <div className="flex gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-400 text-sm font-black text-slate-950">
+          {number}
+        </div>
+        <div>
+          <div className="text-sm font-black text-white">{title}</div>
+          <div className="mt-0.5 text-xs font-semibold leading-relaxed text-stone-400">{text}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getActiveModeClasses(tone: string) {
+  if (tone === 'emerald') return 'border-emerald-200/40 bg-emerald-400 text-slate-950 shadow-[0_12px_26px_rgba(52,211,153,0.22)]';
+  if (tone === 'amber') return 'border-amber-200/40 bg-amber-300 text-slate-950 shadow-[0_12px_26px_rgba(251,191,36,0.2)]';
+  if (tone === 'rose') return 'border-rose-200/40 bg-rose-400 text-slate-950 shadow-[0_12px_26px_rgba(251,113,133,0.2)]';
+  return 'border-sky-200/40 bg-sky-400 text-slate-950 shadow-[0_12px_26px_rgba(56,189,248,0.22)]';
+}
+
+function getInactiveModeClasses(tone: string) {
+  if (tone === 'emerald') return 'border-emerald-300/16 bg-emerald-400/8 text-stone-100 hover:bg-emerald-400/12';
+  if (tone === 'amber') return 'border-amber-300/16 bg-amber-300/8 text-stone-100 hover:bg-amber-300/12';
+  if (tone === 'rose') return 'border-rose-300/16 bg-rose-400/8 text-stone-100 hover:bg-rose-400/12';
+  return 'border-sky-300/16 bg-sky-400/8 text-stone-100 hover:bg-sky-400/12';
+}
+
+function getModeIconClass(tone: string) {
+  if (tone === 'emerald') return 'text-emerald-300';
+  if (tone === 'amber') return 'text-amber-300';
+  if (tone === 'rose') return 'text-rose-300';
+  return 'text-sky-300';
 }
 
 function LineChoice({
@@ -280,7 +335,7 @@ function LineChoice({
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-black text-white">{line.name}</div>
           <div className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-stone-400">
-            {getPlainLanguageSummary(line)}
+            {getLineDifferenceSummary(line)}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {isNewlyUnlocked && (
@@ -362,4 +417,29 @@ function getPlainLanguageSummary(line: OpeningLine) {
   if (label.includes('drag white\'s king')) return 'An aggressive line that pulls the king into danger and wins material.';
 
   return 'A guided line that teaches the key idea before asking you to remember it.';
+}
+
+function getLineDifferenceSummary(line: OpeningLine) {
+  const label = line.name.toLowerCase();
+
+  if (line.description) return toOneSentence(line.description);
+  if (label.includes('queen')) return 'Choose this line to practice punishing early queen adventures.';
+  if (label.includes('dragon') || label.includes('yugoslav')) return 'Choose this line for opposite-side castling and direct king-side attacking plans.';
+  if (label.includes('najdorf')) return 'Choose this line for flexible Sicilian pressure before committing the center.';
+  if (label.includes('scheveningen')) return 'Choose this line for a small-center Sicilian setup with patient counterplay.';
+  if (label.includes('alapin')) return 'Choose this line to meet the anti-Sicilian 2.c3 structure cleanly.';
+  if (label.includes('taimanov')) return 'Choose this line for queen-side flexibility and a less forcing Sicilian setup.';
+  if (label.includes('rook')) return 'Choose this line for a forcing material win after White grabs the bait.';
+  if (label.includes('knight')) return 'Choose this line for tactics around a loose knight and weak coordination.';
+  if (label.includes('exchange')) return 'Choose this line to learn the quieter structure and its long-term targets.';
+  if (label.includes('main')) return 'Choose this line for the core plan you will see most often.';
+  if (label.includes('open')) return 'Choose this line for direct central play instead of trap-heavy sidelines.';
+
+  return getPlainLanguageSummary(line);
+}
+
+function toOneSentence(text: string) {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  const match = clean.match(/^.*?[.!?](?:\s|$)/);
+  return match ? match[0].trim() : clean;
 }
