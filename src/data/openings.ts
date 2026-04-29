@@ -3,6 +3,11 @@ import staffordGambit from './stafford';
 import danishGambitRefutation from './danishGambit';
 import caroKann from './caroKann';
 import { scotchGambit, scotchGame } from './scotch';
+import sicilianDefense from './sicilian';
+import ruyLopez from './ruyLopez';
+import queensGambit from './queensGambit';
+import kingsIndianDefense from './kingsIndian';
+import frenchDefense from './french';
 
 function createComingSoonOpening(id: string, name: string, playerColor: Opening['playerColor'] = 'white'): Opening {
   return {
@@ -16,12 +21,7 @@ function createComingSoonOpening(id: string, name: string, playerColor: Opening[
 }
 
 const comingSoonOpenings: Opening[] = [
-  createComingSoonOpening('sicilian-defense', 'Sicilian Defense', 'black'),
-  createComingSoonOpening('ruy-lopez', 'Ruy Lopez', 'white'),
-  createComingSoonOpening('queens-gambit', "Queen's Gambit", 'white'),
   createComingSoonOpening('london-system', 'London System', 'white'),
-  createComingSoonOpening('kings-indian', "King's Indian Defense", 'black'),
-  createComingSoonOpening('french-defense', 'French Defense', 'black'),
   createComingSoonOpening('vienna-game', 'Vienna Game', 'white'),
   createComingSoonOpening('english-opening', 'English Opening', 'white'),
 ];
@@ -32,6 +32,11 @@ export const OPENINGS: Opening[] = [
   scotchGame,
   danishGambitRefutation,
   caroKann,
+  sicilianDefense,
+  ruyLopez,
+  queensGambit,
+  kingsIndianDefense,
+  frenchDefense,
   ...comingSoonOpenings,
 ];
 

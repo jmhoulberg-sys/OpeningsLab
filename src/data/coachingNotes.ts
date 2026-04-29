@@ -37,6 +37,48 @@ function caroSetupNote(moveIndex: number, san: string) {
   return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
 }
 
+function sicilianSetupNote(moveIndex: number, san: string) {
+  const notes = [
+    'Answer 1.e4 with 1...c5 to unbalance the game immediately and fight for d4 from the flank.',
+  ];
+  return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
+}
+
+function ruySetupNote(moveIndex: number, san: string) {
+  const notes = [
+    'Start with 1.e4 so the game is open and development can come with tempo.',
+    'Develop the knight to f3 and attack e5 before committing the queenside pieces.',
+    'Put the bishop on b5 to pressure the c6-knight, the main defender of Black central pawn.',
+  ];
+  return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
+}
+
+function queensGambitSetupNote(moveIndex: number, san: string) {
+  const notes = [
+    'Begin with 1.d4 to claim central space and make the c-pawn break possible.',
+    'Offer c4 so Black has to decide whether to hold the center or chase a wing pawn.',
+  ];
+  return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
+}
+
+function kingsIndianSetupNote(moveIndex: number, san: string) {
+  const notes = [
+    'Meet 1.d4 with ...Nf6 so White cannot build the center without being watched.',
+    'Fianchetto with ...g6 and prepare a bishop that will pressure the long diagonal all game.',
+    'Develop the bishop to g7 before touching the center; this is the soul of the King\'s Indian.',
+    'Play ...d6 to support ...e5 and invite White to overextend before the counterattack starts.',
+  ];
+  return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
+}
+
+function frenchSetupNote(moveIndex: number, san: string) {
+  const notes = [
+    'Answer e4 with ...e6: modest at first, but it prepares a strong strike at d5.',
+    'Challenge the center with ...d5 and make White choose between space, tension, or symmetry.',
+  ];
+  return notes[Math.floor(moveIndex / 2)] ?? fallbackReason(san);
+}
+
 function staffordReason(lineId: string | undefined, san: string) {
   const map: Record<string, string> = {
     Bc5: 'Develop the bishop with tempo and point everything at f2, because that is where the Stafford attack usually starts.',
@@ -147,6 +189,130 @@ function caroReason(lineId: string | undefined, san: string) {
   return map[san] ?? fallbackReason(san);
 }
 
+function sicilianReason(lineId: string | undefined, san: string) {
+  const map: Record<string, string> = {
+    cxd4: 'Trade the c-pawn for White d-pawn; this is why the Sicilian creates an extra central pawn later.',
+    Nf6: 'Develop with tempo on e4 so White cannot enjoy the center for free.',
+    a6: 'The Najdorf ...a6 controls b5 and prepares flexible queenside expansion.',
+    e5: 'Kick the knight and claim dark squares, accepting d5 as a square White must prove they can use.',
+    Be6: 'Develop actively and point at a2, c4, and the queenside castling zone.',
+    Be7: 'Finish development calmly before White pawn storms the kingside.',
+    'O-O': 'Castle before opening the position; the counterattack works best with the king safe.',
+    Nbd7: 'Bring the last minor piece in and keep c5, e5, and f6 supported.',
+    g6: 'Enter the Dragon and make the bishop on g7 the main defender and attacker.',
+    Bg7: 'The dragon bishop pressures c3 and b2 and often decides the queenside race.',
+    Nc6: 'Develop with pressure on d4 so White cannot attack without defensive duties.',
+    Nxd4: 'Remove the centralized knight before White can build a clean kingside attack.',
+    d6: lineId === 'sicilian-sveshnikov' ? 'Anchor e5 and keep the knight on b5 from becoming comfortable.' : 'Support the center and prepare piece development.',
+    f5: 'Strike before White consolidates; the Sveshnikov lives on active counterplay.',
+    Bxf5: 'Recapture with development and leave White facing active bishops.',
+    Nd5: 'Centralize the knight and block White from building an easy c3-d4 center.',
+    dxe5: 'Break the Alapin center once White overextends it.',
+    Na5: 'Attack the bishop and keep White pieces from settling on active squares.',
+  };
+
+  return map[san] ?? fallbackReason(san);
+}
+
+function ruyReason(_lineId: string | undefined, san: string) {
+  const map: Record<string, string> = {
+    Ba4: 'Keep the Spanish bishop alive; its pressure matters more than forcing an immediate exchange.',
+    'O-O': 'Castle early so the rook can come to e1 and the center can be challenged safely.',
+    Re1: 'Put the rook behind e4 and prepare d4 under ideal conditions.',
+    Bb3: 'Retreat to the long diagonal where the bishop still eyes f7 and supports future central play.',
+    c3: 'Build the classic Ruy Lopez center and prepare d4 without dropping e4.',
+    h3: 'Take g4 away so Black cannot pin the knight at an annoying moment.',
+    Bc2: 'Preserve the bishop pair and keep pressure on h7 and e4.',
+    d4: 'Break in the center once the pieces are ready and Black has committed queenside pawns.',
+    Bxc6: 'Exchange on c6 to damage Black structure and create long-term pawn targets.',
+    dxe5: 'Clarify the center before Black fully coordinates.',
+    Qxd8: 'Trade queens in the Berlin because White structure and development remain easy to handle.',
+    Nc3: 'Develop with tempo toward the center and support the e4/e5 structure.',
+    Rd1: 'Use the open file immediately and force Black king to spend another move.',
+    Nxd4: 'Recapture centrally so the knight becomes active and Black c-pawns stay targets.',
+    d3: 'Against the Schliemann, keep the center solid and do not let ...f5 become a free attack.',
+    Bg5: 'Pin the knight and make Black prove the kingside attack is real.',
+    Nd5: 'Occupy the outpost and make Black spend time resolving the pressure.',
+  };
+
+  return map[san] ?? fallbackReason(san);
+}
+
+function queensGambitReason(_lineId: string | undefined, san: string) {
+  const map: Record<string, string> = {
+    Nc3: 'Develop toward d5 and e4 while increasing the pressure on the center.',
+    Bg5: 'Pin the knight so Black has a harder time defending d5 comfortably.',
+    e3: 'Open the bishop and make recapturing on c4 possible without weakening the center.',
+    Nf3: 'Develop naturally and keep the central tension under control.',
+    Bh4: 'Preserve the pin and make Black spend another tempo if they want the bishop pair.',
+    cxd5: 'Resolve the tension when Black pieces are slightly tied to d5.',
+    Bxe7: 'Trade the pinned bishop at the moment it helps simplify Black defense.',
+    Nxd5: 'Use the knight to remove the central blocker and leave Black with an isolated pawn.',
+    e4: 'Take the full center after Black accepts the gambit pawn.',
+    Bxc4: 'Recover the gambit pawn with development and keep White ahead in activity.',
+    Qb3: 'Attack b7 and e6 at once, turning development lead into concrete pressure.',
+    Ng5: 'Jump in with tempo and make Black defend the kingside before finishing development.',
+    a4: 'Stop ...b5 in the Slav so the c4-pawn cannot be held comfortably.',
+    Qe2: 'Connect the rooks and prepare central pressure without blocking the bishops.',
+    dxe5: 'Accept the Albin pawn and make Black justify the advanced d-pawn.',
+    g3: 'Fianchetto calmly so the king is safe against Black long-castling ideas.',
+    Nbd2: 'Develop without blocking the c-pawn structure and keep e4 covered.',
+    Bg2: 'Put the bishop on the long diagonal where it fights the d5 and b7 squares.',
+  };
+
+  return map[san] ?? fallbackReason(san);
+}
+
+function kingsIndianReason(_lineId: string | undefined, san: string) {
+  const map: Record<string, string> = {
+    'O-O': 'Castle first; the King\'s Indian counterattack starts from a secure king.',
+    e5: 'Challenge White center directly and ask whether they want tension or a locked pawn chain.',
+    Nc6: 'Develop with pressure on d4 and prepare to reroute if White closes the center.',
+    Ne7: 'Head toward g6 or c8 and clear the f-pawn for the kingside break.',
+    Nd7: 'Support ...f5 and keep the knight flexible behind the pawn chain.',
+    f5: 'This is the main lever: attack the base of White kingside and open files near their king.',
+    c6: 'Prepare queenside counterplay against the Saemisch center before White attacks your king.',
+    a6: 'Prepare ...b5 and make White long-castling less comfortable.',
+    b5: 'Start the queenside race immediately before White kingside pieces arrive.',
+    Bxh6: 'Trade off White attacking bishop so the dark squares around your king are less fragile.',
+    exd4: 'Open the e-file when White structure is fixed and your rook is ready to use it.',
+    Re8: 'Put the rook opposite White king and queen lines; every exchange now helps Black activity.',
+    c5: 'Hit the oversized Four Pawns center before it rolls forward.',
+    e6: 'Undermine d5 and make White central pawns choose what they are defending.',
+    dxe5: 'Remove the advanced pawn and open the center once White has overextended.',
+  };
+
+  return map[san] ?? fallbackReason(san);
+}
+
+function frenchReason(_lineId: string | undefined, san: string) {
+  const map: Record<string, string> = {
+    c5: 'Attack the base of White pawn chain; in the French, d4 is the target.',
+    Nc6: 'Add pressure on d4 and make White defend before attacking.',
+    Qb6: 'Hit d4 and b2 at the same time, forcing White to spend tempi on defense.',
+    Nh6: 'Route the knight toward f5 where it attacks d4 without blocking the c-pawn.',
+    cxd4: 'Trade into the base of the pawn chain and reduce White space advantage.',
+    Nf5: 'Land on f5 to pressure d4 and h4 while staying hard to chase.',
+    Be7: 'Develop quietly and prepare castling once the central pressure is established.',
+    Bb4: 'Pin the c3-knight so White e4/e5 center has less support.',
+    'Bxc3+': 'Give up the bishop to damage White structure and create long-term dark-square targets.',
+    Ne7: 'Develop toward f5 or g6 without blocking the c-pawn break.',
+    Qc7: 'Pressure e5 and c3 while preparing queenside development.',
+    b6: 'Prepare ...Ba6 to trade White strong dark-squared bishop.',
+    Ba6: 'Challenge the bishop on d3 and reduce White attacking chances.',
+    Nf6: 'Attack e4/e5 and force White to define the central structure.',
+    Nfd7: 'Retreat the knight so ...c5 and ...f6 can attack the pawn chain.',
+    f6: 'The second French break: attack e5 once d4 has been pressured.',
+    Nxd4: 'Take the loose central pawn after White pieces are overloaded.',
+    exd5: 'Recapture symmetrically and keep the Exchange French simple but active.',
+    Bd6: 'Develop toward h2 and make White watch kingside tactics.',
+    Bg4: 'Pin the knight and create play in a symmetrical structure.',
+    Nbd7: 'Finish development and support both ...c5 and ...e5 ideas later.',
+  };
+
+  return map[san] ?? fallbackReason(san);
+}
+
 export function getCoachingNote(
   opening: Opening | null,
   line: OpeningLine | null,
@@ -168,10 +334,20 @@ export function getCoachingNote(
     if (context.openingId === 'stafford-gambit') return staffordSetupNote(moveIndex, san);
     if (context.openingId === 'danish-gambit-refutation') return danishSetupNote(moveIndex, san);
     if (context.openingId === 'caro-kann') return caroSetupNote(moveIndex, san);
+    if (context.openingId === 'sicilian-defense') return sicilianSetupNote(moveIndex, san);
+    if (context.openingId === 'ruy-lopez') return ruySetupNote(moveIndex, san);
+    if (context.openingId === 'queens-gambit') return queensGambitSetupNote(moveIndex, san);
+    if (context.openingId === 'kings-indian') return kingsIndianSetupNote(moveIndex, san);
+    if (context.openingId === 'french-defense') return frenchSetupNote(moveIndex, san);
   }
 
   if (context.openingId === 'stafford-gambit') return staffordReason(context.lineId, san);
   if (context.openingId === 'danish-gambit-refutation') return danishReason(context.lineId, san);
   if (context.openingId === 'caro-kann') return caroReason(context.lineId, san);
+  if (context.openingId === 'sicilian-defense') return sicilianReason(context.lineId, san);
+  if (context.openingId === 'ruy-lopez') return ruyReason(context.lineId, san);
+  if (context.openingId === 'queens-gambit') return queensGambitReason(context.lineId, san);
+  if (context.openingId === 'kings-indian') return kingsIndianReason(context.lineId, san);
+  if (context.openingId === 'french-defense') return frenchReason(context.lineId, san);
   return fallbackReason(san);
 }
