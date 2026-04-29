@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ArrowLeft,
   Crown,
   LogOut,
   CheckCircle2,
@@ -14,6 +13,7 @@ import {
   BookOpen,
   Copy,
   Check,
+  X,
 } from 'lucide-react';
 import { useProfileStore } from '../store/profileStore';
 import {
@@ -97,23 +97,33 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-stone-950 text-slate-100">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 p-3 text-slate-100 backdrop-blur-sm sm:p-5"
+      onClick={onBack}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-title"
+    >
+      <div
+        className="flex max-h-[calc(100vh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] border border-stone-800/70 bg-stone-950 shadow-2xl shadow-black/60 sm:max-h-[calc(100vh-2.5rem)]"
+        onClick={(event) => event.stopPropagation()}
+      >
       {/* ── Top bar ── */}
       <div className="border-b border-stone-800/60 bg-stone-950">
         <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-4 sm:px-6">
+          <h1 id="profile-title" className="flex-1 text-lg font-bold text-white">My Profile</h1>
           <button
             onClick={onBack}
-            className="flex items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 py-2 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="rounded-xl border border-stone-700/45 bg-stone-800 px-2.5 py-2 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            aria-label="Close profile"
           >
-            <ArrowLeft size={15} />
-            Back
+            <X size={18} />
           </button>
-          <h1 className="text-lg font-bold text-white">My Profile</h1>
         </div>
       </div>
 
       {/* ── Content ── */}
-      <div className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-3xl flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6">
 
         {/* ── Hero card ── */}
         <div className="rounded-[22px] border border-stone-800/60 bg-stone-900 p-6">
@@ -415,6 +425,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
           )}
         </div>
 
+      </div>
       </div>
     </div>
   );

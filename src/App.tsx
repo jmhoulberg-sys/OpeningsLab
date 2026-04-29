@@ -100,17 +100,6 @@ export default function App() {
 
   function handleProfileClick() {
     setShowProfile(true);
-    setShowHome(false);
-  }
-
-  // Remember where the user came from when they opened the profile
-  if (showProfile) {
-    return (
-      <>
-        <ProfilePage onBack={() => setShowProfile(false)} />
-        <AuthModal />
-      </>
-    );
   }
 
   if (showHome) {
@@ -124,6 +113,7 @@ export default function App() {
         />
         <AuthModal />
         <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+        {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
       </>
     );
   }
@@ -235,6 +225,7 @@ export default function App() {
       <FreePlayEndModal />
       <AuthModal />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
     </div>
   );
 }
