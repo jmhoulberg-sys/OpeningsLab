@@ -118,6 +118,16 @@ interface OpeningLibrarySectionProps {
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }
 
+type OpeningFilter = 'all' | 'white' | 'black' | 'gambits' | 'refutations';
+
+const OPENING_FILTERS: Array<{ id: OpeningFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'white', label: 'White' },
+  { id: 'black', label: 'Black' },
+  { id: 'gambits', label: 'Gambits' },
+  { id: 'refutations', label: 'Refutations' },
+];
+
 export function HeroSection({
   headline,
   subheadline,
@@ -368,6 +378,14 @@ export function OpeningLibrarySection({
   openings,
   onStartLine,
 }: OpeningLibrarySectionProps) {
+  const [activeFilter, setActiveFilter] = useState<OpeningFilter>('all');
+  const rankedOpenings = [...openings].sort((a, b) => {
+    const aMatch = openingMatchesFilter(a.opening, activeFilter);
+    const bMatch = openingMatchesFilter(b.opening, activeFilter);
+    if (aMatch === bMatch) return 0;
+    return aMatch ? -1 : 1;
+  });
+
   return (
     <section className="space-y-3" id="opening-library">
       <SectionHeading
@@ -375,12 +393,31 @@ export function OpeningLibrarySection({
         title="Choose the next course"
         description="Tap the board, try the first line, or open the full opening."
       />
+      <div className="flex flex-wrap gap-2">
+        {OPENING_FILTERS.map((filter) => {
+          const active = activeFilter === filter.id;
+          return (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                active
+                  ? 'border-sky-400/45 bg-sky-500 text-slate-950'
+                  : 'border-stone-700/45 bg-stone-900 text-stone-300 hover:bg-stone-800 hover:text-white'
+              }`}
+            >
+              {filter.label}
+            </button>
+          );
+        })}
+      </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {openings.map((summary) => (
+        {rankedOpenings.map((summary) => (
           <OpeningCard
             key={summary.opening.id}
             summary={summary}
             compact
+            muted={activeFilter !== 'all' && !openingMatchesFilter(summary.opening, activeFilter)}
             onStartLine={onStartLine}
           />
         ))}
@@ -464,10 +501,12 @@ function TodayActionCard({
 function OpeningCard({
   summary,
   compact,
+  muted = false,
   onStartLine,
 }: {
   summary: OpeningSummary;
   compact: boolean;
+  muted?: boolean;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }) {
   const { opening, totalLines, completedLines, firstLine, masteryPct, statusLabel } = summary;
@@ -482,7 +521,7 @@ function OpeningCard({
       onClick={() => {
         if (firstLine) onStartLine(opening, firstLine);
       }}
-      className={`group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-all duration-200 ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-700/55 hover:shadow-[0_22px_56px_rgba(0,0,0,0.18)]' : ''}`}
+      className={`group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-all duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-700/55 hover:shadow-[0_22px_56px_rgba(0,0,0,0.18)]' : ''}`}
       aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -532,6 +571,17 @@ function OpeningCard({
       )}
     </article>
   );
+}
+
+function openingMatchesFilter(opening: Opening, filter: OpeningFilter) {
+  if (filter === 'all') return true;
+  if (filter === 'white' || filter === 'black') return opening.playerColor === filter;
+
+  const haystack = `${opening.id} ${opening.name} ${opening.description}`.toLowerCase();
+  if (filter === 'gambits') return haystack.includes('gambit');
+  if (filter === 'refutations') return haystack.includes('refutation') || haystack.includes('refute');
+
+  return true;
 }
 
 function SectionHeading({

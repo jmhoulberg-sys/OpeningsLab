@@ -57,6 +57,7 @@ export default function HomePage({
   const weeklyXp = getWeeklyXp(daily);
   const quests = getQuestProgress(todayProgress);
   const questsComplete = quests.filter((quest) => quest.progress >= quest.target).length;
+  const xpToNextLevel = Math.max(0, levelInfo.nextLevelXp - xpTotal);
 
   const openingSummaries: OpeningSummary[] = OPENINGS.map((opening) => {
     const progress = openingProgress[opening.id];
@@ -162,37 +163,6 @@ export default function HomePage({
           </div>
 
           <div className="flex items-center gap-2.5 justify-self-end">
-            <div className="hidden h-[68px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:flex sm:flex-col sm:justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">
-                Level
-              </div>
-              <div className="mt-1 flex items-center gap-3">
-                <div className="text-lg font-bold text-white">{isLoggedIn ? levelInfo.level : '--'}</div>
-                <div className="h-1.5 w-24 rounded-full bg-stone-800">
-                  <div
-                    className="h-1.5 rounded-full bg-sky-400 transition-all duration-500"
-                    style={{ width: `${isLoggedIn ? levelInfo.progressPct : 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="h-[14px] text-[11px] text-stone-500">
-                {!isLoggedIn ? 'Log in to see details' : ''}
-              </div>
-            </div>
-            <div className="hidden h-[68px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 md:flex md:flex-col md:justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Weekly</div>
-              <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${weeklyXp} XP` : '--'}</div>
-              <div className="h-[14px] text-[11px] text-stone-500">
-                {!isLoggedIn ? 'Log in to see details' : ''}
-              </div>
-            </div>
-            <div className="hidden h-[68px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 lg:flex lg:flex-col lg:justify-between">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">Daily</div>
-              <div className="mt-1 text-lg font-bold text-white">{isLoggedIn ? `${questsComplete}/${quests.length}` : '--'}</div>
-              <div className="h-[14px] text-[11px] text-stone-500">
-                {!isLoggedIn ? 'Log in to see details' : ''}
-              </div>
-            </div>
             {isLoggedIn ? (
               <button
                 onClick={onProfileClick}
@@ -200,7 +170,14 @@ export default function HomePage({
                 title="My Profile"
               >
                 <UserCircle2 size={18} className="text-sky-300" />
-                <span className="max-w-[120px] truncate font-semibold text-white">{accountLabel}</span>
+                <div className="min-w-0">
+                  <div className="max-w-[120px] truncate text-left font-semibold text-white">
+                    {accountLabel}
+                  </div>
+                  <div className="mt-0.5 text-left text-[11px] text-stone-500">
+                    Level {levelInfo.level}
+                  </div>
+                </div>
               </button>
             ) : (
               <button
@@ -225,24 +202,39 @@ export default function HomePage({
 
       <div className="mx-auto w-full max-w-6xl">
 
-        <HeroSection
-          headline={HOME_HERO.headline}
-          subheadline={HOME_HERO.subheadline}
-          primaryLabel={heroPrimaryLabel}
-          secondaryLabel={HOME_HERO.secondaryCta}
-          onPrimaryClick={handlePrimaryAction}
-          onSecondaryClick={scrollToLibrary}
-          continueSummary={continueSummary}
-          onContinueClick={
-            continueSummary
-              ? () => onStartOpeningLine(continueSummary.opening, continueSummary.line)
-              : undefined
-          }
-        />
+        {!isLoggedIn ? (
+          <>
+            <HeroSection
+              headline={HOME_HERO.headline}
+              subheadline={HOME_HERO.subheadline}
+              primaryLabel={heroPrimaryLabel}
+              secondaryLabel={HOME_HERO.secondaryCta}
+              onPrimaryClick={handlePrimaryAction}
+              onSecondaryClick={scrollToLibrary}
+              continueSummary={continueSummary}
+              onContinueClick={
+                continueSummary
+                  ? () => onStartOpeningLine(continueSummary.opening, continueSummary.line)
+                  : undefined
+              }
+            />
 
-        <div className="mt-5">
-          <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
-        </div>
+            <div className="mt-5">
+              <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
+            </div>
+          </>
+        ) : (
+          <ProgressOverview
+            isLoggedIn={isLoggedIn}
+            level={levelInfo.level}
+            progressPct={levelInfo.progressPct}
+            xpToNextLevel={xpToNextLevel}
+            weeklyXp={weeklyXp}
+            todayXp={todayProgress.xp}
+            totalQuestsComplete={questsComplete}
+            totalQuests={quests.length}
+          />
+        )}
 
         <div className="mt-5" ref={featuredRef}>
           <FeaturedOpeningsSection
@@ -254,31 +246,20 @@ export default function HomePage({
 
         {isLoggedIn && (
           <div className="mt-5">
-            <ProgressOverview
-              isLoggedIn={isLoggedIn}
-              level={levelInfo.level}
-              progressPct={levelInfo.progressPct}
-              xpToNextLevel={Math.max(0, levelInfo.nextLevelXp - xpTotal)}
-              weeklyXp={weeklyXp}
-              todayXp={todayProgress.xp}
-              totalQuestsComplete={questsComplete}
-              totalQuests={quests.length}
+            <TodayPanel
+              today={todaySummary}
+              onContinue={handlePrimaryAction}
+              onReview={handleReviewAction}
+              onStartNew={handleStartNewAction}
             />
           </div>
         )}
 
-        <div className="mt-5">
-          <TodayPanel
-            today={todaySummary}
-            onContinue={handlePrimaryAction}
-            onReview={handleReviewAction}
-            onStartNew={handleStartNewAction}
-          />
-        </div>
-
-        <div className="mt-8">
-          <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
-        </div>
+        {isLoggedIn && (
+          <div className="mt-8">
+            <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
+          </div>
+        )}
 
         <div className="mt-8" ref={libraryRef}>
           <OpeningLibrarySection

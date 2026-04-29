@@ -1,4 +1,4 @@
-import { Crown, LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
@@ -52,23 +52,6 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
         </div>
 
         <div className="flex items-center gap-2.5 justify-self-end">
-          <div className="hidden h-[68px] min-w-[138px] rounded-2xl bg-stone-900 px-3.5 py-2.5 sm:flex sm:flex-col sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Crown size={15} className="text-sky-300" />
-              <span className="text-sm font-semibold text-white">
-                {isLoggedIn ? `Level ${levelInfo.level}` : 'Sign in for level'}
-              </span>
-            </div>
-            <div className="mt-2 h-1.5 w-24 rounded-full bg-stone-800">
-              <div
-                className="h-1.5 rounded-full bg-sky-400 transition-all duration-500"
-                style={{ width: `${isLoggedIn ? levelInfo.progressPct : 100}%` }}
-              />
-            </div>
-            <div className="h-[14px] text-[11px] text-stone-500">
-              {isLoggedIn ? `${xpToNext} XP to next` : 'Log in to see details'}
-            </div>
-          </div>
           {isLoggedIn ? (
             <button
               onClick={onProfileClick}
@@ -76,9 +59,14 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
               title="My Profile"
             >
               <UserCircle2 size={17} className="text-sky-300" />
-              <span className="max-w-[120px] truncate font-semibold text-white">
-                {accountLabel}
-              </span>
+              <div className="min-w-0">
+                <div className="max-w-[120px] truncate text-left font-semibold text-white">
+                  {accountLabel}
+                </div>
+                <div className="mt-0.5 text-left text-[11px] text-stone-500">
+                  Level {levelInfo.level} · {xpToNext} XP to next
+                </div>
+              </div>
             </button>
           ) : (
             <button
