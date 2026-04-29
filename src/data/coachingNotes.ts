@@ -133,6 +133,9 @@ function danishReason(lineId: string | undefined, san: string) {
     h6: 'Ask the bishop a direct question so Black can take over the dark squares.',
     cxd5: 'Recapture toward the centre and leave the bishops active in the ending.',
     Qd6: 'Centralise the queen and connect the rooks while White still has loose pieces.',
+    Qc7: 'Put the queen on c7 where it supports the center and eyes c3/e5 without committing the structure.',
+    e6: 'Build the Scheveningen small center and keep both ...Be7 and ...Qc7 flexible.',
+    Ne5: 'Jump into e5 to centralize and make White prove the long-castle attack is fast enough.',
     Bb6: 'Retreat without regret; the bishop stays active and the extra material remains.',
     Qxd5: 'Recapture with the queen because the queen belongs in the centre in this forcing line.',
     Bg4: 'Pin the knight because it is the key defender of d4.',
@@ -233,6 +236,7 @@ function ruyReason(_lineId: string | undefined, san: string) {
     d3: 'Against the Schliemann, keep the center solid and do not let ...f5 become a free attack.',
     Bg5: 'Pin the knight and make Black prove the kingside attack is real.',
     Nd5: 'Occupy the outpost and make Black spend time resolving the pressure.',
+    Rxe5: 'Accept the Marshall material only after forcing exchanges and keeping the rook active.',
   };
 
   return map[san] ?? fallbackReason(san);
@@ -258,6 +262,8 @@ function queensGambitReason(_lineId: string | undefined, san: string) {
     g3: 'Fianchetto calmly so the king is safe against Black long-castling ideas.',
     Nbd2: 'Develop without blocking the c-pawn structure and keep e4 covered.',
     Bg2: 'Put the bishop on the long diagonal where it fights the d5 and b7 squares.',
+    Qc2: 'Defend c3 and keep the queen flexible against Cambridge Springs pressure.',
+    Bd3: 'Develop toward h7 while adding support to the e4 and c4 recovery ideas.',
   };
 
   return map[san] ?? fallbackReason(san);
@@ -280,6 +286,9 @@ function kingsIndianReason(_lineId: string | undefined, san: string) {
     c5: 'Hit the oversized Four Pawns center before it rolls forward.',
     e6: 'Undermine d5 and make White central pawns choose what they are defending.',
     dxe5: 'Remove the advanced pawn and open the center once White has overextended.',
+    a5: 'Slow White queenside expansion and prepare the knight route through a6 to c5.',
+    Na6: 'Head for c5, where the knight pressures e4 and b3 from a safer square.',
+    Qe8: 'Connect the queen to the kingside and support both ...Nc5 and later ...f5 ideas.',
   };
 
   return map[san] ?? fallbackReason(san);
@@ -308,6 +317,8 @@ function frenchReason(_lineId: string | undefined, san: string) {
     Bd6: 'Develop toward h2 and make White watch kingside tactics.',
     Bg4: 'Pin the knight and create play in a symmetrical structure.',
     Nbd7: 'Finish development and support both ...c5 and ...e5 ideas later.',
+    dxe4: 'Choose the Rubinstein simplification and remove White attacking center before it rolls forward.',
+    Ngf6: 'Develop the kingside knight to challenge e4 and prepare a clean recapture on f6.',
   };
 
   return map[san] ?? fallbackReason(san);
