@@ -366,7 +366,7 @@ export function FeaturedOpeningsSection({
         title={title}
         description={description}
       />
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {openings.map((summary) => (
           <OpeningCard
             key={summary.opening.id}
@@ -417,7 +417,7 @@ export function OpeningLibrarySection({
           );
         })}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {rankedOpenings.map((summary) => (
           <OpeningCard
             key={summary.opening.id}
