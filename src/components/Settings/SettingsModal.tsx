@@ -35,7 +35,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setShowEvalBar,
   } = useSettingsStore();
   const {
-    displayName,
     isLoggedIn,
     openAuthModal,
     logout,
@@ -95,7 +94,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-white">
                     <UserCircle2 size={16} className="text-sky-300" />
-                    {isLoggedIn ? displayName || 'Opening Player' : 'No account connected'}
+                    {isLoggedIn ? 'Signed in locally' : 'No account connected'}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-stone-400">
                     {isLoggedIn
