@@ -18,6 +18,8 @@ export default function CompletionModal() {
     backToLineSelect,
     startPostLine,
     stopTimer,
+    setMode,
+    selectLine,
   } = useTrainingStore();
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
@@ -53,6 +55,12 @@ export default function CompletionModal() {
   const existingInterval = existingProgress?.srInterval ?? 0;
   const nextInterval = perfect ? Math.max(1, existingInterval * 2) : 1;
   const levelInfo = getLevelInfo(xpTotal);
+
+  function startPractice(nextMode: 'step-by-step' | 'full-line') {
+    if (!selectedLine) return;
+    setMode(nextMode);
+    selectLine(selectedLine);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -134,11 +142,28 @@ export default function CompletionModal() {
         )}
 
         <div className="flex flex-col gap-3">
+          {mode === 'learn' && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                onClick={() => startPractice('step-by-step')}
+                className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+              >
+                Step-by-step
+              </button>
+              <button
+                onClick={() => startPractice('full-line')}
+                className="w-full rounded-xl border border-sky-400/25 bg-sky-500/14 py-3 text-sm font-bold text-sky-100 transition-colors hover:bg-sky-500/20 cursor-pointer"
+              >
+                Full line
+              </button>
+            </div>
+          )}
+
           <button
             onClick={restart}
             className="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
           >
-            Retry line
+            {mode === 'learn' ? 'Repeat walkthrough' : 'Retry line'}
           </button>
 
           {canContinue && (
