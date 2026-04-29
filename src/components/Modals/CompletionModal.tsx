@@ -10,6 +10,7 @@ export default function CompletionModal() {
     phase,
     opening,
     selectedLine,
+    mode,
     mistakes,
     currentFen,
     streak,
@@ -27,11 +28,14 @@ export default function CompletionModal() {
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
+      const recordsProgress = mode === 'step-by-step' || mode === 'full-line';
       const lineWasNew = !useProgressStore.getState().getLineProgress(opening.id, selectedLine.id)?.unlocked;
-      setLineJustUnlocked(lineWasNew && mistakes === 0);
-      setEarnedXp(10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0));
-      recordLineAttempt(opening.id, selectedLine.id, mistakes);
-      recordSpacedRepetition(opening.id, selectedLine.id, mistakes === 0);
+      setLineJustUnlocked(recordsProgress && lineWasNew && mistakes === 0);
+      setEarnedXp(recordsProgress ? 10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0) : 0);
+      if (recordsProgress) {
+        recordLineAttempt(opening.id, selectedLine.id, mistakes);
+        recordSpacedRepetition(opening.id, selectedLine.id, mistakes === 0);
+      }
     } else {
       setLineJustUnlocked(false);
     }
@@ -42,6 +46,7 @@ export default function CompletionModal() {
   }
 
   const perfect = mistakes === 0;
+  const recordsProgress = mode === 'step-by-step' || mode === 'full-line';
   const canContinue = !isGameOver(currentFen);
   const filledStars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
   const existingProgress = getLineProgress(opening.id, selectedLine.id);
@@ -55,7 +60,7 @@ export default function CompletionModal() {
         <StarRating mistakes={mistakes} filledCount={filledStars} />
 
         <h2 className="mb-1 text-2xl font-bold text-white">
-          {perfect ? 'Perfect!' : 'Good job!'}
+          {mode === 'learn' ? 'Walkthrough complete' : perfect ? 'Perfect!' : 'Good job!'}
         </h2>
 
         <p className="mb-4 text-sm text-slate-400">
@@ -63,7 +68,14 @@ export default function CompletionModal() {
         </p>
 
         <div className="mb-6 space-y-2 rounded-xl bg-slate-800/60 p-4">
-          <StatRow label="XP earned" value={`+${earnedXp}`} good />
+          {recordsProgress ? (
+            <StatRow label="XP earned" value={`+${earnedXp}`} good />
+          ) : (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-400">XP earned</span>
+              <span className="font-bold text-sky-300">Practice to unlock</span>
+            </div>
+          )}
           <StatRow
             label="Mistakes"
             value={mistakes === 0 ? 'None' : `${mistakes}`}
@@ -76,20 +88,26 @@ export default function CompletionModal() {
               good
             />
           )}
-          <StatRow
-            label="Next review"
-            value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'}` : 'Tomorrow'}
-            good={perfect}
-          />
-          {perfect ? (
+          {recordsProgress && (
+            <StatRow
+              label="Next review"
+              value={perfect ? `in ${nextInterval} day${nextInterval === 1 ? '' : 's'}` : 'Tomorrow'}
+              good={perfect}
+            />
+          )}
+          {recordsProgress && perfect ? (
             <p className={`flex items-center justify-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-emerald-300 ${
               lineJustUnlocked ? 'bg-emerald-500/12 star-pop shadow-[0_10px_24px_rgba(16,185,129,0.22)]' : ''
             }`}>
               {lineJustUnlocked ? 'New line unlocked!' : 'Line unlocked!'} <Star size={14} fill="currentColor" />
             </p>
-          ) : (
+          ) : recordsProgress ? (
             <p className="text-xs text-slate-400">
               Complete with zero mistakes to unlock this line.
+            </p>
+          ) : (
+            <p className="rounded-xl border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-200">
+              Now complete step-by-step or full-line practice to unlock this line.
             </p>
           )}
           <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/70 px-3 py-2">

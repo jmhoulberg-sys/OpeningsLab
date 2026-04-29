@@ -121,8 +121,8 @@ function getBoardMessage({
 
     if (mode === 'learn' && isAwaitingUserMove && expectedSan) {
       return {
-        eyebrow: '',
-        text: coachingNote ?? `Next move to learn: ${expectedSan}`,
+        eyebrow: 'Guided walkthrough',
+        text: coachingNote ?? 'Follow the highlighted answer on the board.',
         detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
       };
@@ -291,6 +291,13 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       : selectedLine?.moves[currentMoveIndex]?.san ?? null)
     : null;
   const customSquareStyles: Record<string, React.CSSProperties> = {};
+  const guidedAnswerArrow = mode === 'learn' &&
+    !isReviewing &&
+    !wrongMoveFen &&
+    isAwaitingUserMove &&
+    expectedSan
+    ? resolveArrow(currentFen, expectedSan)
+    : null;
 
   if (
     !isReviewing &&
@@ -325,6 +332,18 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     };
   }
 
+  if (guidedAnswerArrow) {
+    customSquareStyles[guidedAnswerArrow[0]] = {
+      ...(customSquareStyles[guidedAnswerArrow[0]] ?? {}),
+      backgroundColor: 'rgba(56, 189, 248, 0.42)',
+      boxShadow: 'inset 0 0 0 2px rgba(186,230,253,0.3)',
+    };
+    customSquareStyles[guidedAnswerArrow[1]] = {
+      ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
+      backgroundColor: 'rgba(14, 165, 233, 0.54)',
+    };
+  }
+
   const customArrows: [Square, Square, string][] = [];
 
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
@@ -332,6 +351,10 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     if (arrow) {
       customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
     }
+  }
+
+  if (guidedAnswerArrow) {
+    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
   }
 
   const onSquareClick = useCallback(
@@ -634,14 +657,21 @@ function BoardNavRow({
   const inSession = phase === 'training' || phase === 'setup';
   const hideHint = mode === 'time-trial';
   const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
+  const isGuidedLearn = canHint && mode === 'learn' && phase === 'training';
 
-  const showHintBtn = canHint && !hintSquare && !showingCorrectMove;
-  const showAnswerBtn = canHint && (!!hintSquare || showingCorrectMove);
+  const showHintBtn = canHint && !isGuidedLearn && !hintSquare && !showingCorrectMove;
+  const showAnswerBtn = canHint && !isGuidedLearn && (!!hintSquare || showingCorrectMove);
   const answerDisabled = showingCorrectMove;
 
   return (
       <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-2.5">
         <div className="flex min-w-0 items-center justify-start">
+          {isGuidedLearn && (
+            <div className="inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-4 text-sm font-bold text-sky-200 shadow-[0_12px_28px_rgba(14,165,233,0.18)]">
+              <Sparkles size={15} />
+              Answer shown
+            </div>
+          )}
           {!hideHint && showHintBtn && (
             <button
               onClick={showHint}

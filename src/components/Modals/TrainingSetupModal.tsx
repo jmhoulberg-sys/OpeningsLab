@@ -20,20 +20,21 @@ export default function TrainingSetupModal() {
     line,
     unlocked: isLineUnlocked(opening.id, line.id),
   }));
+  const unlockedLineIds = lineStates.filter((entry) => entry.unlocked).map((entry) => entry.line.id);
+  const unlockedLineKey = unlockedLineIds.join('|');
 
   const completedLines = lineStates.filter((entry) => entry.unlocked).length;
   const totalLines = lineStates.length;
-  const practiceLines = lineStates.filter((entry) => entry.unlocked).map((entry) => entry.line);
+  const practiceLines = lineStates.map((entry) => entry.line);
   const learnableLines = lineStates.filter((entry) => !entry.unlocked).map((entry) => entry.line);
   const progressPct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
 
   useEffect(() => {
-    const unlockedIds = practiceLines.map((line) => line.id);
     const previousUnlocked = previousUnlockedRef.current;
-    const freshUnlock = unlockedIds.find((id) => !previousUnlocked.includes(id)) ?? null;
+    const freshUnlock = unlockedLineIds.find((id) => !previousUnlocked.includes(id)) ?? null;
     setNewlyUnlockedId(freshUnlock);
-    previousUnlockedRef.current = unlockedIds;
-  }, [practiceLines]);
+    previousUnlockedRef.current = unlockedLineIds;
+  }, [unlockedLineKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setDismissed(false);
@@ -71,7 +72,7 @@ export default function TrainingSetupModal() {
             </div>
             <h2 className="mt-1 text-2xl font-bold text-white">Choose what to do next</h2>
             <p className="mt-2 text-sm text-stone-400">
-              Choose any line to learn. Once you finish it cleanly, it becomes available for practice in step-by-step or guided full-line mode.
+              Start with a guided walkthrough, then complete step-by-step or full-line practice to unlock the line.
             </p>
           </div>
         </div>
@@ -86,7 +87,7 @@ export default function TrainingSetupModal() {
                 {completedLines}/{totalLines} lines unlocked
               </div>
               <div className="mt-1 text-sm text-stone-400">
-                {learnableLines.length > 0 ? 'Choose any locked line to learn next.' : 'All current lines are unlocked.'}
+                {learnableLines.length > 0 ? 'Choose any locked line for a guided walkthrough.' : 'All current lines are unlocked.'}
               </div>
             </div>
             <div className="text-sm font-semibold text-emerald-300">{progressPct}%</div>
@@ -101,7 +102,7 @@ export default function TrainingSetupModal() {
             <section className="rounded-[22px] border border-sky-400/15 bg-sky-400/8 p-3.5">
               <div className="flex items-center gap-2 text-sky-300">
                 <BookOpen size={18} />
-                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Choose a line to unlock</div>
+                <div className="text-sm font-semibold uppercase tracking-[0.18em]">Guided walkthroughs</div>
               </div>
               <div className="mt-3 space-y-2">
                 {learnableLines.map((line) => (
@@ -120,7 +121,7 @@ export default function TrainingSetupModal() {
                       onClick={() => launchLine(line, 'learn')}
                       className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                     >
-                      Unlock line
+                      Start walkthrough
                       <ChevronRight size={16} />
                     </button>
                   </div>
@@ -132,15 +133,15 @@ export default function TrainingSetupModal() {
           <section className="rounded-[22px] border border-stone-800/70 bg-stone-900/75 p-3.5">
             <div className="flex items-center gap-2 text-emerald-300">
               <Route size={18} />
-              <div className="text-sm font-semibold uppercase tracking-[0.18em]">Practice unlocked lines</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.18em]">Practice lines</div>
             </div>
             <div className="mt-2 text-sm text-stone-400">
-              When a line is unlocked, practice it either move-by-move or as a guided full line.
+              Step-by-step and full-line mode are the practice runs that unlock progress.
             </div>
 
             {practiceLines.length === 0 ? (
               <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/70 px-4 py-3 text-sm text-stone-500">
-                Finish the next line cleanly to open practice modes.
+                Finish a guided walkthrough, then use practice to unlock the line.
               </div>
             ) : (
               <div className="mt-3 space-y-2.5">
