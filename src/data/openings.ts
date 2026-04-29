@@ -2,6 +2,7 @@ import type { Opening } from '../types';
 import staffordGambit from './stafford';
 import danishGambitRefutation from './danishGambit';
 import caroKann from './caroKann';
+import { scotchGambit, scotchGame } from './scotch';
 
 function createComingSoonOpening(id: string, name: string, playerColor: Opening['playerColor'] = 'white'): Opening {
   return {
@@ -23,11 +24,12 @@ const comingSoonOpenings: Opening[] = [
   createComingSoonOpening('french-defense', 'French Defense', 'black'),
   createComingSoonOpening('vienna-game', 'Vienna Game', 'white'),
   createComingSoonOpening('english-opening', 'English Opening', 'white'),
-  createComingSoonOpening('scotch-game', 'Scotch Game', 'white'),
 ];
 
 export const OPENINGS: Opening[] = [
   staffordGambit,
+  scotchGambit,
+  scotchGame,
   danishGambitRefutation,
   caroKann,
   ...comingSoonOpenings,

@@ -193,13 +193,6 @@ export default function HomePage({
                 {!isLoggedIn ? 'Log in to see details' : ''}
               </div>
             </div>
-            <button
-              onClick={onProfileClick}
-              className="hidden h-[68px] min-w-[156px] items-center justify-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
-            >
-              <UserCircle2 size={18} className="text-sky-300" />
-              My Profile
-            </button>
             {isLoggedIn ? (
               <button
                 onClick={onProfileClick}
@@ -207,7 +200,7 @@ export default function HomePage({
                 title="My Profile"
               >
                 <UserCircle2 size={18} className="text-sky-300" />
-                <span className="max-w-[120px] truncate font-semibold">{accountLabel}</span>
+                <span className="max-w-[120px] truncate font-semibold text-white">{accountLabel}</span>
               </button>
             ) : (
               <button

@@ -76,12 +76,9 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
               title="My Profile"
             >
               <UserCircle2 size={17} className="text-sky-300" />
-              <div className="min-w-0">
-                <div className="max-w-[120px] truncate text-left font-semibold text-white">
-                  {accountLabel}
-                </div>
-                <div className="text-left text-[11px] text-stone-500">My Profile</div>
-              </div>
+              <span className="max-w-[120px] truncate font-semibold text-white">
+                {accountLabel}
+              </span>
             </button>
           ) : (
             <button
