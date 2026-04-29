@@ -108,6 +108,9 @@ interface QuestStripProps {
 
 interface FeaturedOpeningsSectionProps {
   openings: OpeningSummary[];
+  title?: string;
+  description?: string;
+  eyebrow?: string;
   onOpenOpening: (opening: Opening) => void;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }
@@ -292,8 +295,8 @@ export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
     <section className="space-y-3">
       <SectionHeading
         eyebrow="Daily quests"
-        title="Small targets that bring you back"
-        description={isLoggedIn ? 'Fast wins for today.' : 'Log in to see details and save daily progress.'}
+        title="Today’s training streak"
+        description={isLoggedIn ? 'Clear these to bank XP and keep momentum.' : 'Log in to save daily progress.'}
       />
       <div className="grid gap-3 md:grid-cols-3">
         {quests.map((quest) => {
@@ -351,14 +354,17 @@ export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
 
 export function FeaturedOpeningsSection({
   openings,
+  title = 'Board-first courses',
+  description = 'Clean starts, clear line counts, fast entry.',
+  eyebrow = 'Featured openings',
   onStartLine,
 }: FeaturedOpeningsSectionProps) {
   return (
     <section className="space-y-3" id="featured-openings">
       <SectionHeading
-        eyebrow="Featured openings"
-        title="Board-first courses"
-        description="Clean starts, clear line counts, fast entry."
+        eyebrow={eyebrow}
+        title={title}
+        description={description}
       />
       <div className="grid gap-4 lg:grid-cols-3">
         {openings.map((summary) => (
@@ -382,16 +388,16 @@ export function OpeningLibrarySection({
   const rankedOpenings = [...openings].sort((a, b) => {
     const aMatch = openingMatchesFilter(a.opening, activeFilter);
     const bMatch = openingMatchesFilter(b.opening, activeFilter);
-    if (aMatch === bMatch) return 0;
-    return aMatch ? -1 : 1;
+    if (aMatch !== bMatch) return aMatch ? -1 : 1;
+    return compareOpeningProgress(a, b);
   });
 
   return (
     <section className="space-y-3" id="opening-library">
       <SectionHeading
         eyebrow="Library"
-        title="Choose the next course"
-        description="Tap the board, try the first line, or open the full opening."
+        title="All openings"
+        description="Sorted by your progress, with filters for color and themes."
       />
       <div className="flex flex-wrap gap-2">
         {OPENING_FILTERS.map((filter) => {
@@ -582,6 +588,13 @@ function openingMatchesFilter(opening: Opening, filter: OpeningFilter) {
   if (filter === 'refutations') return haystack.includes('refutation') || haystack.includes('refute');
 
   return true;
+}
+
+function compareOpeningProgress(a: OpeningSummary, b: OpeningSummary) {
+  if (b.masteryPct !== a.masteryPct) return b.masteryPct - a.masteryPct;
+  if (b.completedLines !== a.completedLines) return b.completedLines - a.completedLines;
+  if (b.totalLines !== a.totalLines) return b.totalLines - a.totalLines;
+  return a.opening.name.localeCompare(b.opening.name);
 }
 
 function SectionHeading({

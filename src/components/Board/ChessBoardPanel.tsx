@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
-import { ChevronLeft, ChevronRight, Lightbulb, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsRight, Lightbulb, Sparkles } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
 import { getCoachingNote } from '../../data/coachingNotes';
 import EvalBar from './EvalBar';
 
-const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
+const ANSWER_ARROW_COLOR = 'rgba(255, 230, 80, 1)';
 const SELECTED_HIGHLIGHT = '#a9c7e2';
 const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
 const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
-const HINT_HIGHLIGHT = 'rgba(0, 216, 153, 0.74)';
+const HINT_HIGHLIGHT = 'rgba(56, 189, 248, 0.72)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
 
@@ -74,8 +74,8 @@ function getBoardMessage({
 
   if (wrongMoveFen) {
     return {
-      eyebrow: 'Try again',
-      text: 'Reset and play the move once more',
+      eyebrow: 'Off book',
+      text: 'That move leaves the line. Use the board marker to reset and try the book move.',
       color: 'text-rose-300',
     };
   }
@@ -84,8 +84,8 @@ function getBoardMessage({
     return {
       eyebrow: '',
       text: isAwaitingUserMove
-        ? (coachingNote ?? 'Reach the shared opening position')
-        : 'Hold the structure while the reply appears',
+        ? (coachingNote ?? 'Build the shared opening position before choosing a line.')
+        : 'Opponent reply incoming. Watch how the structure takes shape.',
       detail: isAwaitingUserMove && expectedSan ? `Play ${expectedSan}` : 'Shared opening moves',
       color: isAwaitingUserMove ? 'text-sky-300' : 'text-stone-500',
     };
@@ -93,8 +93,8 @@ function getBoardMessage({
 
   if (phase === 'line-select') {
     return {
-      eyebrow: 'Line pick',
-      text: 'Choose the next line to learn or an unlocked line to practice',
+      eyebrow: 'Pick your route',
+      text: 'Choose a line, then walk it through or test it from memory.',
       color: 'text-sky-300',
     };
   }
@@ -104,8 +104,8 @@ function getBoardMessage({
       return {
         eyebrow: 'Play on',
         text: isAwaitingUserMove
-          ? 'Keep the initiative and find the best continuation'
-          : 'Wait for the practical response',
+          ? 'Find the practical continuation and keep the pressure alive.'
+          : 'Opponent is choosing from real response data.',
         color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
       };
     }
@@ -113,7 +113,7 @@ function getBoardMessage({
     if (mode === 'full-line' && isAwaitingUserMove && expectedSan) {
       return {
         eyebrow: '',
-        text: coachingNote ?? `Guided move: play ${expectedSan}`,
+        text: coachingNote ?? `Play ${expectedSan} and keep the line connected.`,
         detail: `Play ${expectedSan}`,
         color: 'text-sky-300',
       };
@@ -131,8 +131,8 @@ function getBoardMessage({
     if (mode === 'step-by-step' && isAwaitingUserMove) {
       return {
         eyebrow: '',
-        text: coachingNote ?? 'Recall the next move. Use hint or answer if you need support.',
-        detail: expectedSan ? `Best move: ${expectedSan}` : 'Work from memory',
+        text: coachingNote ?? 'Recall the plan, then play the book move from memory.',
+        detail: expectedSan ? `Target: ${expectedSan}` : 'Work from memory',
         color: 'text-emerald-300',
       };
     }
@@ -140,8 +140,8 @@ function getBoardMessage({
     return {
       eyebrow: 'Training',
       text: isAwaitingUserMove
-        ? 'Find the next move from memory'
-        : 'Read the reply and prepare the next idea',
+        ? 'Find the next book move and explain the idea to yourself.'
+        : 'Read the reply, then prepare the next idea.',
       color: isAwaitingUserMove ? 'text-emerald-300' : 'text-stone-500',
     };
   }
@@ -335,12 +335,13 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   if (guidedAnswerArrow) {
     customSquareStyles[guidedAnswerArrow[0]] = {
       ...(customSquareStyles[guidedAnswerArrow[0]] ?? {}),
-      backgroundColor: 'rgba(56, 189, 248, 0.42)',
-      boxShadow: 'inset 0 0 0 2px rgba(186,230,253,0.3)',
+      backgroundColor: 'rgba(255, 230, 80, 0.52)',
+      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.28)',
     };
     customSquareStyles[guidedAnswerArrow[1]] = {
       ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
-      backgroundColor: 'rgba(14, 165, 233, 0.54)',
+      backgroundColor: 'rgba(255, 183, 3, 0.62)',
+      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.24)',
     };
   }
 
@@ -354,7 +355,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   if (guidedAnswerArrow) {
-    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
+    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(255, 230, 80, 1)']);
   }
 
   const onSquareClick = useCallback(
@@ -458,22 +459,23 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-1">
-      <div className="flex min-h-[92px] w-full max-w-[680px] flex-col items-center justify-center text-center">
+      <div className="flex h-[132px] w-full max-w-[720px] flex-col items-center justify-center text-center">
         {boardMessage.eyebrow && (
-          <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${boardMessage.color}`}>
+          <div className={`text-[11px] font-black uppercase tracking-[0.28em] ${boardMessage.color}`}>
             {boardMessage.eyebrow}
           </div>
         )}
         {(boardMessage.text || boardMessage.detail) && (
-          <div className="mt-1 w-full rounded-[20px] border border-stone-800/70 bg-stone-900/88 px-4 py-2 shadow-[0_12px_28px_rgba(0,0,0,0.16)]">
-            <div className="min-h-[3.4rem] text-[1.02rem] font-semibold leading-relaxed text-white">
-              {boardMessage.text}
-            </div>
+          <div className="mt-1 w-full rounded-[22px] border border-sky-300/18 bg-stone-950/92 px-4 py-3 shadow-[0_18px_42px_rgba(0,0,0,0.28),0_0_24px_rgba(14,165,233,0.08)]">
             {boardMessage.detail && (
-              <div className="mt-0.5 text-[1.08rem] font-semibold tracking-normal text-sky-300">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-400/12 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-sky-200">
+                <Sparkles size={13} />
                 {boardMessage.detail}
               </div>
             )}
+            <div className="line-clamp-2 min-h-[3.1rem] text-[1rem] font-extrabold leading-snug text-white sm:text-[1.08rem]">
+              {boardMessage.text}
+            </div>
           </div>
         )}
       </div>
@@ -558,33 +560,46 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             />
             {wrongMoveSquare && !isReviewing && (() => {
               const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
-              const badge = Math.max(28, Math.min(38, size * 0.48));
+              const badge = Math.max(30, Math.min(42, size * 0.52));
+              const bubbleOnLeft = x > boardSize * 0.52;
               return (
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: x + size - badge * 0.65,
-                    top: y - badge * 0.35,
-                    width: badge,
-                    height: badge,
-                  }}
-                >
-                  <div className="flex h-full w-full items-center justify-center rounded-full border border-rose-100/80 bg-rose-500 shadow-[0_10px_24px_rgba(244,63,94,0.45)] ring-4 ring-rose-200/35">
-                    <svg
-                      width="50%"
-                      height="50%"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#fff7fb"
-                      strokeWidth="3.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 8l8 8" />
-                      <path d="M16 8l-8 8" />
-                    </svg>
+                <>
+                  <div
+                    className="absolute pointer-events-none z-20"
+                    style={{
+                      left: x + size - badge * 0.66,
+                      top: y - badge * 0.34,
+                      width: badge,
+                      height: badge,
+                    }}
+                  >
+                    <div className="flex h-full w-full items-center justify-center rounded-2xl border border-white/55 bg-rose-500 text-white shadow-[0_14px_28px_rgba(244,63,94,0.48)] ring-4 ring-rose-200/25">
+                      <svg
+                        width="48%"
+                        height="48%"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M8 8l8 8" />
+                        <path d="M16 8l-8 8" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                  <div
+                    className="absolute pointer-events-none z-20 max-w-[210px] rounded-2xl border border-rose-200/25 bg-rose-500 px-3 py-2 text-left text-xs font-black leading-tight text-white shadow-[0_16px_34px_rgba(244,63,94,0.35)]"
+                    style={{
+                      left: bubbleOnLeft ? Math.max(8, x - 210) : Math.min(boardSize - 210, x + size * 0.55),
+                      top: Math.max(8, y - 12),
+                    }}
+                  >
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-rose-100/80">Try again</div>
+                    <div>{wrongMoveSan ? `Book move: ${wrongMoveSan}` : 'Stay with the book line'}</div>
+                  </div>
+                </>
               );
             })()}
           </div>
@@ -713,9 +728,11 @@ function BoardNavRow({
         {!isLive && !wrongMoveFen && (
           <button
             onClick={() => navigateToMove(null)}
-            className="rounded-xl border border-stone-700/40 bg-stone-800/85 px-3 py-2 text-xs font-semibold text-sky-300 transition-colors hover:bg-stone-700/85 cursor-pointer"
+            title="Return to live position"
+            aria-label="Return to live position"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-500/14 text-sky-200 shadow-[0_8px_18px_rgba(14,165,233,0.16)] transition-colors hover:bg-sky-500/22 hover:text-white cursor-pointer"
           >
-            Live
+            <ChevronsRight size={18} />
           </button>
         )}
       </div>
@@ -749,7 +766,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-700/45 bg-stone-900/95 text-stone-100 shadow-[0_8px_18px_rgba(0,0,0,0.2)] transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-600/70 bg-stone-800 text-white shadow-[0_10px_22px_rgba(0,0,0,0.28)] ring-1 ring-white/5 transition-colors hover:border-sky-300/35 hover:bg-stone-700 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
     >
       {children}
     </button>

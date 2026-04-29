@@ -81,9 +81,19 @@ export default function HomePage({
     } satisfies OpeningSummary;
   });
 
-  const featuredOpenings = FEATURED_OPENING_IDS
+  const defaultFeaturedOpenings = FEATURED_OPENING_IDS
     .map((id) => openingSummaries.find((summary) => summary.opening.id === id))
     .filter((summary): summary is OpeningSummary => summary !== undefined);
+  const learningOpenings = openingSummaries
+    .filter((summary) => summary.firstLine && (summary.setupComplete || summary.completedLines > 0))
+    .sort((a, b) => {
+      if (b.masteryPct !== a.masteryPct) return b.masteryPct - a.masteryPct;
+      if (b.completedLines !== a.completedLines) return b.completedLines - a.completedLines;
+      return b.totalLines - a.totalLines;
+    });
+  const featuredOpenings = isLoggedIn && learningOpenings.length > 0
+    ? learningOpenings.slice(0, 3)
+    : defaultFeaturedOpenings;
 
   const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
   const reviewSummary = getDueReviewSummary(openingSummaries, openingProgress, isDue);
@@ -104,7 +114,7 @@ export default function HomePage({
       return;
     }
 
-    const defaultOpening = featuredOpenings[0]?.opening ?? OPENINGS.find((opening) => opening.lines.length > 0);
+    const defaultOpening = defaultFeaturedOpenings[0]?.opening ?? OPENINGS.find((opening) => opening.lines.length > 0);
     if (defaultOpening) onSelectOpening(defaultOpening);
   }
 
@@ -239,6 +249,9 @@ export default function HomePage({
         <div className="mt-5" ref={featuredRef}>
           <FeaturedOpeningsSection
             openings={featuredOpenings}
+            eyebrow={isLoggedIn && learningOpenings.length > 0 ? 'Continue courses' : undefined}
+            title={isLoggedIn && learningOpenings.length > 0 ? 'Keep building your repertoire' : undefined}
+            description={isLoggedIn && learningOpenings.length > 0 ? 'Openings you have already started, sorted by progress.' : undefined}
             onOpenOpening={onSelectOpening}
             onStartLine={onStartOpeningLine}
           />
