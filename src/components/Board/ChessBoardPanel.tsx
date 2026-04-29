@@ -9,7 +9,7 @@ import { isStudentMove } from '../../engine/chessEngine';
 import { getCoachingNote } from '../../data/coachingNotes';
 import EvalBar from './EvalBar';
 
-const ANSWER_ARROW_COLOR = 'rgba(255, 230, 80, 1)';
+const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
 const SELECTED_HIGHLIGHT = '#a9c7e2';
 const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
 const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
@@ -335,13 +335,12 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   if (guidedAnswerArrow) {
     customSquareStyles[guidedAnswerArrow[0]] = {
       ...(customSquareStyles[guidedAnswerArrow[0]] ?? {}),
-      backgroundColor: 'rgba(255, 230, 80, 0.52)',
-      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.28)',
+      backgroundColor: 'rgba(56, 189, 248, 0.42)',
+      boxShadow: 'inset 0 0 0 2px rgba(186,230,253,0.3)',
     };
     customSquareStyles[guidedAnswerArrow[1]] = {
       ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
-      backgroundColor: 'rgba(255, 183, 3, 0.62)',
-      boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.24)',
+      backgroundColor: 'rgba(14, 165, 233, 0.54)',
     };
   }
 
@@ -355,7 +354,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   if (guidedAnswerArrow) {
-    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(255, 230, 80, 1)']);
+    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
   }
 
   const onSquareClick = useCallback(
