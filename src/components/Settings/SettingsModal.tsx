@@ -15,9 +15,10 @@ import { useProgressionStore } from '../../store/progressionStore';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenFinder?: () => void;
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, onOpenFinder }: SettingsModalProps) {
   const { randomTopX, setRandomTopX } = useTrainingStore();
   const { reset } = useProgressStore();
   const resetProgression = useProgressionStore((state) => state.reset);
@@ -168,6 +169,27 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               ))}
             </div>
           </section>
+
+          {onOpenFinder && (
+            <section className="rounded-2xl border border-sky-300/18 bg-sky-400/8 p-4">
+              <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-sky-300/85">
+                Beta
+              </div>
+              <div className="text-sm font-semibold text-white">Find your opening</div>
+              <p className="mt-1 text-xs leading-relaxed text-stone-400">
+                Explore a move route with database frequencies before choosing a line to practice.
+              </p>
+              <button
+                onClick={() => {
+                  onOpenFinder();
+                  handleClose();
+                }}
+                className="mt-4 w-full rounded-xl bg-sky-500 px-3 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+              >
+                Open finder beta
+              </button>
+            </section>
+          )}
 
           <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">

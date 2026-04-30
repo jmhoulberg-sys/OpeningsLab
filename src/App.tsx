@@ -22,6 +22,7 @@ import FreePlayEndModal from './components/Modals/FreePlayEndModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
 import SettingsModal from './components/Settings/SettingsModal';
 import TimerDisplay from './components/Timer/TimerDisplay';
+import OpeningFinder from './components/Finder/OpeningFinder';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
@@ -34,12 +35,13 @@ const BOARD_CHROME_H = 104;
 const EVAL_BAR_W = 24;
 
 export default function App() {
-  const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, startOpening } = useTrainingStore();
+  const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, startOpening, selectLine } = useTrainingStore();
   const { markSetupComplete, isSetupComplete, isLineUnlocked } = useProgressStore();
 
   const [showHome, setShowHome] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFinder, setShowFinder] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth < SIDEBAR_BREAK);
   const [boardSize, setBoardSize] = useState(() =>
@@ -104,11 +106,46 @@ export default function App() {
   function handleGoHome() {
     setShowHome(true);
     setShowProfile(false);
+    setShowFinder(false);
     startedRef.current = false;
   }
 
   function handleProfileClick() {
     setShowProfile(true);
+  }
+
+  function handleOpenFinder() {
+    setShowHome(false);
+    setShowProfile(false);
+    setShowSettings(false);
+    setShowFinder(true);
+  }
+
+  function handleStartFinderLine(selectedOpening: Opening, line: OpeningLine) {
+    if (!startedRef.current) {
+      startedRef.current = true;
+    }
+    setShowHome(false);
+    setShowFinder(false);
+    startOpening(selectedOpening);
+    selectLine(line);
+  }
+
+  if (showFinder) {
+    return (
+      <>
+        <OpeningFinder
+          onBack={handleGoHome}
+          onStartPractice={handleStartFinderLine}
+        />
+        <AuthModal />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          onOpenFinder={handleOpenFinder}
+        />
+      </>
+    );
   }
 
   if (showHome) {
@@ -121,7 +158,11 @@ export default function App() {
           onProfileClick={handleProfileClick}
         />
         <AuthModal />
-        <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          onOpenFinder={handleOpenFinder}
+        />
         {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
       </>
     );
@@ -207,7 +248,11 @@ export default function App() {
       <CompletionModal />
       <FreePlayEndModal />
       <AuthModal />
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onOpenFinder={handleOpenFinder}
+      />
       {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
     </div>
   );

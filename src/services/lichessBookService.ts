@@ -1,5 +1,7 @@
 import { sansToUciMoves } from '../engine/chessEngine';
 import {
+  buildExplorerUrl,
+  buildWeightedCandidates,
   DEFAULT_RATINGS,
   DEFAULT_SPEEDS,
   DEFAULT_TOP_MOVES,
@@ -73,6 +75,20 @@ interface BackendErrorPayload {
   message: string;
 }
 
+interface LichessExplorerPayload {
+  white: number;
+  draws: number;
+  black: number;
+  moves: Array<{
+    uci: string;
+    san: string;
+    averageRating?: number;
+    white: number;
+    draws: number;
+    black: number;
+  }>;
+}
+
 function buildTotals(moves: LichessBookMove[]) {
   return moves.reduce(
     (totals, move) => ({
@@ -137,6 +153,65 @@ export async function fetchLichessBookPosition(
         black: totals.black,
         source: data.source,
         cached: data.cached,
+      },
+      raw: null,
+    };
+  } catch {
+    return fetchLichessBookPositionDirect(payload);
+  }
+}
+
+async function fetchLichessBookPositionDirect(
+  request: {
+    fen: string;
+    play: string[];
+    topMoves: number;
+    speeds: string[];
+    ratings: number[];
+    variant: string;
+  },
+): Promise<LichessBookFetchResult> {
+  try {
+    const response = await fetch(buildExplorerUrl('https://explorer.lichess.org', request), {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return {
+        status: response.status === 429 ? 'rate_limited' : 'api_error',
+        position: null,
+        raw: null,
+        error: response.status === 429 ? 'Lichess explorer rate limited this request.' : 'Opening database unavailable.',
+        reason: response.status === 429 ? 'lichess_rate_limited' : 'lichess_unavailable',
+      };
+    }
+
+    const data = (await response.json()) as LichessExplorerPayload;
+    const candidateMoves = buildWeightedCandidates(data.moves, request.topMoves);
+    if (candidateMoves.length === 0) {
+      return {
+        status: 'out_of_database',
+        position: null,
+        raw: null,
+        error: 'No opening database moves found.',
+        reason: 'no_moves',
+      };
+    }
+
+    const totals = buildTotals(candidateMoves);
+    return {
+      status: 'ok',
+      position: {
+        fen: request.fen,
+        moves: candidateMoves,
+        totalGames: candidateMoves.reduce((sum, move) => sum + move.popularity, 0),
+        white: totals.white,
+        draws: totals.draws,
+        black: totals.black,
+        source: 'lichess-opening-explorer',
+        cached: false,
       },
       raw: null,
     };

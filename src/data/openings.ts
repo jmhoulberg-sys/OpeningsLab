@@ -8,6 +8,7 @@ import ruyLopez from './ruyLopez';
 import queensGambit from './queensGambit';
 import kingsIndianDefense from './kingsIndian';
 import frenchDefense from './french';
+import sicilianForWhite from './sicilianWhite';
 
 function createComingSoonOpening(id: string, name: string, playerColor: Opening['playerColor'] = 'white'): Opening {
   return {
@@ -31,6 +32,7 @@ export const OPENINGS: Opening[] = [
   scotchGambit,
   scotchGame,
   danishGambitRefutation,
+  sicilianForWhite,
   caroKann,
   sicilianDefense,
   ruyLopez,
