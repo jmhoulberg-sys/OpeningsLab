@@ -176,11 +176,27 @@ function getMoveNumber(path: string[], san: string) {
   return ply % 2 === 0 ? `${moveNo}. ${san}` : `${moveNo}... ${san}`;
 }
 
+function boardMoveToSan(fen: string, from: string, to: string, piece?: string) {
+  try {
+    const chess = new Chess(fen);
+    const promotion =
+      piece?.[1] === 'P' &&
+      ((piece[0] === 'w' && to[1] === '8') || (piece[0] === 'b' && to[1] === '1'))
+        ? 'q'
+        : undefined;
+    const move = chess.move({ from, to, promotion });
+    return move?.san ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinderProps) {
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [boardWidth, setBoardWidth] = useState(480);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const activePath = path.slice(0, cursor);
   const currentFen = pathToFen(activePath);
@@ -212,6 +228,30 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     const nextPath = [...activePath, san];
     setPath(nextPath);
     setCursor(nextPath.length);
+    setSelectedSquare(null);
+  }
+
+  function chooseBoardMove(from: string, to: string, piece?: string) {
+    const san = boardMoveToSan(currentFen, from, to, piece);
+    if (!san) return false;
+    chooseMove(san);
+    return true;
+  }
+
+  function handleSquareClick(square: string) {
+    if (!selectedSquare) {
+      setSelectedSquare(square);
+      return;
+    }
+
+    if (selectedSquare === square) {
+      setSelectedSquare(null);
+      return;
+    }
+
+    if (!chooseBoardMove(selectedSquare, square)) {
+      setSelectedSquare(square);
+    }
   }
 
   function jumpToBranch(branchPath: string[]) {
@@ -368,7 +408,14 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
               position={currentFen}
               boardWidth={boardWidth}
               boardOrientation={playerColor}
-              arePiecesDraggable={false}
+              arePiecesDraggable
+              onPieceDrop={(from, to, piece) => chooseBoardMove(from, to, piece)}
+              onSquareClick={handleSquareClick}
+              customSquareStyles={
+                selectedSquare
+                  ? { [selectedSquare]: { backgroundColor: 'rgba(56, 189, 248, 0.46)' } }
+                  : undefined
+              }
               customBoardStyle={{
                 borderRadius: '18px',
                 backgroundColor: 'transparent',

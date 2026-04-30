@@ -1,3 +1,4 @@
+import { CheckCircle2, Equal, XCircle } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 
 const CONFETTI_COLORS = [
@@ -61,14 +62,26 @@ export default function FreePlayEndModal() {
           </div>
         )}
 
-        {/* Emoji */}
-        <div className="text-5xl mb-3 select-none">
-          {isWin ? '🎉' : isDraw ? '🤝' : '😔'}
+        {/* Icon */}
+        <div className="mb-4 flex justify-center">
+          {isWin ? (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 ring-2 ring-emerald-400/30">
+              <CheckCircle2 size={36} className="text-emerald-400" strokeWidth={1.5} />
+            </div>
+          ) : isDraw ? (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500/15 ring-2 ring-yellow-400/30">
+              <Equal size={32} className="text-yellow-400" strokeWidth={2} />
+            </div>
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/15 ring-2 ring-rose-400/30">
+              <XCircle size={36} className="text-rose-400" strokeWidth={1.5} />
+            </div>
+          )}
         </div>
 
         {/* Title */}
         <h2 className={`text-2xl font-bold mb-2 ${
-          isWin ? 'text-emerald-400' : isDraw ? 'text-yellow-400' : 'text-red-400'
+          isWin ? 'text-emerald-400' : isDraw ? 'text-yellow-400' : 'text-rose-400'
         }`}>
           {isWin ? 'You Win!' : isDraw ? 'Draw' : 'You Lost'}
         </h2>

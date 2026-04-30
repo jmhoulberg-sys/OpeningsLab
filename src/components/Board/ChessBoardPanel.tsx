@@ -283,28 +283,35 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         piece[1] === 'P' &&
         ((piece[0] === 'w' && to[1] === '8') || (piece[0] === 'b' && to[1] === '1'));
 
-      if (isPromotion && postLine) {
+      if (isPromotion) {
+        // Store pending promotion — the modal dialog calls onPromotionPieceSelect
         setPromotionPending({ from, to });
         return false;
       }
 
-      const result = handleBoardMove(from, to, isPromotion ? 'q' : undefined);
+      const result = handleBoardMove(from, to);
       return result === 'correct' || result === 'wrong';
     },
-    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, postLine, wrongMoveFen],
+    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, wrongMoveFen],
   );
 
   const onPromotionPieceSelect = useCallback(
-    (piece?: string): boolean => {
-      if (!promotionPending || !piece) {
+    (piece?: string, promoteFromSquare?: Square, promoteToSquare?: Square): boolean => {
+      if (!piece) {
         setPromotionPending(null);
         return false;
       }
-      const { from, to } = promotionPending;
-      setPromotionPending(null);
       const promo = piece[1]?.toLowerCase() ?? 'q';
+
+      // Use stored pending squares (from drag) or the squares passed by the dialog
+      const from = promotionPending?.from ?? promoteFromSquare;
+      const to = promotionPending?.to ?? promoteToSquare;
+      setPromotionPending(null);
+
+      if (!from || !to) return false;
+
       const result = handleBoardMove(from, to, promo);
-      return result === 'correct';
+      return result === 'correct' || result === 'wrong';
     },
     [handleBoardMove, promotionPending],
   );
