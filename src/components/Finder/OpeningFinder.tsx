@@ -5,8 +5,6 @@ import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
 import { STARTING_FEN, applyMove, fenAfterMoves } from '../../engine/chessEngine';
-import { fetchLichessBookPosition, type LichessBookMove } from '../../services/lichessBookService';
-import { useSettingsStore } from '../../store/settingsStore';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -23,6 +21,12 @@ interface LocalLineMatch {
   nextSan: string | null;
   matchedMoves: number;
   exactPath: boolean;
+}
+
+interface RouteMoveChoice {
+  san: string;
+  sources: string[];
+  practiceTargets: number;
 }
 
 type CatalogBranch = {
@@ -96,6 +100,52 @@ function getCatalogBranches(path: string[], color: Color) {
     });
 }
 
+function getRouteMoveChoices(path: string[], color: Color, fen: string) {
+  const choices = new Map<string, RouteMoveChoice>();
+
+  function addChoice(san: string, source: string, practiceTarget = false) {
+    if (!applyMove(fen, san)) return;
+
+    const key = normalizeSan(san);
+    const current = choices.get(key) ?? {
+      san,
+      sources: [],
+      practiceTargets: 0,
+    };
+
+    if (!current.sources.includes(source)) {
+      current.sources.push(source);
+    }
+    if (practiceTarget) {
+      current.practiceTargets += 1;
+    }
+    choices.set(key, current);
+  }
+
+  CATALOG_BRANCHES
+    .filter((branch) => branch.color === 'both' || branch.color === color)
+    .forEach((branch) => {
+      if (!pathStartsWith(branch.path, path)) return;
+      const nextSan = branch.path[path.length];
+      if (nextSan) addChoice(nextSan, branch.name);
+    });
+
+  OPENINGS.forEach((opening) => {
+    opening.lines.forEach((line) => {
+      const moves = lineMoves(line);
+      if (!pathStartsWith(moves, path)) return;
+      const nextSan = moves[path.length];
+      if (nextSan) addChoice(nextSan, line.name, opening.playerColor === color);
+    });
+  });
+
+  return [...choices.values()].sort((a, b) => {
+    if (b.practiceTargets !== a.practiceTargets) return b.practiceTargets - a.practiceTargets;
+    if (b.sources.length !== a.sources.length) return b.sources.length - a.sources.length;
+    return a.san.localeCompare(b.san);
+  });
+}
+
 function getPositionName(path: string[]) {
   const exactCatalog = CATALOG_BRANCHES.find((branch) => pathsEqual(branch.path, path));
   if (exactCatalog) return exactCatalog.name;
@@ -106,26 +156,6 @@ function getPositionName(path: string[]) {
   if (path.length === 0) return 'Starting position';
   if (path.length === 1) return `${path[0]} systems`;
   return `After ${path[path.length - 1]}`;
-}
-
-function formatGames(value: number) {
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
-  if (value >= 1_000_000) return `${Math.round(value / 1_000_000)}M`;
-  if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
-  return String(value);
-}
-
-function moveWinPct(move: LichessBookMove, side: Color) {
-  const total = Math.max(1, move.white + move.draws + move.black);
-  return Math.round(((side === 'white' ? move.white : move.black) / total) * 100);
-}
-
-function moveScorePct(move: LichessBookMove, side: Color) {
-  const total = Math.max(1, move.white + move.draws + move.black);
-  const score = side === 'white'
-    ? move.white + move.draws / 2
-    : move.black + move.draws / 2;
-  return Math.round((score / total) * 100);
 }
 
 function pathToFen(path: string[]) {
@@ -151,22 +181,19 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [boardWidth, setBoardWidth] = useState(480);
-  const [bookMoves, setBookMoves] = useState<LichessBookMove[]>([]);
-  const [bookStatus, setBookStatus] = useState<'idle' | 'loading' | 'ready' | 'empty' | 'error'>('idle');
-  const [bookError, setBookError] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const activePath = path.slice(0, cursor);
   const currentFen = pathToFen(activePath);
   const turn = sideToMove(currentFen);
   const localMatches = useMemo(() => getLocalLineMatches(activePath), [activePath.join('|')]);
+  const routeMoveChoices = useMemo(
+    () => getRouteMoveChoices(activePath, playerColor ?? 'white', currentFen),
+    [activePath.join('|'), playerColor, currentFen],
+  );
   const catalogBranches = useMemo(
     () => getCatalogBranches(activePath, playerColor ?? 'white'),
     [activePath.join('|'), playerColor],
   );
-  const lichessTopMoves = useSettingsStore((state) => state.lichessTopMoves);
-  const lichessSpeeds = useSettingsStore((state) => state.lichessSpeeds);
-  const lichessRatings = useSettingsStore((state) => state.lichessRatings);
-  const lichessVariant = useSettingsStore((state) => state.lichessVariant);
 
   useEffect(() => {
     const node = boardRef.current;
@@ -178,36 +205,6 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     observer.observe(node);
     return () => observer.disconnect();
   }, [playerColor]);
-
-  useEffect(() => {
-    if (!playerColor) return;
-
-    let cancelled = false;
-    setBookStatus('loading');
-    setBookError(null);
-
-    fetchLichessBookPosition(currentFen, {
-      topMoves: Math.max(8, lichessTopMoves),
-      speeds: lichessSpeeds,
-      ratings: lichessRatings,
-      variant: lichessVariant,
-      playedSans: activePath,
-    }).then((result) => {
-      if (cancelled) return;
-      if (result.status === 'ok' && result.position) {
-        setBookMoves(result.position.moves);
-        setBookStatus(result.position.moves.length ? 'ready' : 'empty');
-      } else {
-        setBookMoves([]);
-        setBookStatus(result.status === 'out_of_database' ? 'empty' : 'error');
-        setBookError(result.error ?? null);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [playerColor, currentFen, activePath.join('|'), lichessTopMoves, lichessSpeeds, lichessRatings, lichessVariant]);
 
   function chooseMove(san: string) {
     const nextFen = applyMove(currentFen, san);
@@ -265,7 +262,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     );
   }
 
-  const rightTitle = bookStatus === 'loading' ? 'Loading database' : `${turn === playerColor ? 'Your choices' : 'Likely replies'}`;
+  const rightTitle = turn === playerColor ? 'Your course moves' : 'Likely course replies';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
@@ -385,37 +382,41 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
         </section>
 
         <aside className="min-h-0 overflow-y-auto rounded-[22px] border border-stone-800/65 bg-stone-950/72 p-3">
-          <PanelHeading eyebrow="Frequency" title={rightTitle} />
+          <PanelHeading eyebrow="Route choices" title={rightTitle} />
           <div className="mt-3 space-y-2">
-            {bookStatus === 'loading' && <RailNotice text="Reading the opening database..." />}
-            {bookStatus === 'empty' && <RailNotice text="No database moves found here. Local course branches still work." />}
-            {bookStatus === 'error' && <RailNotice text={bookError ?? 'Opening database unavailable.'} />}
-            {bookMoves.map((move) => {
-              const total = Math.max(1, move.popularity);
-              const pct = Math.max(1, Math.round(move.weight * 100));
-              const score = moveScorePct(move, playerColor);
-              const win = moveWinPct(move, playerColor);
-              return (
-                <button
-                  key={move.uci}
-                  onClick={() => chooseMove(move.san)}
-                  className="w-full rounded-2xl border border-stone-800/70 bg-stone-900/70 p-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
-                >
-                  <div className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-2">
-                    <div className="font-mono text-sm font-black text-white">{getMoveNumber(activePath, move.san)}</div>
-                    <div className="h-2 overflow-hidden rounded-full bg-stone-800">
-                      <div className="h-full rounded-full bg-sky-400" style={{ width: `${pct}%` }} />
-                    </div>
-                    <div className="text-xs font-bold text-sky-200">{pct}%</div>
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] font-semibold text-stone-400">
-                    <span>{formatGames(total)} games</span>
-                    <span>{score}% score</span>
-                    <span>{win}% wins</span>
-                  </div>
-                </button>
-              );
-            })}
+            {routeMoveChoices.length === 0 && (
+              <RailNotice text="No local route moves from this position yet. Step back or choose another route." />
+            )}
+            {routeMoveChoices.map((move) => (
+              <button
+                key={move.san}
+                onClick={() => chooseMove(move.san)}
+                className="w-full rounded-2xl border border-stone-800/70 bg-stone-900/70 p-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-mono text-sm font-black text-white">{getMoveNumber(activePath, move.san)}</div>
+                  {move.practiceTargets > 0 && (
+                    <span className="rounded-full bg-emerald-400/12 px-2 py-1 text-[11px] font-bold text-emerald-300">
+                      practice
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 text-xs font-semibold leading-relaxed text-stone-400">
+                  {move.sources.slice(0, 3).join(', ')}
+                  {move.sources.length > 3 ? ` +${move.sources.length - 3} more` : ''}
+                </div>
+              </button>
+            ))}
+
+            <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-900/45 p-3">
+              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-500">
+                Opening database
+              </div>
+              <div className="mt-1 text-sm font-bold text-stone-300">Coming soon</div>
+              <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                Frequencies will plug into the same panel when the Vercel Lichess API is enabled.
+              </p>
+            </div>
           </div>
         </aside>
       </main>
