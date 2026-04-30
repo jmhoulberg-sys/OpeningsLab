@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Home, RotateCcw, Sparkles } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
+import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
@@ -35,20 +36,99 @@ type CatalogBranch = {
   path: string[];
   color: Color | 'both';
   description: string;
+  generic?: boolean;
 };
 
 const CATALOG_BRANCHES: CatalogBranch[] = [
+  { id: 'kings-pawn', name: "King's Pawn Game", path: ['e4'], color: 'both', generic: true, description: 'The main gateway to open games, Sicilians, French, Caro-Kann, and more.' },
+  { id: 'queens-pawn', name: "Queen's Pawn Game", path: ['d4'], color: 'both', generic: true, description: 'The main gateway to Queen’s Gambits, Indian Defenses, London setups, and Stonewall ideas.' },
+  { id: 'english-opening', name: 'English Opening', path: ['c4'], color: 'white', description: 'White starts from the flank and often reaches reversed Sicilian or Catalan-like structures.' },
+  { id: 'reti-opening', name: 'Reti Opening', path: ['Nf3', 'd5', 'c4'], color: 'white', description: 'A flexible hypermodern setup that pressures the center instead of occupying it immediately.' },
+  { id: 'birds-opening', name: "Bird's Opening", path: ['f4'], color: 'white', description: 'White stakes kingside space and can steer toward Dutch-like attacking structures.' },
+  { id: 'nimzowitsch-larsen', name: 'Nimzowitsch-Larsen Attack', path: ['b3'], color: 'white', description: 'White fianchettoes early and pressures the long diagonal.' },
+  { id: 'sokolsky-opening', name: 'Sokolsky Opening', path: ['b4'], color: 'white', description: 'A queenside flank opening that gains space and asks Black to react immediately.' },
+  { id: 'grobs-attack', name: "Grob's Attack", path: ['g4'], color: 'white', description: 'A provocative flank opening with tactical ambitions and real structural risk.' },
+  { id: 'van-geet-opening', name: 'Van Geet Opening', path: ['Nc3'], color: 'white', description: 'White develops first and keeps the central pawn structure undecided.' },
+  { id: 'polish-defense', name: 'Polish Defense', path: ['d4', 'b5'], color: 'black', description: 'Black fights from the queenside with an offbeat pawn thrust.' },
+  { id: 'owen-defense', name: "Owen's Defense", path: ['e4', 'b6'], color: 'black', description: 'Black fianchettoes the queen bishop and pressures e4 from the flank.' },
+  { id: 'st-george-defense', name: 'St. George Defense', path: ['e4', 'a6'], color: 'black', description: 'A provocative queenside setup that often follows with ...b5.' },
+  { id: 'nimzowitsch-defense', name: 'Nimzowitsch Defense', path: ['e4', 'Nc6'], color: 'black', description: 'Black develops first and challenges White to define the center.' },
+  { id: 'modern-defense', name: 'Modern Defense', path: ['e4', 'g6'], color: 'black', description: 'Black lets White build a center, then attacks it with piece pressure and pawn breaks.' },
+  { id: 'pirc-defense', name: 'Pirc Defense', path: ['e4', 'd6', 'd4', 'Nf6'], color: 'black', description: 'Black delays central contact and strikes at White’s broad pawn center.' },
+  { id: 'philidor-defense', name: 'Philidor Defense', path: ['e4', 'e5', 'Nf3', 'd6'], color: 'black', description: 'Black supports e5 solidly and accepts a compact position.' },
+  { id: 'petrov-defense', name: 'Petrov Defense', path: ['e4', 'e5', 'Nf3', 'Nf6'], color: 'black', description: 'A symmetrical counterattack on e4 with a reputation for solidity.' },
+  { id: 'latvian-gambit', name: 'Latvian Gambit', path: ['e4', 'e5', 'Nf3', 'f5'], color: 'black', description: 'Black immediately gambits for initiative in a sharp open game.' },
+  { id: 'elephant-gambit', name: 'Elephant Gambit', path: ['e4', 'e5', 'Nf3', 'd5'], color: 'black', description: 'Black challenges the center at once and invites tactical play.' },
+  { id: 'vienna-game', name: 'Vienna Game', path: ['e4', 'e5', 'Nc3'], color: 'white', description: 'White develops the queen knight first and keeps f4 attacking ideas available.' },
+  { id: 'bishops-opening', name: "Bishop's Opening", path: ['e4', 'e5', 'Bc4'], color: 'white', description: 'White targets f7 immediately and can transpose to Italian or Vienna structures.' },
+  { id: 'kings-gambit', name: "King's Gambit", path: ['e4', 'e5', 'f4'], color: 'white', description: 'White sacrifices a flank pawn to pull Black’s center apart and accelerate development.' },
+  { id: 'center-game', name: 'Center Game', path: ['e4', 'e5', 'd4'], color: 'white', description: 'White opens the center immediately and accepts early queen activity.' },
+  { id: 'danish-gambit', name: 'Danish Gambit', path: ['e4', 'e5', 'd4', 'exd4', 'c3'], color: 'white', description: 'White offers pawns for open diagonals and rapid piece activity.' },
+  { id: 'ponziani-opening', name: 'Ponziani Opening', path: ['e4', 'e5', 'Nf3', 'Nc6', 'c3'], color: 'white', description: 'White prepares d4 with a direct central build.' },
+  { id: 'italian-game', name: 'Italian Game', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4'], color: 'white', description: 'White develops naturally and points the bishop at f7.' },
+  { id: 'giuoco-piano', name: 'Giuoco Piano', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5'], color: 'both', description: 'A classical Italian structure with natural development and central tension.' },
+  { id: 'evans-gambit', name: 'Evans Gambit', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'b4'], color: 'white', description: 'White sacrifices a pawn to drag the bishop away and seize the center.' },
+  { id: 'two-knights-defense', name: 'Two Knights Defense', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6'], color: 'black', description: 'Black develops actively and invites sharp play around f7 and e4.' },
+  { id: 'fried-liver-attack', name: 'Fried Liver Attack', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6', 'Ng5', 'd5', 'exd5', 'Nxd5', 'Nxf7'], color: 'white', description: 'White sacrifices on f7 to expose the black king in a forcing attack.' },
+  { id: 'four-knights-game', name: 'Four Knights Game', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Nc3', 'Nf6'], color: 'both', description: 'Both sides develop knights first and keep the center flexible.' },
+  { id: 'scotch-game', name: 'Scotch Game', path: ['e4', 'e5', 'Nf3', 'Nc6', 'd4'], color: 'white', description: 'White opens the center early and makes development concrete.' },
+  { id: 'scotch-gambit', name: 'Scotch Gambit', path: ['e4', 'e5', 'Nf3', 'Nc6', 'd4', 'exd4', 'Bc4'], color: 'white', description: 'White mixes Scotch central play with Italian attacking development.' },
+  { id: 'ruy-lopez', name: 'Ruy Lopez', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5'], color: 'white', description: 'Classical pressure on the e5 pawn and Black knight.' },
+  { id: 'berlin-defense', name: 'Berlin Defense', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'Nf6'], color: 'black', description: 'Black attacks e4 immediately and heads for resilient structures.' },
+  { id: 'morphy-defense', name: 'Ruy Lopez: Morphy Defense', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6'], color: 'black', description: 'Black questions the bishop and begins the main Ruy Lopez conversation.' },
+  { id: 'exchange-ruy', name: 'Ruy Lopez Exchange', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Bxc6'], color: 'white', description: 'White gives up the bishop pair to damage Black’s queenside structure.' },
+  { id: 'marshall-attack', name: 'Marshall Attack', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Ba4', 'Nf6', 'O-O', 'Be7', 'Re1', 'b5', 'Bb3', 'O-O', 'c3', 'd5'], color: 'black', description: 'Black sacrifices central material for a direct kingside initiative.' },
+  { id: 'sicilian-defense', name: 'Sicilian Defense', path: ['e4', 'c5'], color: 'black', description: 'Black creates an asymmetrical fight and contests d4 from the flank.' },
   { id: 'open-sicilian', name: 'Open Sicilian', path: ['e4', 'c5', 'Nf3', 'd6', 'd4'], color: 'white', description: 'White opens the center and asks Black to choose a Sicilian structure.' },
   { id: 'alapin', name: 'Alapin Sicilian', path: ['e4', 'c5', 'c3'], color: 'white', description: 'A direct center-building route against the Sicilian.' },
   { id: 'closed-sicilian', name: 'Closed Sicilian', path: ['e4', 'c5', 'Nc3'], color: 'white', description: 'Keep the center closed and build kingside pressure.' },
   { id: 'smith-morra', name: 'Smith-Morra Gambit', path: ['e4', 'c5', 'd4'], color: 'white', description: 'A pawn sacrifice for fast development and open files.' },
-  { id: 'kings-pawn', name: "King's Pawn Game", path: ['e4'], color: 'both', description: 'The main gateway to open games, Sicilians, French, Caro-Kann, and more.' },
-  { id: 'ruy-lopez', name: 'Ruy Lopez', path: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5'], color: 'white', description: 'Classical pressure on the e5 pawn and Black knight.' },
-  { id: 'scotch', name: 'Scotch Game', path: ['e4', 'e5', 'Nf3', 'Nc6', 'd4'], color: 'white', description: 'Open the center early and make development concrete.' },
-  { id: 'french', name: 'French Defense', path: ['e4', 'e6'], color: 'black', description: 'A compact center with ...d5 and long-term pawn-chain play.' },
-  { id: 'caro-kann', name: 'Caro-Kann Defense', path: ['e4', 'c6'], color: 'black', description: 'Solid development around ...d5 and a durable pawn structure.' },
+  { id: 'grand-prix-attack', name: 'Grand Prix Attack', path: ['e4', 'c5', 'Nc3', 'Nc6', 'f4'], color: 'white', description: 'White aims for a fast kingside attack against the Sicilian.' },
+  { id: 'najdorf', name: 'Sicilian Najdorf', path: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6'], color: 'black', description: 'Black uses ...a6 for flexible queenside control and rich counterplay.' },
+  { id: 'dragon', name: 'Sicilian Dragon', path: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'g6'], color: 'black', description: 'Black fianchettoes and plays for long diagonal pressure.' },
+  { id: 'scheveningen', name: 'Sicilian Scheveningen', path: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e6'], color: 'black', description: 'Black builds a compact ...e6/...d6 center.' },
+  { id: 'sveshnikov', name: 'Sicilian Sveshnikov', path: ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e5'], color: 'black', description: 'Black accepts long-term holes for dynamic piece activity.' },
+  { id: 'taimanov', name: 'Sicilian Taimanov', path: ['e4', 'c5', 'Nf3', 'e6', 'd4', 'cxd4', 'Nxd4', 'Nc6'], color: 'black', description: 'Black develops flexibly with ...e6 and ...Nc6.' },
+  { id: 'kan-sicilian', name: 'Sicilian Kan', path: ['e4', 'c5', 'Nf3', 'e6', 'd4', 'cxd4', 'Nxd4', 'a6'], color: 'black', description: 'Black uses ...a6 early to control b5 and choose a setup later.' },
+  { id: 'accelerated-dragon', name: 'Accelerated Dragon', path: ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'g6'], color: 'black', description: 'Black fianchettoes quickly and often avoids early ...d6.' },
+  { id: 'french-defense', name: 'French Defense', path: ['e4', 'e6'], color: 'black', description: 'A compact center with ...d5 and long-term pawn-chain play.' },
+  { id: 'french-advance', name: 'French Advance', path: ['e4', 'e6', 'd4', 'd5', 'e5'], color: 'white', description: 'White gains space and locks the center.' },
+  { id: 'french-exchange', name: 'French Exchange', path: ['e4', 'e6', 'd4', 'd5', 'exd5'], color: 'white', description: 'White simplifies the center and heads for symmetrical structures.' },
+  { id: 'french-tarrasch', name: 'French Tarrasch', path: ['e4', 'e6', 'd4', 'd5', 'Nd2'], color: 'white', description: 'White supports e4 and avoids some Winawer pins.' },
+  { id: 'french-w.advance', name: 'French Winawer', path: ['e4', 'e6', 'd4', 'd5', 'Nc3', 'Bb4'], color: 'black', description: 'Black pins the knight and creates imbalanced pawn structures.' },
+  { id: 'caro-kann-defense', name: 'Caro-Kann Defense', path: ['e4', 'c6'], color: 'black', description: 'Solid development around ...d5 and a durable pawn structure.' },
+  { id: 'caro-advance', name: 'Caro-Kann Advance', path: ['e4', 'c6', 'd4', 'd5', 'e5'], color: 'white', description: 'White claims space and asks Black to undermine it.' },
+  { id: 'caro-classical', name: 'Caro-Kann Classical', path: ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4', 'Nxe4', 'Bf5'], color: 'black', description: 'Black develops the light bishop before closing the structure.' },
+  { id: 'scandinavian-defense', name: 'Scandinavian Defense', path: ['e4', 'd5'], color: 'black', description: 'Black challenges e4 immediately and accepts early queen development.' },
+  { id: 'alekhine-defense', name: 'Alekhine Defense', path: ['e4', 'Nf6'], color: 'black', description: 'Black invites White forward and attacks the overextended center later.' },
   { id: 'queens-gambit', name: "Queen's Gambit", path: ['d4', 'd5', 'c4'], color: 'white', description: 'Pressure Black central pawn structure from move two.' },
-  { id: 'kings-indian', name: "King's Indian Defense", path: ['d4', 'Nf6', 'c4', 'g6'], color: 'black', description: 'Let White build the center, then strike it later.' },
+  { id: 'qga', name: "Queen's Gambit Accepted", path: ['d4', 'd5', 'c4', 'dxc4'], color: 'black', description: 'Black accepts the pawn and makes White prove compensation.' },
+  { id: 'qgd', name: "Queen's Gambit Declined", path: ['d4', 'd5', 'c4', 'e6'], color: 'black', description: 'Black supports d5 and builds a solid classical defense.' },
+  { id: 'slav-defense', name: 'Slav Defense', path: ['d4', 'd5', 'c4', 'c6'], color: 'black', description: 'Black supports d5 while keeping the light bishop free.' },
+  { id: 'semi-slav', name: 'Semi-Slav Defense', path: ['d4', 'd5', 'c4', 'c6', 'Nf3', 'Nf6', 'Nc3', 'e6'], color: 'black', description: 'Black combines Slav structure with Queen’s Gambit Declined solidity.' },
+  { id: 'chigorin-defense', name: 'Chigorin Defense', path: ['d4', 'd5', 'c4', 'Nc6'], color: 'black', description: 'Black prioritizes piece pressure over a traditional pawn structure.' },
+  { id: 'albin-countergambit', name: 'Albin Countergambit', path: ['d4', 'd5', 'c4', 'e5'], color: 'black', description: 'Black sacrifices a pawn for central disruption.' },
+  { id: 'tarrasch-defense', name: 'Tarrasch Defense', path: ['d4', 'd5', 'c4', 'e6', 'Nc3', 'c5'], color: 'black', description: 'Black accepts an isolated queen pawn for active piece play.' },
+  { id: 'catalan-opening', name: 'Catalan Opening', path: ['d4', 'Nf6', 'c4', 'e6', 'g3'], color: 'white', description: 'White combines queen-pawn pressure with a kingside fianchetto.' },
+  { id: 'london-system', name: 'London System', path: ['d4', 'd5', 'Bf4'], color: 'white', description: 'White builds a reliable structure around Bf4, e3, and Nf3.' },
+  { id: 'colle-system', name: 'Colle System', path: ['d4', 'd5', 'Nf3', 'Nf6', 'e3'], color: 'white', description: 'White builds quietly and prepares central expansion.' },
+  { id: 'stonewall-attack', name: 'Stonewall Attack', path: ['d4', 'd5', 'e3', 'Nf6', 'Bd3'], color: 'white', description: 'White aims for a sturdy central wall and kingside attacking chances.' },
+  { id: 'trompowsky', name: 'Trompowsky Attack', path: ['d4', 'Nf6', 'Bg5'], color: 'white', description: 'White immediately questions the knight and avoids mainline Indian defenses.' },
+  { id: 'veresov', name: 'Veresov Attack', path: ['d4', 'd5', 'Nc3', 'Nf6', 'Bg5'], color: 'white', description: 'White develops actively and pressures the center with pieces.' },
+  { id: 'benoni-defense', name: 'Benoni Defense', path: ['d4', 'Nf6', 'c4', 'c5'], color: 'black', description: 'Black challenges White’s center and accepts dynamic pawn imbalances.' },
+  { id: 'modern-benoni', name: 'Modern Benoni', path: ['d4', 'Nf6', 'c4', 'c5', 'd5', 'e6'], color: 'black', description: 'Black invites a space disadvantage in exchange for queenside and central breaks.' },
+  { id: 'benko-gambit', name: 'Benko Gambit', path: ['d4', 'Nf6', 'c4', 'c5', 'd5', 'b5'], color: 'black', description: 'Black sacrifices a queenside pawn for long-term file pressure.' },
+  { id: 'budapest-gambit', name: 'Budapest Gambit', path: ['d4', 'Nf6', 'c4', 'e5'], color: 'black', description: 'Black offers a pawn to disrupt White’s queen-pawn setup.' },
+  { id: 'kings-indian-defense', name: "King's Indian Defense", path: ['d4', 'Nf6', 'c4', 'g6'], color: 'black', description: 'Let White build the center, then strike it later.' },
+  { id: 'grunfeld-defense', name: 'Grunfeld Defense', path: ['d4', 'Nf6', 'c4', 'g6', 'Nc3', 'd5'], color: 'black', description: 'Black attacks White’s center from distance with tactical counterplay.' },
+  { id: 'nimzo-indian', name: 'Nimzo-Indian Defense', path: ['d4', 'Nf6', 'c4', 'e6', 'Nc3', 'Bb4'], color: 'black', description: 'Black pins the knight and fights White’s center with piece pressure.' },
+  { id: 'queens-indian', name: "Queen's Indian Defense", path: ['d4', 'Nf6', 'c4', 'e6', 'Nf3', 'b6'], color: 'black', description: 'Black fianchettoes and plays a flexible, light-square strategy.' },
+  { id: 'bogo-indian', name: 'Bogo-Indian Defense', path: ['d4', 'Nf6', 'c4', 'e6', 'Nf3', 'Bb4+'], color: 'black', description: 'Black checks early and fights for a compact, flexible structure.' },
+  { id: 'dutch-defense', name: 'Dutch Defense', path: ['d4', 'f5'], color: 'black', description: 'Black takes kingside space and fights for e4.' },
+  { id: 'staunton-gambit', name: 'Staunton Gambit', path: ['d4', 'f5', 'e4'], color: 'white', description: 'White sacrifices against the Dutch to open lines quickly.' },
+  { id: 'english-symmetrical', name: 'English Symmetrical', path: ['c4', 'c5'], color: 'both', description: 'Both sides contest the queenside and central light squares.' },
+  { id: 'english-reversed-sicilian', name: 'English: Reversed Sicilian', path: ['c4', 'e5'], color: 'white', description: 'White plays an English with colors reversed and an extra tempo.' },
+  { id: 'english-four-knights', name: 'English Four Knights', path: ['c4', 'e5', 'Nc3', 'Nf6', 'Nf3', 'Nc6'], color: 'both', description: 'A flexible English structure with natural knight development.' },
 ];
 
 function normalizeSan(san: string) {
@@ -89,14 +169,19 @@ function getLocalLineMatches(path: string[]) {
 }
 
 function getCatalogBranches(path: string[], color: Color) {
-  return CATALOG_BRANCHES
+  const matching = CATALOG_BRANCHES
     .filter((branch) => branch.color === 'both' || branch.color === color)
-    .filter((branch) => pathStartsWith(branch.path, path) || pathStartsWith(path, branch.path))
+    .filter((branch) => pathStartsWith(branch.path, path) || pathStartsWith(path, branch.path));
+  const hasSpecificBranch = matching.some((branch) => !branch.generic && branch.path.length >= path.length);
+
+  return matching
+    .filter((branch) => !(branch.generic && path.length >= 2 && hasSpecificBranch))
     .sort((a, b) => {
       const aExact = pathsEqual(a.path, path) ? 1 : 0;
       const bExact = pathsEqual(b.path, path) ? 1 : 0;
       if (bExact !== aExact) return bExact - aExact;
-      return a.path.length - b.path.length;
+      if (a.path.length !== b.path.length) return a.path.length - b.path.length;
+      return a.name.localeCompare(b.name);
     });
 }
 
@@ -191,12 +276,31 @@ function boardMoveToSan(fen: string, from: string, to: string, piece?: string) {
   }
 }
 
+function resolveSanArrow(fen: string, san: string): [Square, Square, string] | null {
+  try {
+    const chess = new Chess(fen);
+    const normalised = normalizeSan(san);
+    const move = chess
+      .moves({ verbose: true })
+      .find((candidate) => normalizeSan(candidate.san) === normalised);
+
+    return move ? [move.from as Square, move.to as Square, 'rgba(56, 189, 248, 0.95)'] : null;
+  } catch {
+    return null;
+  }
+}
+
+function getBranchNextMove(path: string[], branch: CatalogBranch) {
+  return pathStartsWith(branch.path, path) ? branch.path[path.length] ?? null : null;
+}
+
 export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinderProps) {
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [boardWidth, setBoardWidth] = useState(480);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [previewSan, setPreviewSan] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const activePath = path.slice(0, cursor);
   const currentFen = pathToFen(activePath);
@@ -210,6 +314,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     () => getCatalogBranches(activePath, playerColor ?? 'white'),
     [activePath.join('|'), playerColor],
   );
+  const previewArrow = previewSan ? resolveSanArrow(currentFen, previewSan) : null;
 
   useEffect(() => {
     const node = boardRef.current;
@@ -229,6 +334,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     setPath(nextPath);
     setCursor(nextPath.length);
     setSelectedSquare(null);
+    setPreviewSan(null);
   }
 
   function chooseBoardMove(from: string, to: string, piece?: string) {
@@ -261,6 +367,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     }, []);
     setPath(legalPrefix);
     setCursor(legalPrefix.length);
+    setPreviewSan(null);
   }
 
   if (!playerColor) {
@@ -338,12 +445,17 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
         <aside className="min-h-0 overflow-y-auto rounded-[22px] border border-stone-800/65 bg-stone-950/72 p-3">
           <PanelHeading eyebrow="Routes" title="Possible openings" />
           <div className="mt-3 space-y-3">
-            {catalogBranches.slice(0, 6).map((branch) => {
+            {catalogBranches.map((branch) => {
               const active = pathsEqual(branch.path, activePath);
+              const nextSan = getBranchNextMove(activePath, branch);
               return (
                 <button
                   key={branch.id}
                   onClick={() => jumpToBranch(branch.path)}
+                  onMouseEnter={() => setPreviewSan(nextSan)}
+                  onFocus={() => setPreviewSan(nextSan)}
+                  onMouseLeave={() => setPreviewSan(null)}
+                  onBlur={() => setPreviewSan(null)}
                   className={`w-full rounded-2xl border p-3 text-left transition-colors cursor-pointer ${
                     active
                       ? 'border-sky-300/35 bg-sky-500/14'
@@ -367,6 +479,10 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
               return (
                 <div
                   key={`${match.opening.id}-${match.line.id}`}
+                  onMouseEnter={() => setPreviewSan(match.nextSan)}
+                  onFocus={() => setPreviewSan(match.nextSan)}
+                  onMouseLeave={() => setPreviewSan(null)}
+                  onBlur={() => setPreviewSan(null)}
                   className={`rounded-2xl border p-3 ${
                     playable
                       ? 'border-emerald-300/18 bg-emerald-400/8'
@@ -411,6 +527,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
               arePiecesDraggable
               onPieceDrop={(from, to, piece) => chooseBoardMove(from, to, piece)}
               onSquareClick={handleSquareClick}
+              customArrows={previewArrow ? [previewArrow] : []}
               customSquareStyles={
                 selectedSquare
                   ? { [selectedSquare]: { backgroundColor: 'rgba(56, 189, 248, 0.46)' } }
@@ -438,6 +555,10 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
               <button
                 key={move.san}
                 onClick={() => chooseMove(move.san)}
+                onMouseEnter={() => setPreviewSan(move.san)}
+                onFocus={() => setPreviewSan(move.san)}
+                onMouseLeave={() => setPreviewSan(null)}
+                onBlur={() => setPreviewSan(null)}
                 className="w-full rounded-2xl border border-stone-800/70 bg-stone-900/70 p-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-3">
