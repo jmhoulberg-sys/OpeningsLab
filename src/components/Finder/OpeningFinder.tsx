@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Home, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Home, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { Chess } from 'chess.js';
@@ -13,6 +13,7 @@ const NORMALIZE_RE = /[+#!?]/g;
 
 interface OpeningFinderProps {
   onBack: () => void;
+  onOpenOpening: (opening: Opening) => void;
   onStartPractice: (opening: Opening, line: OpeningLine) => void;
 }
 
@@ -204,6 +205,16 @@ function getLocalLineMatches(path: string[]) {
   ).filter((match): match is LocalLineMatch => match !== null);
 }
 
+function getUniqueOpenings(matches: LocalLineMatch[], color: Color) {
+  const byId = new Map<string, Opening>();
+  matches.forEach((match) => {
+    if (match.opening.playerColor === color) {
+      byId.set(match.opening.id, match.opening);
+    }
+  });
+  return [...byId.values()];
+}
+
 function getCatalogBranches(path: string[]) {
   const matching = CATALOG_BRANCHES
     .filter((branch) => pathStartsWith(branch.path, path) || pathStartsWith(path, branch.path));
@@ -328,18 +339,39 @@ function getBranchNextMove(path: string[], branch: CatalogBranch) {
   return pathStartsWith(branch.path, path) ? branch.path[path.length] ?? null : null;
 }
 
-export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinderProps) {
+function readFavoriteIds() {
+  if (typeof window === 'undefined') return new Set<string>();
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem('opening-finder-favorites') ?? '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function writeFavoriteIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem('opening-finder-favorites', JSON.stringify([...ids]));
+}
+
+export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }: OpeningFinderProps) {
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [boardWidth, setBoardWidth] = useState(480);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [previewSan, setPreviewSan] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState(readFavoriteIds);
+  const [confirmOpening, setConfirmOpening] = useState<Opening | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const activePath = path.slice(0, cursor);
   const currentFen = pathToFen(activePath);
   const turn = sideToMove(currentFen);
   const localMatches = useMemo(() => getLocalLineMatches(activePath), [activePath.join('|')]);
+  const trainableOpenings = useMemo(
+    () => getUniqueOpenings(localMatches, playerColor ?? 'white'),
+    [localMatches, playerColor],
+  );
   const routeMoveChoices = useMemo(
     () => getRouteMoveChoices(activePath, playerColor ?? 'white', currentFen),
     [activePath.join('|'), playerColor, currentFen],
@@ -349,6 +381,7 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     [activePath.join('|')],
   );
   const previewArrow = previewSan ? resolveSanArrow(currentFen, previewSan) : null;
+  const singleTrainableOpening = trainableOpenings.length === 1 ? trainableOpenings[0] : null;
 
   useEffect(() => {
     const node = boardRef.current;
@@ -402,6 +435,19 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     setPath(legalPrefix);
     setCursor(legalPrefix.length);
     setPreviewSan(null);
+  }
+
+  function toggleFavorite(id: string) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      writeFavoriteIds(next);
+      return next;
+    });
   }
 
   if (!playerColor) {
@@ -482,6 +528,8 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
             {catalogBranches.map((branch) => {
               const active = pathsEqual(branch.path, activePath);
               const nextSan = getBranchNextMove(activePath, branch);
+              const favoriteId = `catalog:${branch.id}`;
+              const favorite = favoriteIds.has(favoriteId);
               return (
                 <button
                   key={branch.id}
@@ -498,9 +546,35 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 truncate text-sm font-black text-white">{branch.name}</div>
-                    <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold uppercase text-stone-300">
-                      {branch.color === 'both' ? 'all' : branch.color}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold uppercase text-stone-300">
+                        {branch.color === 'both' ? 'all' : branch.color}
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={favorite ? `Unfavorite ${branch.name}` : `Favorite ${branch.name}`}
+                        title={favorite ? 'Remove favorite' : 'Favorite opening'}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleFavorite(favoriteId);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            toggleFavorite(favoriteId);
+                          }
+                        }}
+                        className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-colors ${
+                          favorite
+                            ? 'border-amber-300/45 bg-amber-300/14 text-amber-300'
+                            : 'border-stone-700/55 bg-stone-900 text-stone-500 hover:text-stone-200'
+                        }`}
+                      >
+                        <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
+                      </span>
+                    </div>
                   </div>
                   <div className="mt-2 text-xs leading-relaxed text-stone-400">{branch.description}</div>
                   <div className="mt-2 truncate text-[11px] font-semibold text-sky-200/80">{branch.path.join(' ')}</div>
@@ -510,6 +584,8 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
 
             {localMatches.slice(0, 7).map((match) => {
               const playable = match.opening.playerColor === playerColor;
+              const favoriteId = `opening:${match.opening.id}`;
+              const favorite = favoriteIds.has(favoriteId);
               return (
                 <div
                   key={`${match.opening.id}-${match.line.id}`}
@@ -529,6 +605,18 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
                       <div className="truncate text-sm font-black text-white">{match.line.name}</div>
                       <div className="mt-0.5 truncate text-xs text-stone-400">{match.opening.name}</div>
                     </div>
+                    <button
+                      onClick={() => toggleFavorite(favoriteId)}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-colors cursor-pointer ${
+                        favorite
+                          ? 'border-amber-300/45 bg-amber-300/14 text-amber-300'
+                          : 'border-stone-700/55 bg-stone-900 text-stone-500 hover:text-stone-200'
+                      }`}
+                      title={favorite ? 'Remove favorite' : 'Favorite opening'}
+                      aria-label={favorite ? `Unfavorite ${match.opening.name}` : `Favorite ${match.opening.name}`}
+                    >
+                      <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
+                    </button>
                   </div>
                   <div className="mt-2 text-xs text-stone-500">
                     {playable ? 'Available to practice' : `Built for ${match.opening.playerColor}`}
@@ -582,6 +670,25 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
         <aside className="min-h-0 overflow-y-auto rounded-[22px] border border-stone-800/65 bg-stone-950/72 p-3">
           <PanelHeading eyebrow="Route choices" title={rightTitle} />
           <div className="mt-3 space-y-2">
+            {singleTrainableOpening && (
+              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
+                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                  One practice course found
+                </div>
+                <div className="mt-1 text-sm font-black text-white">{singleTrainableOpening.name}</div>
+                <div className="mt-1 text-xs leading-relaxed text-stone-400">
+                  {singleTrainableOpening.lines.length} line{singleTrainableOpening.lines.length === 1 ? '' : 's'} ready from this route.
+                </div>
+                <button
+                  onClick={() => setConfirmOpening(singleTrainableOpening)}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+                >
+                  <Play size={15} />
+                  Practice opening
+                </button>
+              </div>
+            )}
+
             {routeMoveChoices.length === 0 && (
               <RailNotice text="No local route moves from this position yet. Step back or choose another route." />
             )}
@@ -622,6 +729,48 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
           </div>
         </aside>
       </main>
+
+      {confirmOpening && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-4">
+          <div className="w-full max-w-md rounded-[24px] border border-stone-700/60 bg-stone-950 p-5 shadow-2xl shadow-black/60">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                  Start practice
+                </div>
+                <h2 className="mt-1 text-xl font-black text-white">{confirmOpening.name}</h2>
+              </div>
+              <button
+                onClick={() => setConfirmOpening(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-stone-700/55 bg-stone-900 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+                aria-label="Close confirmation"
+              >
+                <X size={17} />
+              </button>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-stone-400">
+              This will leave the finder and open the training board for this course.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setConfirmOpening(null)}
+                className="rounded-xl border border-stone-700/55 bg-stone-900 px-3 py-2.5 text-sm font-bold text-stone-200 transition-colors hover:bg-stone-800 cursor-pointer"
+              >
+                Stay here
+              </button>
+              <button
+                onClick={() => {
+                  onOpenOpening(confirmOpening);
+                  setConfirmOpening(null);
+                }}
+                className="rounded-xl bg-emerald-400 px-3 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+              >
+                Start
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

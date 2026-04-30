@@ -46,6 +46,10 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
 
   const [confirmReset, setConfirmReset] = useState(false);
 
+  if (!isOpen) {
+    return null;
+  }
+
   function handleReset() {
     reset();
     resetProgression();
@@ -66,17 +70,13 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]"
-          onClick={handleBackdropClick}
-        />
-      )}
+      <div
+        className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]"
+        onClick={handleBackdropClick}
+      />
 
       <div
-        className={`fixed left-1/2 top-1/2 z-50 flex max-h-[86vh] w-[min(92vw,30rem)] -translate-x-1/2 flex-col overflow-hidden rounded-[24px] border border-stone-700/55 bg-stone-950 shadow-2xl shadow-black/70 transition-all duration-200 ${
-          isOpen ? '-translate-y-1/2 scale-100 opacity-100' : 'pointer-events-none -translate-y-[46%] scale-95 opacity-0'
-        }`}
+        className="fixed left-1/2 top-1/2 z-50 flex max-h-[86vh] w-[min(92vw,30rem)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col overflow-hidden rounded-[24px] border border-stone-700/55 bg-stone-950 opacity-100 shadow-2xl shadow-black/70 transition-all duration-200"
       >
         <div className="flex items-center justify-between border-b border-stone-800/70 px-5 py-4">
           <h2 className="text-lg font-bold text-white">Settings</h2>

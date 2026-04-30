@@ -9,6 +9,7 @@ import queensGambit from './queensGambit';
 import kingsIndianDefense from './kingsIndian';
 import frenchDefense from './french';
 import sicilianForWhite from './sicilianWhite';
+import criticalResponseOpenings from './criticalResponses';
 
 function createComingSoonOpening(id: string, name: string, playerColor: Opening['playerColor'] = 'white'): Opening {
   return {
@@ -39,6 +40,7 @@ export const OPENINGS: Opening[] = [
   queensGambit,
   kingsIndianDefense,
   frenchDefense,
+  ...criticalResponseOpenings,
   ...comingSoonOpenings,
 ];
 

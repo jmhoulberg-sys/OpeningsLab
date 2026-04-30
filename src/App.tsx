@@ -131,11 +131,21 @@ export default function App() {
     selectLine(line);
   }
 
+  function handleStartFinderOpening(selectedOpening: Opening) {
+    if (!startedRef.current) {
+      startedRef.current = true;
+    }
+    setShowHome(false);
+    setShowFinder(false);
+    startOpening(selectedOpening);
+  }
+
   if (showFinder) {
     return (
       <>
         <OpeningFinder
           onBack={handleGoHome}
+          onOpenOpening={handleStartFinderOpening}
           onStartPractice={handleStartFinderLine}
         />
         <AuthModal />
