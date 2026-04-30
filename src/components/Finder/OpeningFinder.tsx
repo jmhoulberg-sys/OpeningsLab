@@ -100,6 +100,12 @@ const CATALOG_BRANCHES: CatalogBranch[] = [
   { id: 'caro-advance', name: 'Caro-Kann Advance', path: ['e4', 'c6', 'd4', 'd5', 'e5'], color: 'white', description: 'White claims space and asks Black to undermine it.' },
   { id: 'caro-classical', name: 'Caro-Kann Classical', path: ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4', 'Nxe4', 'Bf5'], color: 'black', description: 'Black develops the light bishop before closing the structure.' },
   { id: 'scandinavian-defense', name: 'Scandinavian Defense', path: ['e4', 'd5'], color: 'black', description: 'Black challenges e4 immediately and accepts early queen development.' },
+  { id: 'scandinavian-main-nc3', name: 'Scandinavian Main Line: 3.Nc3', path: ['e4', 'd5', 'exd5', 'Qxd5', 'Nc3'], color: 'white', description: 'White hits the early queen with tempo and develops naturally.' },
+  { id: 'scandinavian-nf3', name: 'Scandinavian: 3.Nf3 Setup', path: ['e4', 'd5', 'exd5', 'Qxd5', 'Nf3'], color: 'white', description: 'A flexible setup that delays Nc3 and keeps development smooth.' },
+  { id: 'scandinavian-d4', name: 'Scandinavian: 3.d4 Center', path: ['e4', 'd5', 'exd5', 'Qxd5', 'd4'], color: 'white', description: 'White takes central space and develops with a broad pawn center.' },
+  { id: 'scandinavian-modern-d4', name: 'Modern Scandinavian: 3.d4', path: ['e4', 'd5', 'exd5', 'Nf6', 'd4'], color: 'white', description: 'White builds the center against the delayed recapture setup.' },
+  { id: 'scandinavian-modern-c4', name: 'Modern Scandinavian: 3.c4', path: ['e4', 'd5', 'exd5', 'Nf6', 'c4'], color: 'white', description: 'White tries to hold the extra pawn and asks Black to prove compensation.' },
+  { id: 'scandinavian-portuguese-f3', name: 'Portuguese Scandinavian: 4.f3', path: ['e4', 'd5', 'exd5', 'Nf6', 'd4', 'Bg4', 'f3'], color: 'white', description: 'White challenges the bishop and grabs space in a sharp Modern Scandinavian branch.' },
   { id: 'alekhine-defense', name: 'Alekhine Defense', path: ['e4', 'Nf6'], color: 'black', description: 'Black invites White forward and attacks the overextended center later.' },
   { id: 'queens-gambit', name: "Queen's Gambit", path: ['d4', 'd5', 'c4'], color: 'white', description: 'Pressure Black central pawn structure from move two.' },
   { id: 'qga', name: "Queen's Gambit Accepted", path: ['d4', 'd5', 'c4', 'dxc4'], color: 'black', description: 'Black accepts the pawn and makes White prove compensation.' },
@@ -168,9 +174,8 @@ function getLocalLineMatches(path: string[]) {
   ).filter((match): match is LocalLineMatch => match !== null);
 }
 
-function getCatalogBranches(path: string[], color: Color) {
+function getCatalogBranches(path: string[]) {
   const matching = CATALOG_BRANCHES
-    .filter((branch) => branch.color === 'both' || branch.color === color)
     .filter((branch) => pathStartsWith(branch.path, path) || pathStartsWith(path, branch.path));
   const hasSpecificBranch = matching.some((branch) => !branch.generic && branch.path.length >= path.length);
 
@@ -208,7 +213,6 @@ function getRouteMoveChoices(path: string[], color: Color, fen: string) {
   }
 
   CATALOG_BRANCHES
-    .filter((branch) => branch.color === 'both' || branch.color === color)
     .forEach((branch) => {
       if (!pathStartsWith(branch.path, path)) return;
       const nextSan = branch.path[path.length];
@@ -311,8 +315,8 @@ export default function OpeningFinder({ onBack, onStartPractice }: OpeningFinder
     [activePath.join('|'), playerColor, currentFen],
   );
   const catalogBranches = useMemo(
-    () => getCatalogBranches(activePath, playerColor ?? 'white'),
-    [activePath.join('|'), playerColor],
+    () => getCatalogBranches(activePath),
+    [activePath.join('|')],
   );
   const previewArrow = previewSan ? resolveSanArrow(currentFen, previewSan) : null;
 
