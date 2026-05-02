@@ -288,6 +288,18 @@ function getPositionName(path: string[]) {
   return `After ${path[path.length - 1]}`;
 }
 
+function getExactCatalogBranch(path: string[]) {
+  return CATALOG_BRANCHES.find((branch) => pathsEqual(branch.path, path)) ?? null;
+}
+
+function getOpeningForCatalogBranch(branch: CatalogBranch | null, color: Color | null) {
+  if (!branch) return null;
+  return OPENINGS.find((opening) =>
+    opening.playerColor === (color ?? opening.playerColor) &&
+    opening.name === branch.name
+  ) ?? null;
+}
+
 function pathToFen(path: string[]) {
   return path.length === 0 ? STARTING_FEN : fenAfterMoves(path);
 }
@@ -391,8 +403,18 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
     () => getCatalogBranches(activePath),
     [activePath.join('|')],
   );
+  const exactCatalogBranch = useMemo(
+    () => getExactCatalogBranch(activePath),
+    [activePath.join('|')],
+  );
+  const exactCourseOpening = useMemo(
+    () => getOpeningForCatalogBranch(exactCatalogBranch, playerColor),
+    [exactCatalogBranch, playerColor],
+  );
   const previewArrow = previewSan ? resolveSanArrow(currentFen, previewSan) : null;
   const singleTrainableOpening = trainableOpenings.length === 1 ? trainableOpenings[0] : null;
+  const featuredCourseOpening = exactCourseOpening ?? singleTrainableOpening;
+  const showLineCards = !featuredCourseOpening;
   const boardSquareStyles: Record<string, CSSProperties> = {};
   if (selectedSquare) {
     boardSquareStyles[selectedSquare] = { backgroundColor: 'rgba(56, 189, 248, 0.24)' };
@@ -550,6 +572,25 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
           <PanelHeading eyebrow="Routes" title="Possible openings" />
           <div className="mt-2 space-y-2">
+            {featuredCourseOpening && (
+              <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
+                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                  Course found
+                </div>
+                <div className="mt-1 text-base font-black text-white">{featuredCourseOpening.name}</div>
+                <div className="mt-1 text-xs leading-relaxed text-stone-300">
+                  {featuredCourseOpening.description}
+                </div>
+                <button
+                  onClick={() => onOpenOpening(featuredCourseOpening)}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+                >
+                  <Play size={15} />
+                  Train {featuredCourseOpening.name}
+                </button>
+              </div>
+            )}
+
             {catalogBranches.map((branch) => {
               const active = pathsEqual(branch.path, activePath);
               const nextSan = getBranchNextMove(activePath, branch);
@@ -607,7 +648,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
               );
             })}
 
-            {localMatches.slice(0, 7).map((match) => {
+            {showLineCards && localMatches.slice(0, 7).map((match) => {
               const playable = match.opening.playerColor === playerColor;
               const favoriteId = `opening:${match.opening.id}`;
               const favorite = favoriteIds.has(favoriteId);
@@ -691,21 +732,21 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
           <PanelHeading eyebrow="Route choices" title={rightTitle} />
           <div className="mt-2 space-y-2">
-            {singleTrainableOpening && (
+            {featuredCourseOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
                 <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
-                  One practice course found
+                  Ready to train
                 </div>
-                <div className="mt-1 text-sm font-black text-white">{singleTrainableOpening.name}</div>
+                <div className="mt-1 text-sm font-black text-white">{featuredCourseOpening.name}</div>
                 <div className="mt-1 text-xs leading-relaxed text-stone-400">
-                  {singleTrainableOpening.lines.length} line{singleTrainableOpening.lines.length === 1 ? '' : 's'} ready from this route.
+                  Continue from here by training the full {featuredCourseOpening.name} course.
                 </div>
                 <button
-                  onClick={() => setConfirmOpening(singleTrainableOpening)}
+                  onClick={() => setConfirmOpening(featuredCourseOpening)}
                   className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
                 >
                   <Play size={15} />
-                  Practice opening
+                  Train {featuredCourseOpening.name}
                 </button>
               </div>
             )}
