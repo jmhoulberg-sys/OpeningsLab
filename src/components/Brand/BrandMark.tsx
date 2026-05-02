@@ -5,7 +5,7 @@ export default function BrandMark({ size = 'normal' }: { size?: 'normal' | 'larg
   return (
     <div className="flex items-center gap-3">
       <div
-        className="flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-400/16 via-sky-400/8 to-transparent ring-1 ring-sky-300/10"
+        className="flex items-center justify-center rounded-xl border border-sky-300/20 bg-sky-400/12"
         style={{ width: iconSize, height: iconSize }}
       >
         <svg width={iconSize - 6} height={iconSize - 6} viewBox="0 0 24 24" fill="none" className="text-sky-400">

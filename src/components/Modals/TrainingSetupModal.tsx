@@ -8,8 +8,6 @@ import {
   Sparkles,
   Star,
   Target,
-  Timer,
-  Trophy,
   X,
 } from 'lucide-react';
 import type { OpeningLine, TrainingMode } from '../../types';
@@ -43,6 +41,7 @@ export default function TrainingSetupModal() {
   const speedUnlocked = completedLines >= 3;
   const visibleLines = useMemo(() => {
     if (selectedMode === 'learn' && learnableLines.length > 0) return learnableLines;
+    if (selectedMode !== 'learn') return lineStates.filter((entry) => entry.unlocked);
     return lineStates;
   }, [learnableLines, lineStates, selectedMode]);
 
@@ -103,7 +102,7 @@ export default function TrainingSetupModal() {
         </div>
 
         <div className="max-h-[calc(100vh-7rem)] overflow-y-auto px-5 py-5">
-          <section className="rounded-[20px] border border-sky-300/15 bg-stone-950/70 p-4 shadow-[0_18px_42px_rgba(14,165,233,0.08)]">
+          <section className="rounded-[20px] border border-sky-300/15 bg-stone-950/70 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-sm font-black text-white">
                 <BookOpen size={17} className="text-sky-300" />
@@ -111,7 +110,7 @@ export default function TrainingSetupModal() {
               </div>
               <span className="text-xs font-semibold text-stone-500">{opening.name}</span>
             </div>
-            <div className="max-w-[560px] rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
+            <div className="max-w-[560px] rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950">
               {getCoachCopy(selectedMode, learnableLines.length)}
             </div>
           </section>
@@ -137,7 +136,6 @@ export default function TrainingSetupModal() {
           <ModePicker
             selectedMode={selectedMode}
             setSelectedMode={setSelectedMode}
-            speedUnlocked={speedUnlocked}
           />
 
           <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
@@ -149,6 +147,11 @@ export default function TrainingSetupModal() {
             </div>
 
             <div className="grid gap-2 lg:grid-cols-2">
+              {visibleLines.length === 0 && (
+                <div className="rounded-2xl border border-stone-800/70 bg-stone-900/70 p-4 text-sm font-semibold text-stone-400 lg:col-span-2">
+                  Learn one line first. Each learned line becomes one practice line.
+                </div>
+              )}
               {visibleLines.map(({ line, unlocked }) => (
                 <LineChoice
                   key={line.id}
@@ -176,11 +179,9 @@ export default function TrainingSetupModal() {
 function ModePicker({
   selectedMode,
   setSelectedMode,
-  speedUnlocked,
 }: {
   selectedMode: SetupMode;
   setSelectedMode: (mode: SetupMode) => void;
-  speedUnlocked: boolean;
 }) {
   const modes: Array<{
     value: SetupMode;
@@ -188,38 +189,37 @@ function ModePicker({
     icon: React.ReactNode;
     tone: string;
     help: string;
-    group: 'learn' | 'practice' | 'speed';
+    group: 'learn' | 'practice';
     locked?: boolean;
     lockLabel?: string;
   }> = [
-    { value: 'learn', label: 'Learn line', icon: <BookOpen size={16} />, tone: 'sky', help: 'Answer shown', group: 'learn' },
-    { value: 'step-by-step', label: 'Step-by-step', icon: <Target size={16} />, tone: 'emerald', help: 'Move by move', group: 'practice' },
-    { value: 'full-line', label: 'Full line', icon: <Trophy size={16} />, tone: 'amber', help: 'No training wheels', group: 'practice' },
-    { value: 'time-trial', label: 'Speed', icon: <Timer size={16} />, tone: 'rose', help: 'Beat the clock', group: 'speed', locked: !speedUnlocked, lockLabel: 'Master min. 3 lines' },
+    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, tone: 'sky', help: '1/28 lines discovered', group: 'learn' },
+    { value: 'step-by-step', label: 'Practice', icon: <Target size={16} />, tone: 'emerald', help: '0/1 lines perfected', group: 'practice' },
   ];
   const learnMode = modes.find((mode) => mode.group === 'learn')!;
-  const practiceModes = modes.filter((mode) => mode.group === 'practice');
-  const speedMode = modes.find((mode) => mode.group === 'speed')!;
+  const practiceMode = modes.find((mode) => mode.group === 'practice')!;
 
   return (
     <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Mode</div>
-        <div className="text-[11px] font-semibold text-stone-500">Learn line &gt; practice line &gt; speed</div>
+        <div className="text-[11px] font-semibold text-stone-500">Learn one line, then practice that line</div>
       </div>
       <div className="space-y-2">
         <ModeButton mode={learnMode} active={selectedMode === learnMode.value} setSelectedMode={setSelectedMode} />
-        <div className="grid gap-2 sm:grid-cols-2">
-          {practiceModes.map((mode) => (
-            <ModeButton
-              key={mode.value}
-              mode={mode}
-              active={selectedMode === mode.value}
-              setSelectedMode={setSelectedMode}
-            />
+        <ModeButton mode={practiceMode} active={selectedMode === practiceMode.value} setSelectedMode={setSelectedMode} />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            ['Drill', 'Learn 3 lines to unlock'],
+            ['Time', 'Learn 3 lines to unlock'],
+            ['Puzzles', 'Learn 2 lines to unlock'],
+          ].map(([label, help]) => (
+            <div key={label} className="min-h-[62px] rounded-2xl border border-stone-800/45 bg-stone-900/35 px-3 py-2 text-stone-600">
+              <div className="text-sm font-black">{label}</div>
+              <div className="mt-1 text-[11px] font-bold">{help}</div>
+            </div>
           ))}
         </div>
-        <ModeButton mode={speedMode} active={selectedMode === speedMode.value} setSelectedMode={setSelectedMode} />
       </div>
     </section>
   );
@@ -270,10 +270,10 @@ function ModeButton({
 }
 
 function getActiveModeClasses(tone: string) {
-  if (tone === 'emerald') return 'border-emerald-200/55 bg-emerald-400/18 text-white shadow-[0_12px_26px_rgba(52,211,153,0.14)]';
-  if (tone === 'amber') return 'border-amber-200/55 bg-amber-300/18 text-white shadow-[0_12px_26px_rgba(251,191,36,0.12)]';
-  if (tone === 'rose') return 'border-rose-200/45 bg-rose-400/14 text-white shadow-[0_12px_26px_rgba(251,113,133,0.1)]';
-  return 'border-sky-200/55 bg-sky-400/18 text-white shadow-[0_12px_26px_rgba(56,189,248,0.14)]';
+  if (tone === 'emerald') return 'border-emerald-200/55 bg-emerald-400/18 text-white';
+  if (tone === 'amber') return 'border-amber-200/55 bg-amber-300/18 text-white';
+  if (tone === 'rose') return 'border-rose-200/45 bg-rose-400/14 text-white';
+  return 'border-sky-200/55 bg-sky-400/18 text-white';
 }
 
 function getInactiveModeClasses(tone: string) {
@@ -329,7 +329,7 @@ function LineChoice({
     <div
       className={`rounded-2xl border bg-stone-950/75 p-3 transition-colors ${
         isUnlocking || isNewlyUnlocked
-          ? 'unlock-outline border-sky-400/45 shadow-[0_10px_24px_rgba(14,165,233,0.14)]'
+          ? 'unlock-outline border-sky-400/45'
           : 'border-stone-800/70'
       }`}
     >

@@ -3,6 +3,7 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
 import BrandMark from '../Brand/BrandMark';
+import StreakBadge from '../Streak/StreakBadge';
 
 interface HeaderProps {
   onSettingsClick: () => void;
@@ -52,6 +53,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
         </div>
 
         <div className="flex items-center gap-2.5 justify-self-end">
+          <StreakBadge />
           {isLoggedIn ? (
             <button
               onClick={onProfileClick}

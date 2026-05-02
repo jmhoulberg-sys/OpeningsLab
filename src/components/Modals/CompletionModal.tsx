@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Crown, Sparkles, Star } from 'lucide-react';
+import { Flame, Star } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
-import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
+import { getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
 import { isGameOver } from '../../engine/chessEngine';
 
 export default function CompletionModal() {
@@ -23,14 +23,14 @@ export default function CompletionModal() {
   } = useTrainingStore();
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
-  const xpTotal = useProgressionStore((state) => state.xpTotal);
+  const daily = useProgressionStore((state) => state.daily);
   const [earnedXp, setEarnedXp] = useState(0);
   const [lineJustUnlocked, setLineJustUnlocked] = useState(false);
 
   useEffect(() => {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
-      const recordsProgress = mode === 'step-by-step' || mode === 'full-line';
+      const recordsProgress = mode === 'learn' || mode === 'step-by-step' || mode === 'full-line';
       const lineWasNew = !useProgressStore.getState().getLineProgress(opening.id, selectedLine.id)?.unlocked;
       setLineJustUnlocked(recordsProgress && lineWasNew && mistakes === 0);
       setEarnedXp(recordsProgress ? 10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0) : 0);
@@ -48,13 +48,13 @@ export default function CompletionModal() {
   }
 
   const perfect = mistakes === 0;
-  const recordsProgress = mode === 'step-by-step' || mode === 'full-line';
+  const recordsProgress = mode === 'learn' || mode === 'step-by-step' || mode === 'full-line';
   const canContinue = !isGameOver(currentFen);
-  const filledStars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
   const existingProgress = getLineProgress(opening.id, selectedLine.id);
   const existingInterval = existingProgress?.srInterval ?? 0;
   const nextInterval = perfect ? Math.max(1, existingInterval * 2) : 1;
-  const levelInfo = getLevelInfo(xpTotal);
+  const streakDays = getRecentStreakDays(daily, 5);
+  const currentStreak = getCurrentStreak(daily);
 
   function startPractice(nextMode: 'step-by-step' | 'full-line') {
     if (!selectedLine) return;
@@ -63,19 +63,40 @@ export default function CompletionModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="mx-4 w-full max-w-md rounded-2xl border border-slate-700/60 bg-brand-surface p-8 text-center shadow-2xl shadow-black/60">
-        <StarRating mistakes={mistakes} filledCount={filledStars} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/78 px-4">
+      <div className="mx-4 w-full max-w-2xl rounded-3xl border border-amber-400 bg-brand-surface p-7 text-center">
+        <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-[32px] bg-amber-400/10 text-amber-300">
+          <Flame size={74} fill="currentColor" />
+        </div>
 
-        <h2 className="mb-1 text-2xl font-bold text-white">
-          {mode === 'learn' ? 'Walkthrough complete' : perfect ? 'Perfect!' : 'Good job!'}
+        <div className="mt-5 text-7xl font-black leading-none text-amber-400">
+          {Math.max(1, currentStreak)}
+        </div>
+        <h2 className="mt-4 text-2xl font-black text-amber-400">
+          {Math.max(1, currentStreak)} day streak
         </h2>
-
-        <p className="mb-4 text-sm text-slate-400">
-          {opening.name} / {selectedLine.name}
+        <p className="mt-2 text-sm font-semibold text-slate-300">
+          {mode === 'learn' ? 'Walkthrough complete' : perfect ? 'Perfect line complete' : 'Line complete'}: {selectedLine.name}
         </p>
 
-        <div className="mb-6 space-y-2 rounded-xl bg-slate-800/60 p-4">
+        <div className="mx-auto mt-5 grid max-w-sm grid-cols-5 gap-2 rounded-xl border border-slate-700/70 bg-slate-900/70 p-3">
+          {streakDays.map((day) => (
+            <div key={day.key} className="text-center">
+              <div className={`text-xs font-black ${day.today ? 'text-amber-300' : 'text-slate-200'}`}>
+                {day.label}
+              </div>
+              <div className={`mt-2 flex aspect-square items-center justify-center rounded-full text-2xl font-black ${
+                day.active || day.today
+                  ? 'bg-amber-400 text-slate-950'
+                  : 'bg-slate-700 text-slate-500'
+              }`}>
+                {day.active || day.today ? '✓' : ''}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="my-5 space-y-2 rounded-xl bg-slate-800/60 p-4">
           {recordsProgress ? (
             <StatRow label="XP earned" value={`+${earnedXp}`} good />
           ) : (
@@ -105,7 +126,7 @@ export default function CompletionModal() {
           )}
           {recordsProgress && perfect ? (
             <p className={`flex items-center justify-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-emerald-300 ${
-              lineJustUnlocked ? 'bg-emerald-500/12 star-pop shadow-[0_10px_24px_rgba(16,185,129,0.22)]' : ''
+              lineJustUnlocked ? 'bg-emerald-500/12 star-pop' : ''
             }`}>
               {lineJustUnlocked ? 'New line unlocked!' : 'Line unlocked!'} <Star size={14} fill="currentColor" />
             </p>
@@ -118,21 +139,6 @@ export default function CompletionModal() {
               Now complete step-by-step or full-line practice to unlock this line.
             </p>
           )}
-          <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/70 px-3 py-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sky-300">
-                <Crown size={15} />
-                <span className="text-sm font-semibold text-white">Level {levelInfo.level}</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-slate-400">
-                <Sparkles size={13} />
-                {Math.max(0, levelInfo.nextLevelXp - xpTotal)} XP to next
-              </div>
-            </div>
-            <div className="mt-2 h-1.5 rounded-full bg-slate-800">
-              <div className="h-1.5 rounded-full bg-sky-400" style={{ width: `${levelInfo.progressPct}%` }} />
-            </div>
-          </div>
         </div>
 
         {!canContinue && (
@@ -143,27 +149,19 @@ export default function CompletionModal() {
 
         <div className="flex flex-col gap-3">
           {mode === 'learn' && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                onClick={() => startPractice('step-by-step')}
-                className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
-              >
-                Step-by-step
-              </button>
-              <button
-                onClick={() => startPractice('full-line')}
-                className="w-full rounded-xl border border-sky-400/25 bg-sky-500/14 py-3 text-sm font-bold text-sky-100 transition-colors hover:bg-sky-500/20 cursor-pointer"
-              >
-                Full line
-              </button>
-            </div>
+            <button
+              onClick={() => startPractice('step-by-step')}
+              className="w-full rounded-xl bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+            >
+              Train this line
+            </button>
           )}
 
           <button
             onClick={restart}
-            className="w-full rounded-xl bg-sky-500 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 cursor-pointer"
+            className="w-full rounded-xl bg-amber-400 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-300 cursor-pointer"
           >
-            {mode === 'learn' ? 'Repeat walkthrough' : 'Retry line'}
+            {mode === 'learn' ? 'Repeat walkthrough' : 'Continue'}
           </button>
 
           {canContinue && (
@@ -192,40 +190,6 @@ function StatRow({ label, value, good }: { label: string; value: string; good: b
     <div className="flex items-center justify-between text-sm">
       <span className="text-slate-400">{label}</span>
       <span className={`font-bold ${good ? 'text-emerald-400' : 'text-red-400'}`}>{value}</span>
-    </div>
-  );
-}
-
-function StarRating({ mistakes, filledCount }: { mistakes: number; filledCount: number }) {
-  const [shown, setShown] = useState(0);
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setShown(1), 300),
-      setTimeout(() => setShown(2), 600),
-      setTimeout(() => setShown(3), 900),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [mistakes]);
-
-  return (
-    <div className="mb-3 flex justify-center gap-3">
-      {[1, 2, 3].map((star) => (
-        <div
-          key={`${star}-${shown}`}
-          className="inline-flex"
-          style={shown >= star
-            ? { animation: 'starPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }
-            : { opacity: 0.2, transform: 'scale(0.8)' }}
-        >
-          <Star
-            size={52}
-            className={star <= filledCount ? 'text-yellow-400' : 'text-slate-600'}
-            fill={star <= filledCount && shown >= star ? 'currentColor' : 'none'}
-            strokeWidth={star <= filledCount ? 1.5 : 2}
-          />
-        </div>
-      ))}
     </div>
   );
 }

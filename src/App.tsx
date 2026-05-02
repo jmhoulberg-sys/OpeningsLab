@@ -9,8 +9,6 @@ import {
   RotateCcw,
   Sparkles,
   Target,
-  Timer,
-  Trophy,
   X,
 } from 'lucide-react';
 import Header from './components/Header/Header';
@@ -461,7 +459,7 @@ function ModeSelector({
   opening: Opening;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
 }) {
-  const { mode, selectedLine, setMode } = useTrainingStore();
+  const { mode, setMode } = useTrainingStore();
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
   const modes: Array<{
@@ -472,15 +470,13 @@ function ModeSelector({
     lockLabel?: string;
   }> = [
     { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, unlocked: true },
-    { value: 'step-by-step', label: 'Step', icon: <Target size={16} />, unlocked: setupDone, lockLabel: 'Finish setup' },
-    { value: 'full-line', label: 'Full line', icon: <Trophy size={16} />, unlocked: setupDone && !!selectedLine, lockLabel: 'Pick a line' },
-    { value: 'time-trial', label: 'Speed', icon: <Timer size={16} />, unlocked: completedLines >= 3, lockLabel: 'Master 3 lines' },
+    { value: 'step-by-step', label: 'Practice', icon: <Target size={16} />, unlocked: setupDone && completedLines > 0, lockLabel: 'Learn 1 line' },
   ];
 
   return (
     <section className="rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
       <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Mode</div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid gap-2">
         {modes.map((item) => {
           const active = mode === item.value;
           return (
@@ -511,6 +507,23 @@ function ModeSelector({
             </button>
           );
         })}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            ['Drill', 'Learn 3 lines'],
+            ['Speed', 'Learn 3 lines'],
+          ].map(([label, lockLabel]) => (
+            <div
+              key={label}
+              className="min-h-[58px] rounded-2xl border border-stone-800/45 bg-stone-900/35 px-3 py-2 text-left text-stone-600"
+            >
+              <div className="flex items-center gap-2 text-sm font-black">
+                <Lock size={15} />
+                {label}
+              </div>
+              <div className="mt-1 text-[11px] font-semibold">{lockLabel}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

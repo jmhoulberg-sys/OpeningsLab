@@ -142,8 +142,7 @@ export function HeroSection({
   onContinueClick,
 }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-stone-800/55 bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7">
-      <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.15),transparent_42%)] lg:block" />
+    <section className="relative overflow-hidden rounded-[30px] border border-stone-800/55 bg-stone-900 px-5 py-6 sm:px-7 sm:py-7">
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
           <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
@@ -206,7 +205,7 @@ export function ProgressOverview({
 }: ProgressOverviewProps) {
   return (
     <section className="grid gap-3 lg:grid-cols-[1.35fr_1fr_1fr]">
-      <div className="rounded-[20px] border border-sky-300/15 bg-stone-900/75 p-4 shadow-[0_18px_42px_rgba(14,165,233,0.08)]">
+      <div className="rounded-[20px] border border-sky-300/15 bg-stone-900/75 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">
@@ -216,13 +215,13 @@ export function ProgressOverview({
               {isLoggedIn ? `Level ${level}` : 'Sign in to see level'}
             </div>
           </div>
-          <div className="rounded-2xl bg-sky-400/18 p-3 text-sky-200 shadow-[0_0_28px_rgba(56,189,248,0.22)]">
+          <div className="rounded-2xl bg-sky-400/18 p-3 text-sky-200">
             <Crown size={24} />
           </div>
         </div>
         <div className="mt-3 h-2 rounded-full bg-stone-800">
           <div
-            className="h-2 rounded-full bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 transition-all duration-500"
+            className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
             style={{ width: `${isLoggedIn ? progressPct : 100}%` }}
           />
         </div>
@@ -443,8 +442,8 @@ function MetricCard({
   tone: 'sky' | 'emerald';
 }) {
   const toneClasses = tone === 'sky'
-    ? 'border-sky-300/15 bg-sky-400/16 text-sky-200 shadow-[0_0_28px_rgba(56,189,248,0.14)]'
-    : 'border-emerald-300/15 bg-emerald-400/16 text-emerald-200 shadow-[0_0_28px_rgba(52,211,153,0.14)]';
+    ? 'border-sky-300/15 bg-sky-400/16 text-sky-200'
+    : 'border-emerald-300/15 bg-emerald-400/16 text-emerald-200';
 
   return (
     <div className="rounded-[20px] border border-stone-800/55 bg-stone-900/75 p-4">
@@ -521,7 +520,7 @@ function OpeningCard({
       onClick={() => {
         if (firstLine) onStartLine(opening, firstLine);
       }}
-      className={`group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.12)] transition-all duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-700/55 hover:shadow-[0_22px_56px_rgba(0,0,0,0.18)]' : ''}`}
+      className={`group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 transition-colors duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-700/55' : ''}`}
       aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -643,7 +642,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-square w-full overflow-hidden rounded-[20px] shadow-[0_10px_24px_rgba(0,0,0,0.22)] ${isClickable ? 'cursor-pointer ring-1 ring-transparent transition-all duration-200 group-hover:ring-sky-400/35 group-hover:shadow-[0_14px_30px_rgba(14,165,233,0.16)] board-preview-clickable' : ''}`}
+      className={`relative aspect-square w-full overflow-hidden rounded-[20px] ${isClickable ? 'cursor-pointer ring-1 ring-transparent transition-colors duration-200 group-hover:ring-sky-400/35 board-preview-clickable' : ''}`}
     >
       <Chessboard
         position={fen}

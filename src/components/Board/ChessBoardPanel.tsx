@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
@@ -15,6 +15,8 @@ const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
 const HINT_HIGHLIGHT = 'rgba(56, 189, 248, 0.72)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
+const MOVE_DOT = 'radial-gradient(circle, rgba(92,82,61,0.48) 0 18%, transparent 20%)';
+const ANSWER_DOT = 'radial-gradient(circle, rgba(14,165,233,0.7) 0 18%, transparent 20%)';
 
 function resolveArrow(fen: string, san: string): [Square, Square] | null {
   try {
@@ -24,6 +26,15 @@ function resolveArrow(fen: string, san: string): [Square, Square] | null {
     return found ? [found.from as Square, found.to as Square] : null;
   } catch {
     return null;
+  }
+}
+
+function legalDestinations(fen: string, from: Square): Square[] {
+  try {
+    const chess = new Chess(fen);
+    return chess.moves({ square: from, verbose: true }).map((move) => move.to as Square);
+  } catch {
+    return [];
   }
 }
 
@@ -168,7 +179,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       ? opening?.setupMoves[currentMoveIndex] ?? null
       : selectedLine?.moves[currentMoveIndex]?.san ?? null)
     : null;
-  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  const customSquareStyles: Record<string, CSSProperties> = {};
   const guidedAnswerArrow = mode === 'learn' &&
     !isReviewing &&
     !wrongMoveFen &&
@@ -200,6 +211,12 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
   if (!isReviewing && selectedSquare) {
     customSquareStyles[selectedSquare] = { backgroundColor: SELECTED_HIGHLIGHT };
+    legalDestinations(displayFen, selectedSquare).forEach((square) => {
+      customSquareStyles[square] = {
+        ...(customSquareStyles[square] ?? {}),
+        background: MOVE_DOT,
+      };
+    });
   }
 
   if (!isReviewing && hintSquare) {
@@ -213,12 +230,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   if (guidedAnswerArrow) {
     customSquareStyles[guidedAnswerArrow[0]] = {
       ...(customSquareStyles[guidedAnswerArrow[0]] ?? {}),
-      backgroundColor: 'rgba(56, 189, 248, 0.42)',
-      boxShadow: 'inset 0 0 0 2px rgba(186,230,253,0.3)',
+      backgroundColor: 'rgba(56, 189, 248, 0.22)',
     };
     customSquareStyles[guidedAnswerArrow[1]] = {
       ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
-      backgroundColor: 'rgba(14, 165, 233, 0.54)',
+      background: ANSWER_DOT,
     };
   }
 
@@ -229,10 +245,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     if (arrow) {
       customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
     }
-  }
-
-  if (guidedAnswerArrow) {
-    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
   }
 
   const onSquareClick = useCallback(
@@ -372,7 +384,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
             key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
             className={[
               'board-frame relative isolate overflow-hidden rounded-[18px]',
-              'bg-[#2f2116] shadow-[0_20px_50px_rgba(0,0,0,0.34)]',
+              'bg-[#2f2116]',
               boardFlashing ? 'board-flash-green' : '',
               isReviewing ? 'opacity-90 ring-2 ring-sky-500/30' : '',
             ].join(' ')}
@@ -418,7 +430,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                       height: badge,
                     }}
                   >
-                    <div className="flex h-full w-full items-center justify-center rounded-2xl border border-white/55 bg-rose-500 text-white shadow-[0_14px_28px_rgba(244,63,94,0.48)] ring-4 ring-rose-200/25">
+                    <div className="flex h-full w-full items-center justify-center rounded-2xl border border-white/55 bg-rose-500 text-white ring-4 ring-rose-200/25">
                       <svg
                         width="48%"
                         height="48%"
@@ -435,7 +447,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                     </div>
                   </div>
                   <div
-                    className="absolute pointer-events-none z-20 max-w-[210px] rounded-2xl border border-rose-200/25 bg-rose-500 px-3 py-2 text-left text-xs font-black leading-tight text-white shadow-[0_16px_34px_rgba(244,63,94,0.35)]"
+                    className="absolute pointer-events-none z-20 max-w-[210px] rounded-2xl border border-rose-200/25 bg-rose-500 px-3 py-2 text-left text-xs font-black leading-tight text-white"
                     style={{
                       left: bubbleOnLeft ? Math.max(8, x - 210) : Math.min(boardSize - 210, x + size * 0.55),
                       top: Math.max(8, y - 12),
@@ -527,7 +539,7 @@ function BoardNavRow({
       <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-2.5">
         <div className="flex min-w-0 items-center justify-start">
           {isGuidedLearn && (
-            <div className="inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-4 text-sm font-bold text-sky-200 shadow-[0_12px_28px_rgba(14,165,233,0.18)]">
+            <div className="inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-4 text-sm font-bold text-sky-200">
               <Sparkles size={15} />
               Answer shown
             </div>
@@ -536,7 +548,7 @@ function BoardNavRow({
             <button
               onClick={showHint}
               title="Hint"
-              className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 px-4 text-sm font-bold text-slate-950 shadow-[0_12px_28px_rgba(16,185,129,0.34)] ring-1 ring-emerald-100/10 transition-all hover:-translate-y-0.5 hover:from-emerald-200 hover:via-emerald-300 hover:to-emerald-200 cursor-pointer"
+              className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-400 px-4 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
           >
             <Lightbulb size={15} />
             Hint
@@ -547,10 +559,10 @@ function BoardNavRow({
             onClick={showAnswer}
             disabled={answerDisabled}
             title="Show answer"
-            className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold shadow-[0_12px_28px_rgba(14,165,233,0.32)] ring-1 transition-all ${
+            className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold transition-colors ${
               answerDisabled
-                ? 'cursor-not-allowed border-stone-700/45 bg-stone-800/90 text-stone-400 ring-stone-600/20'
-                : 'cursor-pointer border-sky-200/20 bg-gradient-to-r from-sky-400 via-sky-500 to-sky-400 text-slate-950 ring-sky-100/10 hover:-translate-y-0.5 hover:from-sky-300 hover:via-sky-400 hover:to-sky-300'
+                ? 'cursor-not-allowed border-stone-700/45 bg-stone-800/90 text-stone-400'
+                : 'cursor-pointer border-sky-200/20 bg-sky-500 text-slate-950 hover:bg-sky-400'
             }`}
           >
             <Sparkles size={15} />
@@ -575,7 +587,7 @@ function BoardNavRow({
             onClick={() => navigateToMove(null)}
             title="Return to live position"
             aria-label="Return to live position"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-500/14 text-sky-200 shadow-[0_8px_18px_rgba(14,165,233,0.16)] transition-colors hover:bg-sky-500/22 hover:text-white cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-500/14 text-sky-200 transition-colors hover:bg-sky-500/22 hover:text-white cursor-pointer"
           >
             <ChevronsRight size={18} />
           </button>
@@ -611,7 +623,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-600/70 bg-stone-800 text-white shadow-[0_10px_22px_rgba(0,0,0,0.28)] ring-1 ring-white/5 transition-colors hover:border-sky-300/35 hover:bg-stone-700 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-500/80 bg-stone-700 text-white transition-colors hover:border-sky-300/45 hover:bg-stone-600 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
     >
       {children}
     </button>

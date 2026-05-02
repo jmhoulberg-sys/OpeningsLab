@@ -28,6 +28,7 @@ import {
   HOW_IT_WORKS_STEPS,
 } from '../components/Home/homeContent';
 import BrandMark from '../components/Brand/BrandMark';
+import StreakBadge from '../components/Streak/StreakBadge';
 
 interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
@@ -174,6 +175,7 @@ export default function HomePage({
           </div>
 
           <div className="flex items-center gap-2.5 justify-self-end">
+            <StreakBadge />
             {isLoggedIn ? (
               <button
                 onClick={onProfileClick}

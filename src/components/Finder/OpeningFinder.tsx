@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Home, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
@@ -321,6 +321,17 @@ function boardMoveToSan(fen: string, from: string, to: string, piece?: string) {
   }
 }
 
+function legalDestinations(fen: string, from: string): Square[] {
+  try {
+    const chess = new Chess(fen);
+    return chess
+      .moves({ square: from as Square, verbose: true })
+      .map((move) => move.to as Square);
+  } catch {
+    return [];
+  }
+}
+
 function resolveSanArrow(fen: string, san: string): [Square, Square, string] | null {
   try {
     const chess = new Chess(fen);
@@ -382,6 +393,16 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
   );
   const previewArrow = previewSan ? resolveSanArrow(currentFen, previewSan) : null;
   const singleTrainableOpening = trainableOpenings.length === 1 ? trainableOpenings[0] : null;
+  const boardSquareStyles: Record<string, CSSProperties> = {};
+  if (selectedSquare) {
+    boardSquareStyles[selectedSquare] = { backgroundColor: 'rgba(56, 189, 248, 0.24)' };
+    legalDestinations(currentFen, selectedSquare).forEach((square) => {
+      boardSquareStyles[square] = {
+        ...(boardSquareStyles[square] ?? {}),
+        background: 'radial-gradient(circle, rgba(92,82,61,0.48) 0 18%, transparent 20%)',
+      };
+    });
+  }
 
   useEffect(() => {
     const node = boardRef.current;
@@ -461,7 +482,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
             <Home size={16} />
             Back
           </button>
-          <section className="rounded-[26px] border border-stone-800/65 bg-stone-950/80 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.28)] sm:p-7">
+          <section className="rounded-[26px] border border-stone-800/65 bg-stone-950/80 p-5 sm:p-7">
             <div className="max-w-3xl">
               <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Finder beta</div>
               <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">Find your opening</h1>
@@ -474,12 +495,16 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                 <button
                   key={color}
                   onClick={() => setPlayerColor(color)}
-                  className="rounded-[22px] border border-stone-700/55 bg-stone-900/70 p-5 text-left transition-all hover:border-sky-300/55 hover:bg-stone-800 cursor-pointer"
+                  className="flex items-center gap-4 rounded-[18px] border border-stone-700/55 bg-stone-900/70 p-4 text-left transition-colors hover:border-sky-300/55 hover:bg-stone-800 cursor-pointer"
                 >
-                  <div className="text-2xl font-black capitalize text-white">{color}</div>
-                  <div className="mt-2 text-sm leading-relaxed text-stone-400">
-                    Explore the tree from {color === 'white' ? 'the first move' : "White's first choice"}, then pick the branch you want to train.
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+                    color === 'white'
+                      ? 'border-stone-600 bg-white text-stone-950'
+                      : 'border-stone-700 bg-stone-950 text-white'
+                  }`}>
+                    <PawnIcon />
                   </div>
+                  <div className="text-2xl font-black capitalize text-white">{color}</div>
                 </button>
               ))}
             </div>
@@ -521,10 +546,10 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 p-3 lg:grid-cols-[330px_minmax(0,1fr)_380px]">
-        <aside className="min-h-0 overflow-y-auto rounded-[22px] border border-stone-800/65 bg-stone-950/72 p-3">
+      <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
+        <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
           <PanelHeading eyebrow="Routes" title="Possible openings" />
-          <div className="mt-3 space-y-3">
+          <div className="mt-2 space-y-2">
             {catalogBranches.map((branch) => {
               const active = pathsEqual(branch.path, activePath);
               const nextSan = getBranchNextMove(activePath, branch);
@@ -538,7 +563,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                   onFocus={() => setPreviewSan(nextSan)}
                   onMouseLeave={() => setPreviewSan(null)}
                   onBlur={() => setPreviewSan(null)}
-                  className={`w-full rounded-2xl border p-3 text-left transition-colors cursor-pointer ${
+                  className={`w-full rounded-xl border p-2.5 text-left transition-colors cursor-pointer ${
                     active
                       ? 'border-sky-300/35 bg-sky-500/14'
                       : 'border-stone-800/70 bg-stone-900/65 hover:bg-stone-800'
@@ -576,8 +601,8 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs leading-relaxed text-stone-400">{branch.description}</div>
-                  <div className="mt-2 truncate text-[11px] font-semibold text-sky-200/80">{branch.path.join(' ')}</div>
+                  <div className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-stone-400">{branch.description}</div>
+                  <div className="mt-1.5 truncate text-[11px] font-semibold text-sky-200/80">{branch.path.join(' ')}</div>
                 </button>
               );
             })}
@@ -641,7 +666,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
           <div className="border-b border-stone-800/60 p-3">
             <RouteBar path={activePath} cursor={cursor} total={path.length} onBack={() => setCursor(Math.max(0, cursor - 1))} onForward={() => setCursor(Math.min(path.length, cursor + 1))} />
           </div>
-          <div ref={boardRef} className="flex min-h-0 flex-1 items-center justify-center p-3">
+          <div ref={boardRef} className="flex min-h-0 flex-1 items-center justify-center p-2">
             <Chessboard
               position={currentFen}
               boardWidth={boardWidth}
@@ -650,15 +675,11 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
               onPieceDrop={(from, to, piece) => chooseBoardMove(from, to, piece)}
               onSquareClick={handleSquareClick}
               customArrows={previewArrow ? [previewArrow] : []}
-              customSquareStyles={
-                selectedSquare
-                  ? { [selectedSquare]: { backgroundColor: 'rgba(56, 189, 248, 0.46)' } }
-                  : undefined
-              }
+              customSquareStyles={Object.keys(boardSquareStyles).length ? boardSquareStyles : undefined}
               customBoardStyle={{
                 borderRadius: '18px',
                 backgroundColor: 'transparent',
-                boxShadow: '0 18px 46px rgba(0,0,0,0.28)',
+                boxShadow: 'none',
               }}
               customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
               customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
@@ -667,9 +688,9 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
           </div>
         </section>
 
-        <aside className="min-h-0 overflow-y-auto rounded-[22px] border border-stone-800/65 bg-stone-950/72 p-3">
+        <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
           <PanelHeading eyebrow="Route choices" title={rightTitle} />
-          <div className="mt-3 space-y-2">
+          <div className="mt-2 space-y-2">
             {singleTrainableOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
                 <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
@@ -700,7 +721,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                 onFocus={() => setPreviewSan(move.san)}
                 onMouseLeave={() => setPreviewSan(null)}
                 onBlur={() => setPreviewSan(null)}
-                className="w-full rounded-2xl border border-stone-800/70 bg-stone-900/70 p-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
+                className="w-full rounded-xl border border-stone-800/70 bg-stone-900/70 p-2.5 text-left transition-colors hover:bg-stone-800 cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-mono text-sm font-black text-white">{getMoveNumber(activePath, move.san)}</div>
@@ -792,6 +813,17 @@ function RailNotice({ text }: { text: string }) {
   );
 }
 
+function PawnIcon() {
+  return (
+    <svg width="29" height="29" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="6.2" r="3.2" />
+      <path d="M9.7 9.4h4.6l1.2 5.2h-7z" />
+      <path d="M7.2 16h9.6l1.2 3.2H6z" />
+      <path d="M5.3 20h13.4v1.6H5.3z" />
+    </svg>
+  );
+}
+
 function RouteBar({
   path,
   cursor,
@@ -811,7 +843,7 @@ function RouteBar({
         <button
           onClick={onBack}
           disabled={cursor === 0}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-700/45 bg-stone-900 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 transition-colors hover:border-sky-300/45 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           aria-label="Step back"
         >
           <ChevronLeft size={18} />
@@ -819,7 +851,7 @@ function RouteBar({
         <button
           onClick={onForward}
           disabled={cursor >= total}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-700/45 bg-stone-900 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 transition-colors hover:border-sky-300/45 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           aria-label="Step forward"
         >
           <ChevronRight size={18} />

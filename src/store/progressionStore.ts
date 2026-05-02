@@ -138,6 +138,44 @@ export function getTodayProgress(daily: Record<string, DailyProgress>) {
   return sanitiseDaily(daily?.[getTodayKey()]);
 }
 
+function toDateKey(date: Date) {
+  return date.toISOString().split('T')[0];
+}
+
+function hasDailyTraining(daily?: DailyProgress) {
+  return !!daily && (daily.sessions > 0 || daily.linesCompleted.length > 0 || daily.perfectLines.length > 0);
+}
+
+export function getCurrentStreak(daily: Record<string, DailyProgress>) {
+  const safeDaily = sanitiseDailyRecord(daily);
+  const cursor = new Date();
+  let streak = 0;
+
+  while (hasDailyTraining(safeDaily[toDateKey(cursor)])) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function getRecentStreakDays(daily: Record<string, DailyProgress>, count = 7) {
+  const safeDaily = sanitiseDailyRecord(daily);
+  const today = new Date();
+
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (count - 1 - index));
+    const key = toDateKey(date);
+    return {
+      key,
+      label: date.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 1),
+      active: hasDailyTraining(safeDaily[key]),
+      today: key === toDateKey(today),
+    };
+  });
+}
+
 export function getQuestProgress(daily: DailyProgress) {
   const safeDaily = sanitiseDaily(daily);
   return [

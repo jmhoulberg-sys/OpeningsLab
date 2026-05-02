@@ -16,9 +16,7 @@
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background:
-      radial-gradient(circle at top, rgba(191, 146, 92, 0.12), transparent 34%),
-      linear-gradient(180deg, #2b2724 0%, #24211e 100%);
+    background: linear-gradient(180deg, #2b2724 0%, #24211e 100%);
     color: #e2e8f0;
   }
 
@@ -84,13 +82,14 @@
 }
 
 @keyframes board-flash-green {
-  0% { box-shadow: 0 0 0 0 rgba(16, 216, 153, 0); }
-  25% { box-shadow: 0 0 0 8px rgba(16, 216, 153, 0.72); }
-  65% { box-shadow: 0 0 0 8px rgba(16, 216, 153, 0.34); }
-  100% { box-shadow: 0 0 0 0 rgba(16, 216, 153, 0); }
+  0% { outline-color: rgba(16, 216, 153, 0); }
+  25% { outline-color: rgba(16, 216, 153, 0.82); }
+  65% { outline-color: rgba(16, 216, 153, 0.5); }
+  100% { outline-color: rgba(16, 216, 153, 0); }
 }
 
 .board-flash-green {
+  outline: 4px solid transparent;
   animation: board-flash-green 0.7s ease-out forwards;
 }
 
@@ -117,15 +116,12 @@
 
 @keyframes unlockOutline {
   0% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
     border-color: rgba(68, 64, 60, 0.7);
   }
   45% {
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14);
     border-color: rgba(56, 189, 248, 0.55);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
     border-color: rgba(56, 189, 248, 0.42);
   }
 }
