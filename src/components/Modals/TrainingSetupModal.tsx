@@ -136,6 +136,8 @@ export default function TrainingSetupModal() {
           <ModePicker
             selectedMode={selectedMode}
             setSelectedMode={setSelectedMode}
+            learnedLines={completedLines}
+            totalLines={totalLines}
           />
 
           <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
@@ -179,10 +181,15 @@ export default function TrainingSetupModal() {
 function ModePicker({
   selectedMode,
   setSelectedMode,
+  learnedLines,
+  totalLines,
 }: {
   selectedMode: SetupMode;
   setSelectedMode: (mode: SetupMode) => void;
+  learnedLines: number;
+  totalLines: number;
 }) {
+  const practiceLineCount = learnedLines;
   const modes: Array<{
     value: SetupMode;
     label: string;
@@ -193,8 +200,24 @@ function ModePicker({
     locked?: boolean;
     lockLabel?: string;
   }> = [
-    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, tone: 'sky', help: '1/28 lines discovered', group: 'learn' },
-    { value: 'step-by-step', label: 'Practice', icon: <Target size={16} />, tone: 'emerald', help: '0/1 lines perfected', group: 'practice' },
+    {
+      value: 'learn',
+      label: 'Learn',
+      icon: <BookOpen size={16} />,
+      tone: 'sky',
+      help: `${learnedLines}/${totalLines} lines learned`,
+      group: 'learn',
+    },
+    {
+      value: 'step-by-step',
+      label: 'Practice',
+      icon: <Target size={16} />,
+      tone: 'emerald',
+      help: `${practiceLineCount}/${practiceLineCount} lines available`,
+      group: 'practice',
+      locked: practiceLineCount === 0,
+      lockLabel: 'Learn 1 line',
+    },
   ];
   const learnMode = modes.find((mode) => mode.group === 'learn')!;
   const practiceMode = modes.find((mode) => mode.group === 'practice')!;

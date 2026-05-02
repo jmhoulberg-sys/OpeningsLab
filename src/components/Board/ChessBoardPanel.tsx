@@ -16,7 +16,6 @@ const HINT_HIGHLIGHT = 'rgba(56, 189, 248, 0.72)';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
 const MOVE_DOT = 'radial-gradient(circle, rgba(92,82,61,0.48) 0 18%, transparent 20%)';
-const ANSWER_DOT = 'radial-gradient(circle, rgba(14,165,233,0.7) 0 18%, transparent 20%)';
 
 function resolveArrow(fen: string, san: string): [Square, Square] | null {
   try {
@@ -36,19 +35,6 @@ function legalDestinations(fen: string, from: Square): Square[] {
   } catch {
     return [];
   }
-}
-
-function squareToXY(
-  square: string,
-  boardSize: number,
-  orientation: 'white' | 'black',
-): { x: number; y: number; size: number } {
-  const file = square.charCodeAt(0) - 'a'.charCodeAt(0);
-  const rank = parseInt(square[1]) - 1;
-  const size = boardSize / 8;
-  const x = orientation === 'white' ? file * size : (7 - file) * size;
-  const y = orientation === 'white' ? (7 - rank) * size : rank * size;
-  return { x, y, size };
 }
 
 export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: number }) {
@@ -234,11 +220,23 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     };
     customSquareStyles[guidedAnswerArrow[1]] = {
       ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
-      background: ANSWER_DOT,
+      backgroundColor: 'rgba(14, 165, 233, 0.54)',
+    };
+  }
+
+  if (!isReviewing && wrongMoveSquare) {
+    customSquareStyles[wrongMoveSquare] = {
+      ...(customSquareStyles[wrongMoveSquare] ?? {}),
+      backgroundColor: 'rgba(244, 63, 94, 0.36)',
+      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.28)',
     };
   }
 
   const customArrows: [Square, Square, string][] = [];
+
+  if (guidedAnswerArrow) {
+    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
+  }
 
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
@@ -415,50 +413,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                   }
                 : {})}
             />
-            {wrongMoveSquare && !isReviewing && (() => {
-              const { x, y, size } = squareToXY(wrongMoveSquare, boardSize, boardOrientation);
-              const badge = Math.max(30, Math.min(42, size * 0.52));
-              const bubbleOnLeft = x > boardSize * 0.52;
-              return (
-                <>
-                  <div
-                    className="absolute pointer-events-none z-20"
-                    style={{
-                      left: x + size - badge * 0.66,
-                      top: y - badge * 0.34,
-                      width: badge,
-                      height: badge,
-                    }}
-                  >
-                    <div className="flex h-full w-full items-center justify-center rounded-2xl border border-white/55 bg-rose-500 text-white ring-4 ring-rose-200/25">
-                      <svg
-                        width="48%"
-                        height="48%"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M8 8l8 8" />
-                        <path d="M16 8l-8 8" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div
-                    className="absolute pointer-events-none z-20 max-w-[210px] rounded-2xl border border-rose-200/25 bg-rose-500 px-3 py-2 text-left text-xs font-black leading-tight text-white"
-                    style={{
-                      left: bubbleOnLeft ? Math.max(8, x - 210) : Math.min(boardSize - 210, x + size * 0.55),
-                      top: Math.max(8, y - 12),
-                    }}
-                  >
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-rose-100/80">Try again</div>
-                    <div>{wrongMoveSan ? `Book move: ${wrongMoveSan}` : 'Stay with the book line'}</div>
-                  </div>
-                </>
-              );
-            })()}
           </div>
 
           {(phase === 'training' || phase === 'setup' || phase === 'completed') && (

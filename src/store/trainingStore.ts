@@ -198,6 +198,16 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
     // ── startOpening ──────────────────────────────────────────────
     startOpening(opening) {
+      if (opening.setupMoves.length === 0) {
+        set({
+          ...buildInitialState(),
+          opening,
+          phase: 'line-select',
+          isAwaitingUserMove: false,
+        });
+        return;
+      }
+
       set({
         ...buildInitialState(),
         opening,

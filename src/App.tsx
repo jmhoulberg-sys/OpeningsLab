@@ -462,15 +462,30 @@ function ModeSelector({
   const { mode, setMode } = useTrainingStore();
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
+  const totalLines = opening.lines.length;
   const modes: Array<{
     value: TrainingMode;
     label: string;
     icon: React.ReactNode;
     unlocked: boolean;
+    help?: string;
     lockLabel?: string;
   }> = [
-    { value: 'learn', label: 'Learn', icon: <BookOpen size={16} />, unlocked: true },
-    { value: 'step-by-step', label: 'Practice', icon: <Target size={16} />, unlocked: setupDone && completedLines > 0, lockLabel: 'Learn 1 line' },
+    {
+      value: 'learn',
+      label: 'Learn',
+      icon: <BookOpen size={16} />,
+      unlocked: true,
+      help: `${completedLines}/${totalLines} lines learned`,
+    },
+    {
+      value: 'step-by-step',
+      label: 'Practice',
+      icon: <Target size={16} />,
+      unlocked: setupDone && completedLines > 0,
+      help: `${completedLines}/${completedLines} lines available`,
+      lockLabel: 'Learn 1 line',
+    },
   ];
 
   return (
@@ -501,8 +516,10 @@ function ModeSelector({
                 </span>
                 {item.label}
               </div>
-              {!item.unlocked && (
-                <div className="mt-1 text-[11px] font-semibold text-stone-600">{item.lockLabel}</div>
+              {(item.help || !item.unlocked) && (
+                <div className={`mt-1 text-[11px] font-semibold ${item.unlocked ? 'text-stone-400' : 'text-stone-600'}`}>
+                  {item.unlocked ? item.help : item.lockLabel}
+                </div>
               )}
             </button>
           );
