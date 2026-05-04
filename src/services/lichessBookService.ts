@@ -6,6 +6,7 @@ import {
   DEFAULT_SPEEDS,
   DEFAULT_TOP_MOVES,
   DEFAULT_VARIANT,
+  selectWeightedMove,
   type BackendErrorReason,
 } from '../server/lichessResponseCore';
 
@@ -29,6 +30,7 @@ export interface LichessBookPosition {
   black: number;
   source: 'lichess-opening-explorer';
   cached: boolean;
+  selectedMove: LichessBookMove | null;
 }
 
 export interface LichessBookFetchResult {
@@ -142,6 +144,8 @@ export async function fetchLichessBookPosition(
     }
 
     const totals = buildTotals(data.candidateMoves);
+    const selectedMove = data.candidateMoves.find((move) => move.uci === data.selectedMove.uci) ?? null;
+
     return {
       status: 'ok',
       position: {
@@ -153,6 +157,7 @@ export async function fetchLichessBookPosition(
         black: totals.black,
         source: data.source,
         cached: data.cached,
+        selectedMove,
       },
       raw: null,
     };
@@ -190,6 +195,8 @@ async function fetchLichessBookPositionDirect(
 
     const data = (await response.json()) as LichessExplorerPayload;
     const candidateMoves = buildWeightedCandidates(data.moves, request.topMoves);
+    const { selectedMove } = selectWeightedMove(candidateMoves);
+
     if (candidateMoves.length === 0) {
       return {
         status: 'out_of_database',
@@ -212,6 +219,7 @@ async function fetchLichessBookPositionDirect(
         black: totals.black,
         source: 'lichess-opening-explorer',
         cached: false,
+        selectedMove,
       },
       raw: null,
     };
@@ -251,7 +259,7 @@ export async function pickLichessBookMove(
 
   return {
     status: 'ok',
-    move: result.position.moves[0] ?? null,
+    move: result.position.selectedMove ?? result.position.moves[0] ?? null,
     position: result.position,
   };
 }
