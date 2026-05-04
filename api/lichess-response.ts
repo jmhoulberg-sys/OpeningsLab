@@ -1,8 +1,8 @@
 import {
   type BackendErrorResponse,
   validateAndNormalizeRequest,
-} from '../src/server/lichessResponseCore';
-import { LichessExplorerService } from '../src/server/lichessResponseService';
+} from '../src/server/lichessResponseCore.js';
+import { LichessExplorerService } from '../src/server/lichessResponseService.js';
 
 const explorerService = new LichessExplorerService({
   token: process.env.LICHESS_TOKEN,

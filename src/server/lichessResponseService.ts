@@ -7,7 +7,7 @@ import {
   buildExplorerUrl,
   buildWeightedCandidates,
   selectWeightedMove,
-} from './lichessResponseCore';
+} from './lichessResponseCore.js';
 
 interface CachedExplorerResult {
   status: 'ok' | 'no_moves';
