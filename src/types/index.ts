@@ -4,7 +4,12 @@ export type Color = 'white' | 'black';
 
 export type TrainingMode = 'learn' | 'step-by-step' | 'full-line' | 'time-trial';
 
-export type PostLineMode = 'computer-beginner' | 'computer-advanced' | 'computer-pro' | 'top-moves';
+export type PostLineMode =
+  | 'computer-beginner'
+  | 'computer-advanced'
+  | 'computer-pro'
+  | 'top-moves'
+  | 'top-moves-choice';
 export type ExplorerOpponentMode = 'most_popular' | 'top3_weighted';
 
 /** How the opponent selects its move during practice */

@@ -17,11 +17,16 @@ import {
   applyUciMove,
   dropToSan,
   isGameOver,
+  getComputerMoveSan,
   repetitionTarget,
   getSetupFen,
 } from '../engine/chessEngine';
 import { useSettingsStore } from './settingsStore';
-import { logExplorerMoveAcceptance, pickLichessBookMove } from '../services/lichessBookService';
+import {
+  logExplorerMoveAcceptance,
+  pickLichessBookMove,
+  type LichessBookMove,
+} from '../services/lichessBookService';
 import { useProgressionStore } from './progressionStore';
 
 // ─── State shape ────────────────────────────────────────────────────
@@ -64,6 +69,8 @@ interface TrainingState {
   postLineSource: 'lichess-db' | null;
   postLineOutOfBook: boolean;
   postLineError: string | null;
+  postLineChoices: LichessBookMove[];
+  previewUciMove: string | null;
   /** playedMoves.length at the moment postLine started — used for move list divider. */
   postLineStartMoveCount: number | null;
   /** Show position evaluation panel during free play. */
@@ -92,6 +99,9 @@ interface TrainingActions {
   /** Clear the wrong-move overlay and return to the correct position. */
   clearWrongMove(): void;
   startPostLine(mode?: PostLineMode, showEval?: boolean, showTopMoves?: boolean): void;
+  choosePostLineMove(uci: string): void;
+  continuePostLineAgainstComputer(mode: Extract<PostLineMode, 'computer-beginner' | 'computer-advanced' | 'computer-pro'>): void;
+  setPreviewUciMove(uci: string | null): void;
   setMode(mode: TrainingMode): void;
   setOpponentMode(mode: OpponentMode): void;
   setRandomTopX(x: number): void;
@@ -132,6 +142,8 @@ function buildInitialState(): TrainingState {
     postLineSource: null,
     postLineOutOfBook: false,
     postLineError: null,
+    postLineChoices: [],
+    previewUciMove: null,
     postLineStartMoveCount: null,
     showEval: false,
     showTopMoves: true,
@@ -386,6 +398,9 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           wrongMoveSan: null,
           showingCorrectMove: false,
           postLineError: null,
+          postLineOutOfBook: false,
+          postLineChoices: [],
+          previewUciMove: null,
         });
 
         if (isGameOver(newFen)) {
@@ -606,7 +621,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
       if (state.postLine) {
         let opponentSan: string | null = null;
 
-        if (state.postLineMode === 'top-moves') {
+        if (state.postLineMode === 'top-moves' || state.postLineMode === 'top-moves-choice') {
           const { lichessTopMoves, lichessSpeeds, lichessRatings, lichessVariant } = useSettingsStore.getState();
           const decision = await pickLichessBookMove(state.currentFen, {
             topMoves: lichessTopMoves,
@@ -615,6 +630,16 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             variant: lichessVariant,
             playedSans: state.playedMoves,
           });
+
+          if (state.postLineMode === 'top-moves-choice' && decision.position?.moves.length) {
+            set({
+              isAwaitingUserMove: false,
+              postLineOutOfBook: false,
+              postLineError: null,
+              postLineChoices: decision.position.moves.slice(0, lichessTopMoves),
+            });
+            return;
+          }
 
           if (decision.move) {
             const legalMove = applyUciMove(state.currentFen, decision.move.uci);
@@ -635,9 +660,13 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
               isAwaitingUserMove: false,
               postLineOutOfBook: false,
               postLineError: decision.error ?? 'Could not reach Lichess explorer',
+              postLineChoices: [],
             });
             return;
           }
+        } else if (state.postLineMode?.startsWith('computer-')) {
+          const level = state.postLineMode.replace('computer-', '') as 'beginner' | 'advanced' | 'pro';
+          opponentSan = getComputerMoveSan(state.currentFen, level);
         }
 
         if (!opponentSan) {
@@ -645,6 +674,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             isAwaitingUserMove: false,
             postLineOutOfBook: true,
             postLineError: null,
+            postLineChoices: [],
           });
           return;
         }
@@ -686,6 +716,8 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             currentMoveIndex: newIdx,
             postLineOutOfBook: false,
             postLineError: null,
+            postLineChoices: [],
+            previewUciMove: null,
             isAwaitingUserMove: true,
           });
         }
@@ -887,14 +919,87 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLineStartMoveCount: get().playedMoves.length,
         isAwaitingUserMove: false,
         postLineMode: mode ?? null,
-        postLineSource: mode === 'top-moves' ? 'lichess-db' : null,
+        postLineSource: mode === 'top-moves' || mode === 'top-moves-choice' ? 'lichess-db' : null,
         postLineOutOfBook: false,
         postLineError: null,
+        postLineChoices: [],
+        previewUciMove: null,
         showEval,
         showTopMoves,
         viewMoveIndex: null,
       });
       setTimeout(() => get().advanceOpponent(), 500);
+    },
+
+    choosePostLineMove(uci) {
+      const state = get();
+      if (!state.postLine || state.postLineMode !== 'top-moves-choice') return;
+
+      const legalMove = applyUciMove(state.currentFen, uci);
+      if (!legalMove) {
+        set({
+          postLineError: 'That Lichess move is not legal on the current board.',
+          postLineChoices: [],
+          previewUciMove: null,
+        });
+        return;
+      }
+
+      const newIdx = state.currentMoveIndex + 1;
+      const gameEnded = isGameOver(legalMove.fen);
+      if (gameEnded) {
+        const chess = new Chess(legalMove.fen);
+        let result: 'win' | 'loss' | 'draw' = 'draw';
+        if (chess.isCheckmate()) result = 'loss';
+        else if (chess.isDraw() || chess.isStalemate()) result = 'draw';
+        useProgressionStore.getState().awardTopResponseResult(result);
+        set({
+          currentFen: legalMove.fen,
+          playedMoves: [...state.playedMoves, legalMove.san],
+          fenHistory: [...state.fenHistory, legalMove.fen],
+          currentMoveIndex: newIdx,
+          phase: 'line-select' as TrainingPhase,
+          postLine: false,
+          postLineSource: null,
+          postLineOutOfBook: false,
+          postLineError: null,
+          postLineChoices: [],
+          previewUciMove: null,
+          freePlayResult: result,
+          showFreePlayResult: true,
+        });
+        return;
+      }
+
+      set({
+        currentFen: legalMove.fen,
+        playedMoves: [...state.playedMoves, legalMove.san],
+        fenHistory: [...state.fenHistory, legalMove.fen],
+        currentMoveIndex: newIdx,
+        postLineOutOfBook: false,
+        postLineError: null,
+        postLineChoices: [],
+        previewUciMove: null,
+        isAwaitingUserMove: true,
+      });
+    },
+
+    continuePostLineAgainstComputer(mode) {
+      set({
+        postLine: true,
+        postLineMode: mode,
+        postLineSource: null,
+        postLineOutOfBook: false,
+        postLineError: null,
+        postLineChoices: [],
+        previewUciMove: null,
+        isAwaitingUserMove: false,
+      });
+      setTimeout(() => get().advanceOpponent(), 250);
+    },
+
+    setPreviewUciMove(previewUciMove) {
+      set({ previewUciMove });
     },
 
     // ── backToLineSelect ──────────────────────────────────────────

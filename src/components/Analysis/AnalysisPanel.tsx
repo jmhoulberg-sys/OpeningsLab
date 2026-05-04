@@ -3,7 +3,18 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export default function AnalysisPanel() {
-  const { currentFen, playedMoves, showTopMoves, postLineOutOfBook, postLineError } = useTrainingStore();
+  const {
+    currentFen,
+    playedMoves,
+    showTopMoves,
+    postLineOutOfBook,
+    postLineError,
+    postLineMode,
+    isAwaitingUserMove,
+    choosePostLineMove,
+    continuePostLineAgainstComputer,
+    setPreviewUciMove,
+  } = useTrainingStore();
   const { lichessTopMoves, lichessSpeeds, lichessRatings } = useSettingsStore();
 
   const { moves, loading } = useLichessAnalysis(
@@ -16,6 +27,7 @@ export default function AnalysisPanel() {
   );
 
   if (!showTopMoves) return null;
+  const canChooseMove = postLineMode === 'top-moves-choice' && !isAwaitingUserMove;
 
   return (
     <div className="flex-shrink-0 px-4 pb-4 pt-3">
@@ -37,9 +49,26 @@ export default function AnalysisPanel() {
       )}
 
       {!loading && !postLineError && postLineOutOfBook && (
-        <p className="text-xs italic text-amber-300">
-          Out of database. Lichess returned no continuation moves for this position.
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs italic text-amber-300">
+            Out of database. Continue against a computer level.
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              ['Beginner', 'computer-beginner'],
+              ['Advanced', 'computer-advanced'],
+              ['Pro', 'computer-pro'],
+            ].map(([label, mode]) => (
+              <button
+                key={mode}
+                onClick={() => continuePostLineAgainstComputer(mode as 'computer-beginner' | 'computer-advanced' | 'computer-pro')}
+                className="rounded-md border border-slate-600/60 bg-slate-800/70 px-2 py-1.5 text-[11px] font-semibold text-slate-200 transition-colors hover:border-sky-400/60 hover:text-white"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {!loading && !postLineOutOfBook && !postLineError && moves.length === 0 && (
@@ -50,16 +79,29 @@ export default function AnalysisPanel() {
 
       {!loading && moves.length > 0 && (
         <div className="space-y-1.5">
-          <div className="mb-1 grid grid-cols-[46px_44px_1fr_46px_46px_46px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+          {canChooseMove && (
+            <p className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1.5 text-[11px] font-semibold text-emerald-200">
+              Choose the move you want to train against.
+            </p>
+          )}
+          <div className="mb-1 grid grid-cols-[42px_40px_52px_1fr_34px_34px_34px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
             <span>Move</span>
             <span className="text-center">Use</span>
+            <span className="text-right">Games</span>
             <span />
             <span className="text-center">W%</span>
             <span className="text-center">D%</span>
             <span className="text-center">B%</span>
           </div>
           {moves.map((move) => (
-            <MoveRow key={move.san} move={move} />
+            <MoveRow
+              key={move.uci}
+              move={move}
+              canChoose={canChooseMove}
+              onChoose={() => choosePostLineMove(move.uci)}
+              onPreview={() => setPreviewUciMove(move.uci)}
+              onClearPreview={() => setPreviewUciMove(null)}
+            />
           ))}
         </div>
       )}
@@ -67,7 +109,19 @@ export default function AnalysisPanel() {
   );
 }
 
-function MoveRow({ move }: { move: LichessMove }) {
+function MoveRow({
+  move,
+  canChoose,
+  onChoose,
+  onPreview,
+  onClearPreview,
+}: {
+  move: LichessMove;
+  canChoose: boolean;
+  onChoose: () => void;
+  onPreview: () => void;
+  onClearPreview: () => void;
+}) {
   const total = move.popularity;
   const games = total >= 1000 ? `${(total / 1000).toFixed(1)}k` : `${total}`;
   const whitePct = total ? Math.round((move.white / total) * 100) : 0;
@@ -76,11 +130,25 @@ function MoveRow({ move }: { move: LichessMove }) {
   const playPct = Math.round(move.weight * 100);
 
   return (
-    <div className="grid grid-cols-[46px_44px_1fr_46px_46px_46px] items-center gap-x-1">
+    <button
+      type="button"
+      onClick={canChoose ? onChoose : undefined}
+      onMouseEnter={onPreview}
+      onMouseLeave={onClearPreview}
+      onFocus={onPreview}
+      onBlur={onClearPreview}
+      aria-disabled={!canChoose}
+      className={`grid w-full grid-cols-[42px_40px_52px_1fr_34px_34px_34px] items-center gap-x-1 rounded-md px-0.5 py-0.5 text-left transition-colors ${
+        canChoose
+          ? 'cursor-pointer hover:bg-emerald-400/10 focus:outline-none focus:ring-1 focus:ring-emerald-300/40'
+          : 'cursor-default'
+      }`}
+    >
       <span className="font-mono text-xs font-bold text-white">{move.san}</span>
       <span className="text-center text-[11px] font-semibold tabular-nums text-sky-300">
         {playPct}%
       </span>
+      <span className="text-right text-[11px] tabular-nums text-slate-300">{games}</span>
 
       <div className="flex h-3 overflow-hidden rounded-sm" title={`${games} games`}>
         <div className="bg-slate-100" style={{ width: `${whitePct}%` }} />
@@ -97,6 +165,6 @@ function MoveRow({ move }: { move: LichessMove }) {
       <span className="text-center text-[11px] tabular-nums text-slate-500">
         {blackPct}%
       </span>
-    </div>
+    </button>
   );
 }

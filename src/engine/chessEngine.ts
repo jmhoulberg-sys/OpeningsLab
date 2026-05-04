@@ -250,6 +250,71 @@ export function getRandomLegalMove(fen: string): string | null {
   }
 }
 
+const PIECE_VALUE: Record<string, number> = {
+  p: 100,
+  n: 320,
+  b: 330,
+  r: 500,
+  q: 900,
+  k: 0,
+};
+
+function materialScore(chess: Chess, color: 'w' | 'b') {
+  return chess.board().flat().reduce((score, piece) => {
+    if (!piece) return score;
+    const value = PIECE_VALUE[piece.type] ?? 0;
+    return score + (piece.color === color ? value : -value);
+  }, 0);
+}
+
+function moveScore(fen: string, san: string, level: 'beginner' | 'advanced' | 'pro') {
+  const chess = new Chess(fen);
+  const movingColor = chess.turn();
+  const move = chess.move(san);
+  if (!move) return -Infinity;
+
+  if (chess.isCheckmate()) return 100_000;
+
+  let score = materialScore(chess, movingColor);
+  if (move.captured) score += PIECE_VALUE[move.captured] ?? 0;
+  if (move.promotion) score += PIECE_VALUE[move.promotion] ?? 0;
+  if (move.san.includes('+')) score += 55;
+  if (chess.isDraw() || chess.isStalemate()) score -= 150;
+
+  if (level === 'advanced') {
+    score += Math.random() * 240;
+  } else if (level === 'pro') {
+    score += Math.random() * 60;
+  }
+
+  return score;
+}
+
+export function getComputerMoveSan(
+  fen: string,
+  level: 'beginner' | 'advanced' | 'pro',
+): string | null {
+  try {
+    const chess = new Chess(fen);
+    const moves = chess.moves();
+    if (moves.length === 0) return null;
+    if (level === 'beginner') return moves[Math.floor(Math.random() * moves.length)];
+
+    const pool = moves
+      .map((san) => ({ san, score: moveScore(fen, san, level) }))
+      .sort((a, b) => b.score - a.score);
+
+    if (level === 'advanced') {
+      const top = pool.slice(0, Math.min(5, pool.length));
+      return top[Math.floor(Math.random() * top.length)]?.san ?? pool[0].san;
+    }
+
+    return pool[0].san;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Return the move index of the N-th student move in the line that occurs
  * AFTER the setup sequence (i.e. at index >= opening.setupMoves.length).

@@ -60,10 +60,22 @@ export default function PlayOnModal({ isOpen, onClose }: PlayOnModalProps) {
             className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 p-4 text-left transition-all hover:border-sky-500/60 hover:bg-slate-700/60 cursor-pointer"
           >
             <div className="text-white font-bold text-sm mb-1">
-              Against Top Player Moves
+              Weighted Lichess Response
             </div>
             <div className="text-slate-400 text-xs">
-              Opponent plays the most popular human responses
+              Computer randomly chooses from the top moves by play frequency
+            </div>
+          </button>
+
+          <button
+            onClick={() => go('top-moves-choice')}
+            className="w-full rounded-xl border border-slate-600/50 bg-slate-800/60 p-4 text-left transition-all hover:border-emerald-400/60 hover:bg-slate-700/60 cursor-pointer"
+          >
+            <div className="text-white font-bold text-sm mb-1">
+              Choose Lichess Response
+            </div>
+            <div className="text-slate-400 text-xs">
+              Show the top player moves and pick what to train against
             </div>
           </button>
 
@@ -77,7 +89,6 @@ export default function PlayOnModal({ isOpen, onClose }: PlayOnModalProps) {
                 <div className="text-white font-bold text-sm inline mr-2">
                   Against Computer
                 </div>
-                <span className="text-slate-500 text-xs">(engine coming soon)</span>
                 <div className="text-slate-400 text-xs mt-0.5">
                   Choose a difficulty level
                 </div>

@@ -8,6 +8,7 @@ import {
   buildWeightedCandidates,
   selectWeightedMove,
 } from './lichessResponseCore.js';
+import { getCachedJson, setCachedJson } from './cacheStore.js';
 
 interface CachedExplorerResult {
   status: 'ok' | 'no_moves';
@@ -48,6 +49,12 @@ export class LichessExplorerService {
     const cached = this.cache.get(cacheKey);
     if (cached) {
       return this.buildResponseFromPayload(cached.payload, request, true, randomValue);
+    }
+
+    const persisted = await getCachedJson<CachedExplorerResult>(cacheKey);
+    if (persisted) {
+      this.cache.set(cacheKey, persisted);
+      return this.buildResponseFromPayload(persisted.payload, request, true, randomValue);
     }
 
     if (!this.token) {
@@ -122,6 +129,10 @@ export class LichessExplorerService {
 
         const status = payload.moves.length > 0 ? 'ok' : 'no_moves';
         this.cache.set(cacheKey, {
+          status,
+          payload,
+        });
+        void setCachedJson(cacheKey, {
           status,
           payload,
         });

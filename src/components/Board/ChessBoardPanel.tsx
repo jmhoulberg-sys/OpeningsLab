@@ -28,6 +28,11 @@ function resolveArrow(fen: string, san: string): [Square, Square] | null {
   }
 }
 
+function resolveUciArrow(uci: string): [Square, Square] | null {
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return null;
+  return [uci.slice(0, 2) as Square, uci.slice(2, 4) as Square];
+}
+
 function legalDestinations(fen: string, from: Square): Square[] {
   try {
     const chess = new Chess(fen);
@@ -61,6 +66,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     streak,
     mistakes,
     hintSquare,
+    previewUciMove,
   } = useTrainingStore();
   const { showEvalBar } = useSettingsStore();
 
@@ -233,6 +239,19 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const customArrows: [Square, Square, string][] = [];
+  const previewArrow = previewUciMove ? resolveUciArrow(previewUciMove) : null;
+
+  if (previewArrow && !isReviewing) {
+    customSquareStyles[previewArrow[0]] = {
+      ...(customSquareStyles[previewArrow[0]] ?? {}),
+      backgroundColor: 'rgba(52, 211, 153, 0.26)',
+    };
+    customSquareStyles[previewArrow[1]] = {
+      ...(customSquareStyles[previewArrow[1]] ?? {}),
+      backgroundColor: 'rgba(16, 185, 129, 0.48)',
+    };
+    customArrows.push([previewArrow[0], previewArrow[1], 'rgba(52, 211, 153, 0.95)']);
+  }
 
   if (guidedAnswerArrow) {
     customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
