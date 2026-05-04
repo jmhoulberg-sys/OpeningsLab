@@ -48,12 +48,14 @@ export class LichessExplorerService {
     const cacheKey = buildCacheKey(request);
     const cached = this.cache.get(cacheKey);
     if (cached) {
+      console.info('[Lichess Explorer] cache_hit memory');
       return this.buildResponseFromPayload(cached.payload, request, true, randomValue);
     }
 
     const persisted = await getCachedJson<CachedExplorerResult>(cacheKey);
     if (persisted) {
       this.cache.set(cacheKey, persisted);
+      console.info('[Lichess Explorer] cache_hit redis');
       return this.buildResponseFromPayload(persisted.payload, request, true, randomValue);
     }
 
@@ -128,14 +130,13 @@ export class LichessExplorerService {
         }
 
         const status = payload.moves.length > 0 ? 'ok' : 'no_moves';
-        this.cache.set(cacheKey, {
+        const cacheValue: CachedExplorerResult = {
           status,
           payload,
-        });
-        void setCachedJson(cacheKey, {
-          status,
-          payload,
-        });
+        };
+        this.cache.set(cacheKey, cacheValue);
+        await setCachedJson(cacheKey, cacheValue);
+        console.info('[Lichess Explorer] fetched upstream');
 
         return this.buildResponseFromPayload(payload, request, false, randomValue);
       } catch {
