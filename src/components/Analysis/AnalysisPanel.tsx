@@ -11,9 +11,11 @@ export default function AnalysisPanel() {
     postLineError,
     postLineMode,
     isAwaitingUserMove,
+    autoplayLichessMoves,
     choosePostLineMove,
     continuePostLineAgainstComputer,
     setPreviewUciMove,
+    toggleAutoplayLichessMoves,
   } = useTrainingStore();
   const { lichessTopMoves, lichessSpeeds, lichessRatings } = useSettingsStore();
 
@@ -27,7 +29,9 @@ export default function AnalysisPanel() {
   );
 
   if (!showTopMoves) return null;
-  const canChooseMove = postLineMode === 'top-moves-choice' && !isAwaitingUserMove;
+  const canChooseMove =
+    (postLineMode === 'top-moves-choice' || (postLineMode === 'top-moves' && !autoplayLichessMoves)) &&
+    !isAwaitingUserMove;
 
   return (
     <div className="flex-shrink-0 px-4 pb-4 pt-3">
@@ -37,6 +41,20 @@ export default function AnalysisPanel() {
       <p className="mb-2 text-[11px] text-slate-500">
         Top {lichessTopMoves} continuations by game count.
       </p>
+
+      {postLineMode === 'top-moves' && (
+        <button
+          onClick={toggleAutoplayLichessMoves}
+          className={`mb-2 flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+            autoplayLichessMoves
+              ? 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200'
+              : 'border-sky-300/30 bg-sky-400/10 text-sky-200'
+          }`}
+        >
+          <span>Autoplay player moves</span>
+          <span>{autoplayLichessMoves ? 'On' : 'Off'}</span>
+        </button>
+      )}
 
       {loading && (
         <p className="animate-pulse text-xs text-slate-500">Fetching...</p>

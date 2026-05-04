@@ -348,7 +348,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const isDraggable =
     !isReviewing &&
     !wrongMoveFen &&
-    isAwaitingUserMove &&
     (phase === 'training' || phase === 'setup');
   const boardColumnWidth = `${boardSize}px`;
 

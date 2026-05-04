@@ -22,6 +22,7 @@ import {
   getSetupFen,
 } from '../engine/chessEngine';
 import { useSettingsStore } from './settingsStore';
+import { useProgressStore } from './progressStore';
 import {
   logExplorerMoveAcceptance,
   pickLichessBookMove,
@@ -64,6 +65,8 @@ interface TrainingState {
   mode: TrainingMode;
   opponentMode: OpponentMode;
   randomTopX: number;
+  lineSelectModalNonce: number;
+  drillQueue: string[];
   postLine: boolean;
   postLineMode: PostLineMode | null;
   postLineSource: 'lichess-db' | null;
@@ -77,6 +80,7 @@ interface TrainingState {
   showEval: boolean;
   /** Show top-3 Lichess moves panel during free play. */
   showTopMoves: boolean;
+  autoplayLichessMoves: boolean;
   repetitionBlock: number;
   streak: number;
   timeLeft: number;
@@ -96,6 +100,9 @@ interface TrainingActions {
   showHint(): void;
   restart(): void;
   backToLineSelect(): void;
+  openLineSelectModal(mode?: TrainingMode): void;
+  startDrill(): void;
+  advanceDrillLine(): void;
   /** Clear the wrong-move overlay and return to the correct position. */
   clearWrongMove(): void;
   startPostLine(mode?: PostLineMode, showEval?: boolean, showTopMoves?: boolean): void;
@@ -107,6 +114,7 @@ interface TrainingActions {
   setRandomTopX(x: number): void;
   toggleShowEval(): void;
   toggleShowTopMoves(): void;
+  toggleAutoplayLichessMoves(): void;
   /** Navigate to a historical position. Pass null to return to live. */
   navigateToMove(idx: number | null): void;
   tickTimer(): void;
@@ -137,6 +145,8 @@ function buildInitialState(): TrainingState {
     mode: 'learn',
     opponentMode: 'forced',
     randomTopX: 3,
+    lineSelectModalNonce: 0,
+    drillQueue: [],
     postLine: false,
     postLineMode: null,
     postLineSource: null,
@@ -147,6 +157,7 @@ function buildInitialState(): TrainingState {
     postLineStartMoveCount: null,
     showEval: false,
     showTopMoves: true,
+    autoplayLichessMoves: true,
     repetitionBlock: 1,
     streak: 0,
     timeLeft: -1,
@@ -200,6 +211,20 @@ function dispatchChessEvent<T>(name: string, detail: T) {
 
 function countStudentMovesInLine(opening: Opening, line: OpeningLine) {
   return line.moves.filter((_, index) => isStudentMove(opening, index)).length;
+}
+
+function shuffleLines(lines: OpeningLine[]) {
+  const next = [...lines];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
+function getUnlockedLines(opening: Opening) {
+  const progress = useProgressStore.getState();
+  return opening.lines.filter((line) => progress.isLineUnlocked(opening.id, line.id));
 }
 
 // ─── Store ──────────────────────────────────────────────────────────
@@ -312,6 +337,96 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         } else {
           setTimeout(() => get().advanceOpponent(), 400);
         }
+      }
+    },
+
+    startDrill() {
+      const state = get();
+      if (!state.opening) return;
+      const unlocked = shuffleLines(getUnlockedLines(state.opening));
+      const first = unlocked[0];
+      if (!first) return;
+
+      const setupFen = getSetupFen(state.opening);
+      const setupFenHistory = buildFenHistory(STARTING_FEN, state.opening.setupMoves);
+      const setupLen = state.opening.setupMoves.length;
+      set({
+        mode: 'drill',
+        selectedLine: first,
+        phase: 'training',
+        currentMoveIndex: setupLen,
+        currentFen: setupFen,
+        playedMoves: [...state.opening.setupMoves],
+        fenHistory: setupFenHistory,
+        viewMoveIndex: null,
+        mistakes: 0,
+        wrongMoveSan: null,
+        wrongMoveSquare: null,
+        wrongMoveFen: null,
+        hintSquare: null,
+        showingCorrectMove: false,
+        postLine: false,
+        postLineSource: null,
+        postLineOutOfBook: false,
+        postLineError: null,
+        postLineChoices: [],
+        postLineStartMoveCount: null,
+        previewUciMove: null,
+        isAwaitingUserMove: false,
+        repetitionBlock: 1,
+        streak: 0,
+        drillQueue: unlocked.slice(1).map((line) => line.id),
+      });
+
+      if (isStudentMove(state.opening, setupLen)) {
+        set({ isAwaitingUserMove: true });
+      } else {
+        setTimeout(() => get().advanceOpponent(), 400);
+      }
+    },
+
+    advanceDrillLine() {
+      const state = get();
+      if (!state.opening) return;
+      const [nextLineId, ...remaining] = state.drillQueue;
+      const nextLine = state.opening.lines.find((line) => line.id === nextLineId);
+      if (!nextLine) {
+        set({
+          phase: 'completed',
+          isAwaitingUserMove: false,
+          drillQueue: [],
+          wrongMoveSan: null,
+          wrongMoveSquare: null,
+          wrongMoveFen: null,
+          showingCorrectMove: false,
+        });
+        return;
+      }
+
+      const setupFen = getSetupFen(state.opening);
+      const setupFenHistory = buildFenHistory(STARTING_FEN, state.opening.setupMoves);
+      const setupLen = state.opening.setupMoves.length;
+      set({
+        selectedLine: nextLine,
+        phase: 'training',
+        currentMoveIndex: setupLen,
+        currentFen: setupFen,
+        playedMoves: [...state.opening.setupMoves],
+        fenHistory: setupFenHistory,
+        viewMoveIndex: null,
+        wrongMoveSan: null,
+        wrongMoveSquare: null,
+        wrongMoveFen: null,
+        hintSquare: null,
+        showingCorrectMove: false,
+        isAwaitingUserMove: false,
+        drillQueue: remaining,
+      });
+
+      if (isStudentMove(state.opening, setupLen)) {
+        set({ isAwaitingUserMove: true });
+      } else {
+        setTimeout(() => get().advanceOpponent(), 400);
       }
     },
 
@@ -447,6 +562,9 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           lineId: line.id,
           openingId: state.opening.id,
         });
+        if (state.mode === 'drill') {
+          setTimeout(() => get().advanceDrillLine(), 1300);
+        }
         return 'wrong';
       }
 
@@ -470,7 +588,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         showingCorrectMove: false,
         isAwaitingUserMove: false,
         streak: s.streak + 1,
-        ...(lineComplete ? { phase: 'completed' as TrainingPhase } : {}),
+        ...(lineComplete && state.mode !== 'drill' ? { phase: 'completed' as TrainingPhase } : {}),
       }));
       dispatchChessEvent('chess:move_correct', {
         san,
@@ -485,6 +603,10 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           lineId: line.id,
           openingId: state.opening.id,
         });
+        if (state.mode === 'drill') {
+          setTimeout(() => get().advanceDrillLine(), 700);
+          return 'correct';
+        }
       }
 
       if (state.mode === 'time-trial') {
@@ -631,7 +753,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
             playedSans: state.playedMoves,
           });
 
-          if (state.postLineMode === 'top-moves-choice' && decision.position?.moves.length) {
+          if (
+            (state.postLineMode === 'top-moves-choice' ||
+              (state.postLineMode === 'top-moves' && !state.autoplayLichessMoves)) &&
+            decision.position?.moves.length
+          ) {
             set({
               isAwaitingUserMove: false,
               postLineOutOfBook: false,
@@ -759,7 +885,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         playedMoves: [...state.playedMoves, opponentSan],
         fenHistory: [...state.fenHistory, newFen],
         currentMoveIndex: newIdx,
-        ...(lineComplete ? { phase: 'completed' as TrainingPhase } : {}),
+        ...(lineComplete && state.mode !== 'drill' ? { phase: 'completed' as TrainingPhase } : {}),
       });
 
       if (lineComplete) {
@@ -769,6 +895,9 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           lineId: line.id,
           openingId: opening.id,
         });
+        if (state.mode === 'drill') {
+          setTimeout(() => get().advanceDrillLine(), 700);
+        }
       }
 
       if (!lineComplete) {
@@ -933,7 +1062,11 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
     choosePostLineMove(uci) {
       const state = get();
-      if (!state.postLine || state.postLineMode !== 'top-moves-choice') return;
+      if (
+        !state.postLine ||
+        (state.postLineMode !== 'top-moves-choice' &&
+          !(state.postLineMode === 'top-moves' && !state.autoplayLichessMoves))
+      ) return;
 
       const legalMove = applyUciMove(state.currentFen, uci);
       if (!legalMove) {
@@ -1031,14 +1164,24 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLineSource: null,
         postLineOutOfBook: false,
         postLineError: null,
+        postLineChoices: [],
+        previewUciMove: null,
         postLineStartMoveCount: null,
         repetitionBlock: 1,
         streak: 0,
+        drillQueue: [],
         timeLeft: -1,
         timerRunning: false,
         freePlayResult: null,
         showFreePlayResult: false,
       });
+    },
+
+    openLineSelectModal(mode) {
+      set((state) => ({
+        ...(mode ? { mode } : {}),
+        lineSelectModalNonce: state.lineSelectModalNonce + 1,
+      }));
     },
 
     // ── clearWrongMove ────────────────────────────────────────────
@@ -1066,6 +1209,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     setRandomTopX(x) { set({ randomTopX: Math.min(10, Math.max(1, x)) }); },
     toggleShowEval() { set((s) => ({ showEval: !s.showEval })); },
     toggleShowTopMoves() { set((s) => ({ showTopMoves: !s.showTopMoves })); },
+    toggleAutoplayLichessMoves() { set((s) => ({ autoplayLichessMoves: !s.autoplayLichessMoves })); },
 
     tickTimer() {
       set((s) => {

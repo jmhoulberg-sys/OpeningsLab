@@ -18,7 +18,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 type SetupMode = TrainingMode;
 
 export default function TrainingSetupModal() {
-  const { phase, opening, selectLine, setMode } = useTrainingStore();
+  const { phase, opening, mode, lineSelectModalNonce, selectLine, setMode, startDrill } = useTrainingStore();
   const { isLineUnlocked, isFavorite, toggleFavorite, isDue } = useProgressStore();
   const { enableSRReminders } = useSettingsStore();
   const [selectedMode, setSelectedMode] = useState<SetupMode>('learn');
@@ -39,6 +39,7 @@ export default function TrainingSetupModal() {
   const progressPct = totalLines > 0 ? Math.round((completedLines / totalLines) * 100) : 0;
   const learnableLines = lineStates.filter((entry) => !entry.unlocked);
   const speedUnlocked = completedLines >= 3;
+  const drillUnlocked = completedLines >= 3;
   const visibleLines = useMemo(() => {
     if (selectedMode === 'learn' && learnableLines.length > 0) return learnableLines;
     if (selectedMode !== 'learn') return lineStates.filter((entry) => entry.unlocked);
@@ -56,11 +57,22 @@ export default function TrainingSetupModal() {
     setDismissed(false);
     setUnlockingLineId(null);
     setSelectedMode('learn');
-  }, [phase, openingId]);
+  }, [phase, openingId, lineSelectModalNonce]);
+
+  useEffect(() => {
+    if (mode === 'learn' || mode === 'step-by-step' || mode === 'full-line' || mode === 'drill') {
+      setSelectedMode(mode);
+    }
+  }, [mode, lineSelectModalNonce]);
 
   if (phase !== 'line-select' || !opening) return null;
 
   function launchLine(line: OpeningLine, mode: SetupMode) {
+    if (mode === 'drill') {
+      if (!drillUnlocked) return;
+      startDrill();
+      return;
+    }
     if (mode === 'time-trial' && !speedUnlocked) return;
 
     if (mode === 'learn') {
@@ -138,6 +150,7 @@ export default function TrainingSetupModal() {
             setSelectedMode={setSelectedMode}
             learnedLines={completedLines}
             totalLines={totalLines}
+            drillUnlocked={drillUnlocked}
           />
 
           <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
@@ -149,12 +162,24 @@ export default function TrainingSetupModal() {
             </div>
 
             <div className="grid gap-2 lg:grid-cols-2">
-              {visibleLines.length === 0 && (
+              {selectedMode === 'drill' ? (
+                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-100 lg:col-span-2">
+                  Drill will shuffle your unlocked lines from the setup position. No line repeats in the same run.
+                  <button
+                    onClick={() => launchLine(opening.lines[0], 'drill')}
+                    disabled={!drillUnlocked}
+                    className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-3.5 text-sm font-black text-slate-950 transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-stone-800 disabled:text-stone-600"
+                  >
+                    Start drill
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              ) : visibleLines.length === 0 && (
                 <div className="rounded-2xl border border-stone-800/70 bg-stone-900/70 p-4 text-sm font-semibold text-stone-400 lg:col-span-2">
                   Learn one line first. Each learned line becomes one practice line.
                 </div>
               )}
-              {visibleLines.map(({ line, unlocked }) => (
+              {selectedMode !== 'drill' && visibleLines.map(({ line, unlocked }) => (
                 <LineChoice
                   key={line.id}
                   line={line}
@@ -183,11 +208,13 @@ function ModePicker({
   setSelectedMode,
   learnedLines,
   totalLines,
+  drillUnlocked,
 }: {
   selectedMode: SetupMode;
   setSelectedMode: (mode: SetupMode) => void;
   learnedLines: number;
   totalLines: number;
+  drillUnlocked: boolean;
 }) {
   const practiceLineCount = learnedLines;
   const modes: Array<{
@@ -210,7 +237,7 @@ function ModePicker({
     },
     {
       value: 'step-by-step',
-      label: 'Practice',
+      label: 'Step Practice',
       icon: <Target size={16} />,
       tone: 'emerald',
       help: `${practiceLineCount}/${practiceLineCount} lines available`,
@@ -218,9 +245,30 @@ function ModePicker({
       locked: practiceLineCount === 0,
       lockLabel: 'Learn 1 line',
     },
+    {
+      value: 'full-line',
+      label: 'Full Line',
+      icon: <Route size={16} />,
+      tone: 'emerald',
+      help: `${practiceLineCount}/${practiceLineCount} lines available`,
+      group: 'practice',
+      locked: practiceLineCount === 0,
+      lockLabel: 'Learn 1 line',
+    },
+    {
+      value: 'drill',
+      label: 'Drill',
+      icon: <Route size={16} />,
+      tone: 'emerald',
+      help: 'Shuffle unlocked lines',
+      group: 'practice',
+      locked: !drillUnlocked,
+      lockLabel: 'Learn 3 lines',
+    },
   ];
   const learnMode = modes.find((mode) => mode.group === 'learn')!;
-  const practiceMode = modes.find((mode) => mode.group === 'practice')!;
+  const practiceMode = modes.find((mode) => mode.value === 'step-by-step')!;
+  const fullLineMode = modes.find((mode) => mode.value === 'full-line')!;
 
   return (
     <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
@@ -231,9 +279,10 @@ function ModePicker({
       <div className="space-y-2">
         <ModeButton mode={learnMode} active={selectedMode === learnMode.value} setSelectedMode={setSelectedMode} />
         <ModeButton mode={practiceMode} active={selectedMode === practiceMode.value} setSelectedMode={setSelectedMode} />
-        <div className="grid gap-2 sm:grid-cols-3">
+        <ModeButton mode={fullLineMode} active={selectedMode === fullLineMode.value} setSelectedMode={setSelectedMode} />
+        <ModeButton mode={modes.find((mode) => mode.value === 'drill')!} active={selectedMode === 'drill'} setSelectedMode={setSelectedMode} />
+        <div className="grid gap-2 sm:grid-cols-2">
           {[
-            ['Drill', 'Learn 3 lines to unlock'],
             ['Time', 'Learn 3 lines to unlock'],
             ['Puzzles', 'Learn 2 lines to unlock'],
           ].map(([label, help]) => (
@@ -419,6 +468,7 @@ function getActionLabel(mode: SetupMode, unlocked: boolean) {
   if (mode === 'learn') return unlocked ? 'Review walkthrough' : 'Start walkthrough';
   if (mode === 'step-by-step') return 'Practice step by step';
   if (mode === 'full-line') return 'Practice full line';
+  if (mode === 'drill') return 'Start drill';
   return 'Start speed run';
 }
 
@@ -433,6 +483,9 @@ function getCoachCopy(mode: SetupMode, lockedCount: number) {
   }
   if (mode === 'full-line') {
     return 'Full line is the real test: play the whole sequence cleanly and prove the pattern is yours.';
+  }
+  if (mode === 'drill') {
+    return 'Drill mixes your unlocked lines from the setup position so you have to recognize the branch from memory.';
   }
   return 'Speed is locked until you have three mastered lines. Accuracy comes first, then tempo.';
 }
