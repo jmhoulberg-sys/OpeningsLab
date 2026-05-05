@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import Header from './components/Header/Header';
 import AuthModal from './components/Auth/AuthModal';
-import ChessBoardPanel from './components/Board/ChessBoardPanel';
+import ChessBoardPanel, { BoardNavRow } from './components/Board/ChessBoardPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import MoveList from './components/MoveList/MoveList';
 import CompletionModal from './components/Modals/CompletionModal';
@@ -33,8 +33,8 @@ import { fetchLichessBookPosition } from './services/lichessBookService';
 import type { Opening, OpeningLine, TrainingMode } from './types';
 
 const SIDEBAR_BREAK = 1100;
-const BOARD_CHROME_H = 104;
-const EVAL_BAR_W = 24;
+const BOARD_CHROME_H = 44;
+const EVAL_BAR_W = 0;
 
 export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, startOpening, selectLine } = useTrainingStore();
@@ -231,7 +231,7 @@ export default function App() {
 
           <section
             ref={boardContainerRef}
-            className="flex min-h-0 min-w-0 items-start justify-center overflow-hidden rounded-[28px] bg-stone-950/35 px-2 pb-4 pt-3 sm:px-4"
+            className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-[28px] bg-stone-950/35 p-2"
           >
             <ChessBoardPanel boardSize={boardSize} />
           </section>
@@ -387,6 +387,7 @@ function TrainingRightPanel({
         <MoveList />
       </section>
 
+      <div className="mt-auto pt-3">
       {postLine && (
         <div className={`mt-3 rounded-2xl border px-4 py-3 ${postLineError || postLineOutOfBook ? 'border-amber-300/18 bg-amber-400/8' : 'border-emerald-300/18 bg-emerald-400/8'}`}>
           <p className={`text-xs font-semibold leading-relaxed ${postLineError || postLineOutOfBook ? 'text-amber-300' : 'text-emerald-300'}`}>
@@ -400,6 +401,10 @@ function TrainingRightPanel({
       )}
 
       {postLine && <AnalysisPanel />}
+        <div className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+          <BoardNavRow />
+        </div>
+      </div>
     </div>
   );
 }

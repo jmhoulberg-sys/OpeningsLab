@@ -393,14 +393,10 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     !wrongMoveFen &&
     canInteractWithBoard &&
     (phase === 'training' || phase === 'setup');
-  const boardColumnWidth = `${boardSize}px`;
-
   return (
     <div className="flex w-full max-w-full flex-col items-center gap-2">
-      <div
-        className={`w-full ${showProgressBar ? 'visible' : 'invisible'}`}
-        style={{ maxWidth: boardSize }}
-      >
+      {showProgressBar && (
+      <div className="w-full" style={{ maxWidth: boardSize }}>
         <div className="mb-1 flex justify-between text-xs font-semibold text-stone-400">
           <span>{progressLabel}</span>
           <span>{progressDone} / {progressTotal} moves</span>
@@ -416,9 +412,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           />
         </div>
       </div>
+      )}
 
+      {(feedbackMsg || (wrongMoveFen && !showingCorrectMove)) && (
       <div className="flex h-4 items-center justify-center">
-        {feedbackMsg ? (
+        {feedbackMsg && (
           <span
             className={`rounded-full px-4 py-1 text-xs font-bold ${
               feedbackMsg.type === 'correct'
@@ -428,18 +426,21 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
           >
             {feedbackMsg.text}
           </span>
-        ) : wrongMoveFen && !showingCorrectMove ? (
+        )}
+        {!feedbackMsg && wrongMoveFen && !showingCorrectMove && (
           <span className="rounded-full bg-rose-500/85 px-3 py-1 text-xs font-semibold text-white">
             Play it again
           </span>
-        ) : null}
-      </div>
-
-      <div className="flex w-full items-start justify-center gap-3 sm:gap-4">
-        {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
-          <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
         )}
-        <div className="flex flex-col items-center gap-3" style={{ width: boardColumnWidth }}>
+      </div>
+      )}
+
+      <div className="relative flex items-center justify-center" style={{ width: boardSize, height: boardSize }}>
+        {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
+          <div className="absolute left-[-30px] top-0">
+          <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
+          </div>
+        )}
           <div
             key={boardFlashing ? `flash-${flashKeyRef.current}` : 'board'}
             className={[
@@ -481,17 +482,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
               orientation={boardOrientation}
             />
           </div>
-
-          {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
-            <BoardNavRow
-              wrongMoveFen={wrongMoveFen}
-              clearWrongMove={clearWrongMove}
-              phase={phase}
-              mode={mode}
-              postLine={postLine}
-            />
-          )}
-        </div>
       </div>
     </div>
   );
@@ -574,20 +564,13 @@ function KnightArrowOverlay({
   );
 }
 
-function BoardNavRow({
-  wrongMoveFen,
-  clearWrongMove,
-  phase,
-  mode,
-  postLine,
-}: {
-  wrongMoveFen: string | null;
-  clearWrongMove: () => void;
-  phase: string;
-  mode: string;
-  postLine: boolean;
-}) {
+export function BoardNavRow() {
   const {
+    wrongMoveFen,
+    clearWrongMove,
+    phase,
+    mode,
+    postLine,
     viewMoveIndex,
     playedMoves,
     navigateToMove,
