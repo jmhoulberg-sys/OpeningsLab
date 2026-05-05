@@ -66,6 +66,12 @@ function legalDestinations(fen: string, from: Square): Square[] {
   }
 }
 
+function isKnightArrow(from: Square, to: Square) {
+  const dx = Math.abs(from.charCodeAt(0) - to.charCodeAt(0));
+  const dy = Math.abs(Number(from[1]) - Number(to[1]));
+  return (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
+}
+
 export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: number }) {
   const {
     opening,
@@ -264,6 +270,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const customArrows: [Square, Square, string][] = [];
+  const knightArrows: [Square, Square, string][] = [];
   const previewArrow = previewUciMove ? resolveUciArrow(currentFen, previewUciMove) : null;
 
   if (previewArrow && !isReviewing) {
@@ -275,17 +282,23 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       ...(customSquareStyles[previewArrow[1]] ?? {}),
       backgroundColor: 'rgba(16, 185, 129, 0.48)',
     };
-    customArrows.push([previewArrow[0], previewArrow[1], 'rgba(52, 211, 153, 0.95)']);
+    const arrow: [Square, Square, string] = [previewArrow[0], previewArrow[1], 'rgba(52, 211, 153, 0.95)'];
+    if (isKnightArrow(previewArrow[0], previewArrow[1])) knightArrows.push(arrow);
+    else customArrows.push(arrow);
   }
 
   if (guidedAnswerArrow) {
-    customArrows.push([guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)']);
+    const arrow: [Square, Square, string] = [guidedAnswerArrow[0], guidedAnswerArrow[1], 'rgba(56, 189, 248, 0.95)'];
+    if (isKnightArrow(guidedAnswerArrow[0], guidedAnswerArrow[1])) knightArrows.push(arrow);
+    else customArrows.push(arrow);
   }
 
   if (!isReviewing && wrongMoveSan && showingCorrectMove && !wrongMoveFen) {
     const arrow = resolveArrow(currentFen, wrongMoveSan);
     if (arrow) {
-      customArrows.push([arrow[0], arrow[1], ANSWER_ARROW_COLOR]);
+      const customArrow: [Square, Square, string] = [arrow[0], arrow[1], ANSWER_ARROW_COLOR];
+      if (isKnightArrow(arrow[0], arrow[1])) knightArrows.push(customArrow);
+      else customArrows.push(customArrow);
     }
   }
 
@@ -457,6 +470,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
                   }
                 : {})}
             />
+            <KnightArrowOverlay
+              arrows={knightArrows}
+              boardSize={boardSize}
+              orientation={boardOrientation}
+            />
           </div>
 
           {(phase === 'training' || phase === 'setup' || phase === 'completed') && (
@@ -471,6 +489,73 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         </div>
       </div>
     </div>
+  );
+}
+
+function KnightArrowOverlay({
+  arrows,
+  boardSize,
+  orientation,
+}: {
+  arrows: [Square, Square, string][];
+  boardSize: number;
+  orientation: 'white' | 'black';
+}) {
+  if (arrows.length === 0) return null;
+
+  const squareSize = boardSize / 8;
+  const center = (square: Square) => {
+    const file = square.charCodeAt(0) - 97;
+    const rank = Number(square[1]) - 1;
+    const x = orientation === 'white' ? file + 0.5 : 7 - file + 0.5;
+    const y = orientation === 'white' ? 7 - rank + 0.5 : rank + 0.5;
+    return { x: x * squareSize, y: y * squareSize };
+  };
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 z-20"
+      width={boardSize}
+      height={boardSize}
+      viewBox={`0 0 ${boardSize} ${boardSize}`}
+      aria-hidden="true"
+    >
+      <defs>
+        {arrows.map(([, , color], index) => (
+          <marker
+            key={`knight-head-${index}`}
+            id={`knight-head-${index}`}
+            markerWidth="8"
+            markerHeight="8"
+            refX="6.5"
+            refY="4"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M0,0 L8,4 L0,8 Z" fill={color} />
+          </marker>
+        ))}
+      </defs>
+      {arrows.map(([from, to, color], index) => {
+        const start = center(from);
+        const end = center(to);
+        const horizontalFirst = Math.abs(start.x - end.x) > Math.abs(start.y - end.y);
+        const bend = horizontalFirst ? { x: end.x, y: start.y } : { x: start.x, y: end.y };
+        return (
+          <path
+            key={`${from}-${to}-${index}`}
+            d={`M ${start.x} ${start.y} L ${bend.x} ${bend.y} L ${end.x} ${end.y}`}
+            fill="none"
+            stroke={color}
+            strokeWidth={Math.max(5, boardSize * 0.012)}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            markerEnd={`url(#knight-head-${index})`}
+            opacity="0.95"
+          />
+        );
+      })}
+    </svg>
   );
 }
 
@@ -534,8 +619,8 @@ function BoardNavRow({
   const answerDisabled = showingCorrectMove;
 
   return (
-      <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-2.5">
-        <div className="flex min-w-0 items-center justify-start">
+      <div className="grid w-full grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-2.5">
+        <div className="order-2 flex min-w-0 items-center justify-start sm:order-1">
           {isGuidedLearn && (
             <div className="inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-4 text-sm font-bold text-sky-200">
               <Sparkles size={15} />
@@ -569,7 +654,7 @@ function BoardNavRow({
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-2 sm:gap-3">
+      <div className="order-1 col-span-2 flex items-center justify-center gap-2 sm:order-2 sm:col-span-1 sm:gap-3">
         <NavButton
           onClick={goBack}
           disabled={!canBack}
@@ -592,8 +677,8 @@ function BoardNavRow({
         )}
       </div>
 
-        <div className="flex min-w-0 items-center justify-end">
-        <div className={`inline-flex h-10 min-w-[100px] items-center justify-center rounded-2xl px-4 text-sm font-semibold ${
+        <div className="order-3 flex min-w-0 items-center justify-end">
+        <div className={`inline-flex h-10 min-w-[92px] items-center justify-center rounded-2xl px-3 text-sm font-semibold sm:min-w-[100px] sm:px-4 ${
           mistakes > 0
             ? 'bg-rose-500/12 text-rose-300'
             : 'bg-stone-900/75 text-stone-400'

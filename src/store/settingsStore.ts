@@ -65,7 +65,7 @@ function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
     lichessRatings: lichessRatings.length > 0 ? lichessRatings : [...DEFAULT_LICHESS_RATINGS],
     lichessVariant: state?.lichessVariant === 'standard' ? 'standard' : 'standard',
     enableSRReminders: asBoolean(state?.enableSRReminders, true),
-    showEvalBar: asBoolean(state?.showEvalBar, false),
+    showEvalBar: asBoolean(state?.showEvalBar, true),
   };
 }
 
@@ -78,7 +78,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       lichessRatings: [...DEFAULT_LICHESS_RATINGS],
       lichessVariant: 'standard',
       enableSRReminders: true,
-      showEvalBar: false,
+      showEvalBar: true,
       setRestartFrom: (v) => set({ restartFrom: v }),
       setLichessTopMoves: (v) => set({ lichessTopMoves: Math.max(1, Math.min(10, Math.floor(v))) }),
       toggleLichessSpeed: (value) => set((state) => {

@@ -51,8 +51,8 @@ export default function FreePlayEndModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative bg-brand-surface border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 p-8 max-w-sm w-full mx-4 text-center overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 px-3 py-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-slate-700/60 bg-brand-surface p-5 text-center shadow-2xl shadow-black/60 sm:p-8">
         {/* Confetti container */}
         {isWin && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">

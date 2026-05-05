@@ -27,6 +27,8 @@ interface ProfileState {
   displayName: string;
   isLoggedIn: boolean;
   accounts: LocalAccount[];
+  friends: string[];
+  friendRequests: string[];
   isAuthModalOpen: boolean;
   authMode: AuthMode;
   setDisplayName: (name: string) => void;
@@ -38,6 +40,9 @@ interface ProfileState {
   signUp: (username: string, password: string) => AuthResult;
   signIn: (username: string, password: string) => AuthResult;
   logout: () => void;
+  addFriendRequest: (username: string) => AuthResult;
+  acceptFriendRequest: (username: string) => void;
+  declineFriendRequest: (username: string) => void;
   resetProfile: () => void;
   exportData: () => string;
   importData: (code: string) => boolean;
@@ -48,6 +53,8 @@ interface PersistedProfileState {
   displayName?: unknown;
   isLoggedIn?: unknown;
   accounts?: unknown;
+  friends?: unknown;
+  friendRequests?: unknown;
 }
 
 function asString(value: unknown, fallback = '') {
@@ -81,7 +88,13 @@ function sanitiseProfileState(state?: PersistedProfileState) {
     displayName: asString(state?.displayName),
     isLoggedIn: asBoolean(state?.isLoggedIn),
     accounts: sanitiseAccounts(state?.accounts),
+    friends: asStringArray(state?.friends),
+    friendRequests: asStringArray(state?.friendRequests),
   };
+}
+
+function asStringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
 
 function normaliseUsername(username: string) {
@@ -112,6 +125,8 @@ export const useProfileStore = create<ProfileState>()(
       displayName: '',
       isLoggedIn: false,
       accounts: [],
+      friends: [],
+      friendRequests: [],
       isAuthModalOpen: false,
       authMode: 'signup',
 
@@ -172,11 +187,40 @@ export const useProfileStore = create<ProfileState>()(
       },
 
       logout: () => set({ isLoggedIn: false }),
+      addFriendRequest: (username) => {
+        const cleanUsername = username.trim();
+        if (cleanUsername.length < 3) return { ok: false, message: 'Enter a username with at least 3 characters.' };
+        const self = normaliseUsername(get().displayName);
+        const key = normaliseUsername(cleanUsername);
+        if (self && key === self) return { ok: false, message: 'That is your own username.' };
+        if (get().friends.some((friend) => normaliseUsername(friend) === key)) {
+          return { ok: false, message: 'Already friends.' };
+        }
+        if (get().friendRequests.some((friend) => normaliseUsername(friend) === key)) {
+          return { ok: false, message: 'Request already pending.' };
+        }
+        set((state) => ({ friendRequests: [...state.friendRequests, cleanUsername] }));
+        return { ok: true };
+      },
+      acceptFriendRequest: (username) => set((state) => {
+        const key = normaliseUsername(username);
+        const request = state.friendRequests.find((item) => normaliseUsername(item) === key);
+        if (!request) return state;
+        return {
+          friendRequests: state.friendRequests.filter((item) => normaliseUsername(item) !== key),
+          friends: state.friends.some((item) => normaliseUsername(item) === key) ? state.friends : [...state.friends, request],
+        };
+      }),
+      declineFriendRequest: (username) => set((state) => ({
+        friendRequests: state.friendRequests.filter((item) => normaliseUsername(item) !== normaliseUsername(username)),
+      })),
       resetProfile: () => set({
         profileId: generateId(),
         displayName: '',
         isLoggedIn: false,
         accounts: [],
+        friends: [],
+        friendRequests: [],
         isAuthModalOpen: false,
         authMode: 'signup',
       }),
@@ -234,6 +278,8 @@ export const useProfileStore = create<ProfileState>()(
         displayName: state.displayName,
         isLoggedIn: state.isLoggedIn,
         accounts: state.accounts,
+        friends: state.friends,
+        friendRequests: state.friendRequests,
       }),
       merge: (persistedState, currentState) => ({
         ...currentState,

@@ -662,8 +662,8 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
-        <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
+      <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px] lg:overflow-hidden">
+        <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
           <PanelHeading title="Possible openings" />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
@@ -797,11 +797,11 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/50">
+        <section className="order-1 flex min-h-[360px] flex-col overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/50 lg:order-2 lg:min-h-0">
           <div className="border-b border-stone-800/60 p-3">
             <RouteBar path={activePath} cursor={cursor} total={path.length} onBack={() => setCursor(Math.max(0, cursor - 1))} onForward={() => setCursor(Math.min(path.length, cursor + 1))} />
           </div>
-          <div ref={boardRef} className="flex min-h-0 flex-1 items-center justify-center p-2">
+          <div ref={boardRef} className="flex min-h-[280px] flex-1 items-center justify-center p-2 lg:min-h-0">
             <Chessboard
               position={currentFen}
               boardWidth={boardWidth}
@@ -823,7 +823,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
           </div>
         </section>
 
-        <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
+        <aside className="order-3 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
           <PanelHeading title={rightTitle} />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (

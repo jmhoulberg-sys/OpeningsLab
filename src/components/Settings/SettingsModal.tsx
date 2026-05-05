@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogIn, LogOut, UserCircle2, X } from 'lucide-react';
+import { ArrowLeft, LogIn, LogOut, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import {
@@ -58,39 +58,29 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
     onClose();
   }
 
-  function handleBackdropClick() {
-    setConfirmReset(false);
-    onClose();
-  }
-
   function handleClose() {
     setConfirmReset(false);
     onClose();
   }
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[1px]"
-        onClick={handleBackdropClick}
-      />
-
-      <div
-        className="fixed left-1/2 top-1/2 z-50 flex max-h-[86vh] w-[min(92vw,30rem)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col overflow-hidden rounded-[24px] border border-stone-700/55 bg-stone-950 opacity-100 shadow-2xl shadow-black/70 transition-all duration-200"
-      >
-        <div className="flex items-center justify-between border-b border-stone-800/70 px-5 py-4">
-          <h2 className="text-lg font-bold text-white">Settings</h2>
+    <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
+      <header className="border-b border-stone-800/80 bg-stone-950">
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4 sm:px-6">
           <button
             onClick={handleClose}
-            className="rounded-xl border border-stone-700/45 bg-stone-900 px-2.5 py-2 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
-            aria-label="Close settings"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
           >
-            <X size={18} />
+            <ArrowLeft size={16} />
+            Back
           </button>
+          <h1 className="text-lg font-bold text-white">Settings</h1>
         </div>
+      </header>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5">
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Account</div>
             <div>
               <div className="flex items-start justify-between gap-3">
@@ -144,11 +134,11 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </div>
           </section>
 
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Restart line from
             </label>
-            <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
+            <div className="flex flex-col overflow-hidden rounded-xl border border-stone-700/45 sm:flex-row">
               {(
                 [
                   { value: 'setup', label: 'Setup position' },
@@ -191,7 +181,7 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </section>
           )}
 
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Opponent depth
             </label>
@@ -211,7 +201,7 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </div>
           </section>
 
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4 lg:col-span-2">
             <label className="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Lichess response settings
             </label>
@@ -295,7 +285,7 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </div>
           </section>
 
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Evaluation Bar
             </label>
@@ -304,7 +294,7 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </ToggleButton>
           </section>
 
-          <section className="rounded-2xl border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Spaced Repetition
             </label>
@@ -313,7 +303,7 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             </ToggleButton>
           </section>
 
-          <section className="rounded-2xl border border-rose-400/15 bg-rose-400/5 p-4">
+          <section className="rounded-[20px] border border-rose-400/15 bg-rose-400/5 p-4 lg:col-span-2">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-rose-200/80">Reset profile</div>
             {!confirmReset ? (
               <button
@@ -345,8 +335,8 @@ export default function SettingsModal({ isOpen, onClose, onOpenFinder }: Setting
             )}
           </section>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
 

@@ -27,6 +27,8 @@ import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import { getCoachingNote } from './data/coachingNotes';
+import { getSetupFen } from './engine/chessEngine';
+import { fetchLichessBookPosition } from './services/lichessBookService';
 import type { Opening, OpeningLine, TrainingMode } from './types';
 
 const SIDEBAR_BREAK = 1100;
@@ -110,6 +112,9 @@ export default function App() {
   }
 
   function handleProfileClick() {
+    setShowHome(false);
+    setShowFinder(false);
+    setShowSettings(false);
     setShowProfile(true);
   }
 
@@ -139,6 +144,28 @@ export default function App() {
     startOpening(selectedOpening);
   }
 
+  if (showSettings) {
+    return (
+      <>
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          onOpenFinder={handleOpenFinder}
+        />
+        <AuthModal />
+      </>
+    );
+  }
+
+  if (showProfile) {
+    return (
+      <>
+        <ProfilePage onBack={() => setShowProfile(false)} />
+        <AuthModal />
+      </>
+    );
+  }
+
   if (showFinder) {
     return (
       <>
@@ -148,11 +175,6 @@ export default function App() {
           onStartPractice={handleStartFinderLine}
         />
         <AuthModal />
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          onOpenFinder={handleOpenFinder}
-        />
       </>
     );
   }
@@ -168,12 +190,6 @@ export default function App() {
           onOpenFinder={handleOpenFinder}
         />
         <AuthModal />
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          onOpenFinder={handleOpenFinder}
-        />
-        {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
       </>
     );
   }
@@ -230,7 +246,7 @@ export default function App() {
 
         {isSmallScreen && opening && (
           <aside
-            className={`fixed inset-y-0 right-0 z-40 w-80 overflow-hidden border-l border-stone-800/60 bg-stone-950/96 shadow-2xl shadow-black/60 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`fixed inset-y-0 right-0 z-40 w-screen max-w-[22rem] overflow-hidden border-l border-stone-800/60 bg-stone-950 shadow-2xl shadow-black/60 transition-transform duration-300 max-[380px]:max-w-none ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="relative h-full">
               <button
@@ -258,12 +274,6 @@ export default function App() {
       <CompletionModal />
       <FreePlayEndModal />
       <AuthModal />
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        onOpenFinder={handleOpenFinder}
-      />
-      {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
     </div>
   );
 }
@@ -610,6 +620,35 @@ function OpeningLineDropdown({
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
   const [open, setOpen] = useState(false);
+  const [lineFrequencies, setLineFrequencies] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!setupDone || !open) return;
+
+    fetchLichessBookPosition(getSetupFen(opening), { topMoves: 10, playedSans: opening.setupMoves })
+      .then((result) => {
+        if (cancelled || result.status !== 'ok' || !result.position) return;
+        const total = Math.max(1, result.position.totalGames);
+        const normalise = (value: string) => value.replace(/[+#!?]/g, '').trim();
+        const bySan = new Map(
+          result.position.moves.map((move) => [normalise(move.san), Math.round((move.popularity / total) * 100)]),
+        );
+        setLineFrequencies(Object.fromEntries(
+          opening.lines.map((line) => {
+            const nextMove = line.moves[opening.setupMoves.length]?.san;
+            return [line.id, nextMove ? bySan.get(normalise(nextMove)) ?? 0 : 0];
+          }),
+        ));
+      })
+      .catch(() => {
+        if (!cancelled) setLineFrequencies({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, opening, setupDone]);
 
   return (
     <section className="relative rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
@@ -656,6 +695,11 @@ function OpeningLineDropdown({
               >
                 {mastered ? <Sparkles size={14} className="text-emerald-300" /> : <Lock size={14} />}
                 <span className="min-w-0 flex-1 truncate font-semibold">{line.name}</span>
+                {setupDone && (
+                  <span className="shrink-0 rounded-full bg-stone-800 px-2 py-0.5 text-[11px] font-black text-stone-300">
+                    {lineFrequencies[line.id] != null ? `${lineFrequencies[line.id]}%` : '--'}
+                  </span>
+                )}
               </button>
             );
           })}

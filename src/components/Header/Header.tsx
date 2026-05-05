@@ -28,7 +28,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
 
   return (
     <header className="border-b border-stone-800/80 bg-stone-950">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         <button
           onClick={onHomeClick}
           className="group flex items-center gap-3 justify-self-start cursor-pointer"
@@ -51,8 +51,10 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 justify-self-end">
-          <StreakBadge />
+        <div className="flex items-center gap-1.5 justify-self-end sm:gap-2.5">
+          <div className="scale-90 sm:scale-100">
+            <StreakBadge />
+          </div>
           {isLoggedIn ? (
             <button
               onClick={onProfileClick}
@@ -83,7 +85,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           )}
           <button
             onClick={onSettingsClick}
-            className="h-[68px] rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="h-11 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white sm:h-[68px] sm:rounded-2xl sm:px-4 cursor-pointer"
             title="Settings"
             aria-label="Open settings"
           >

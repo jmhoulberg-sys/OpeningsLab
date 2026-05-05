@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  ArrowLeft,
   BarChart2,
   BookOpen,
   Check,
@@ -15,7 +16,6 @@ import {
   Upload,
   User,
   Users,
-  X,
 } from 'lucide-react';
 import { useProfileStore } from '../store/profileStore';
 import {
@@ -33,6 +33,7 @@ interface ProfilePageProps {
 
 type ProfileTab = 'stats' | 'progress' | 'friends' | 'leaderboard';
 type ChartRange = 'week' | 'month' | 'year' | 'all';
+type LeaderboardScope = 'all' | 'friends';
 
 const TABS: Array<{ id: ProfileTab; label: string; icon: typeof BarChart2 }> = [
   { id: 'stats', label: 'Stats', icon: BarChart2 },
@@ -60,6 +61,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   const [importCode, setImportCode] = useState('');
   const [importError, setImportError] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const [leaderboardScope, setLeaderboardScope] = useState<LeaderboardScope>('all');
 
   const levelInfo = getLevelInfo(xpTotal);
   const today = getTodayProgress(daily);
@@ -121,27 +123,18 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 p-3 text-slate-100 backdrop-blur-sm sm:p-5"
-      onClick={onBack}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profile-title"
-    >
-      <div
-        className="flex max-h-[calc(100vh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[24px] border border-stone-800/70 bg-stone-950 shadow-2xl shadow-black/60 sm:max-h-[calc(100vh-2.5rem)]"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-stone-950">
         <div className="border-b border-stone-800/60 bg-stone-950">
           <div className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-4 sm:px-6">
-            <h1 id="profile-title" className="flex-1 text-lg font-bold text-white">My Profile</h1>
             <button
               onClick={onBack}
-              className="rounded-xl border border-stone-700/45 bg-stone-800 px-2.5 py-2 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
-              aria-label="Close profile"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
             >
-              <X size={18} />
+              <ArrowLeft size={16} />
+              Back
             </button>
+            <h1 id="profile-title" className="flex-1 text-lg font-bold text-white">My Profile</h1>
           </div>
           <div className="mx-auto flex max-w-4xl gap-2 overflow-x-auto px-4 pb-4 sm:px-6">
             {TABS.map((tab) => {
@@ -223,6 +216,8 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
               xpTotal={xpTotal}
               weeklyXp={chart.weeklyXp}
               level={levelInfo.level}
+              scope={leaderboardScope}
+              onScopeChange={setLeaderboardScope}
             />
           )}
         </div>
@@ -554,6 +549,16 @@ function FriendsPanel({
   accountLabel: string;
   totalAttempts: number;
 }) {
+  const { friends, friendRequests, addFriendRequest, acceptFriendRequest, declineFriendRequest } = useProfileStore();
+  const [username, setUsername] = useState('');
+  const [message, setMessage] = useState('');
+
+  function handleAddFriend() {
+    const result = addFriendRequest(username);
+    setMessage(result.ok ? `Request sent to ${username.trim()}.` : result.message ?? 'Could not send request.');
+    if (result.ok) setUsername('');
+  }
+
   return (
     <div className="grid gap-5 md:grid-cols-[1.1fr_0.9fr]">
       <div className="rounded-[22px] border border-stone-800/60 bg-stone-900 p-5">
@@ -563,18 +568,61 @@ function FriendsPanel({
         </div>
         <div className="space-y-3">
           <FriendRow name={accountLabel} detail={`${totalAttempts} practice sessions`} active />
-          <FriendRow name="Invite slot" detail="Share progress battles here soon" />
-          <FriendRow name="Training partner" detail="Compare openings once accounts are online" />
+          {friends.map((friend) => (
+            <FriendRow key={friend} name={friend} detail="Friend" />
+          ))}
+          {friends.length === 0 && <FriendRow name="No friends yet" detail="Add someone by username" />}
         </div>
       </div>
       <div className="rounded-[22px] border border-stone-800/60 bg-stone-900 p-5">
         <div className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">
-          Next social goals
+          Add friend
         </div>
-        <div className="space-y-3 text-sm text-stone-400">
-          <GoalRow text="Add friends by username" />
-          <GoalRow text="Compare course progress" />
-          <GoalRow text="Weekly XP challenges" />
+        <div className="flex gap-2">
+          <input
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              setMessage('');
+            }}
+            placeholder="Username"
+            className="min-w-0 flex-1 rounded-xl border border-stone-700/45 bg-stone-950 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 focus:border-sky-400/55 focus:outline-none"
+          />
+          <button
+            onClick={handleAddFriend}
+            disabled={!username.trim()}
+            className="rounded-xl bg-sky-500 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-45 cursor-pointer"
+          >
+            Add
+          </button>
+        </div>
+        {message && <p className="mt-2 text-xs font-semibold text-stone-400">{message}</p>}
+
+        <div className="mt-5 text-xs font-bold uppercase tracking-widest text-stone-400">
+          Requests
+        </div>
+        <div className="mt-3 space-y-2">
+          {friendRequests.length === 0 ? (
+            <div className="rounded-2xl border border-stone-800/70 bg-stone-950/60 p-3 text-sm text-stone-500">
+              No pending requests.
+            </div>
+          ) : friendRequests.map((request) => (
+            <div key={request} className="flex items-center gap-2 rounded-2xl border border-stone-800/70 bg-stone-950/60 p-3">
+              <div className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{request}</div>
+              <button
+                onClick={() => acceptFriendRequest(request)}
+                className="rounded-xl bg-emerald-400 px-3 py-1.5 text-xs font-bold text-slate-950 cursor-pointer"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => declineFriendRequest(request)}
+                className="rounded-xl border border-stone-700/55 bg-stone-900 px-3 py-1.5 text-xs font-bold text-stone-300 cursor-pointer"
+              >
+                Decline
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -586,23 +634,53 @@ function LeaderboardPanel({
   xpTotal,
   weeklyXp,
   level,
+  scope,
+  onScopeChange,
 }: {
   accountLabel: string;
   xpTotal: number;
   weeklyXp: number;
   level: number;
+  scope: LeaderboardScope;
+  onScopeChange: (scope: LeaderboardScope) => void;
 }) {
-  const rows = [
+  const { friends } = useProfileStore();
+  const allRows: Array<{ rank: number; name: string; score: string; detail: string; current?: boolean }> = [
     { rank: 1, name: accountLabel, score: `${weeklyXp} weekly XP`, detail: `Level ${level}`, current: true },
     { rank: 2, name: 'Local benchmark', score: `${Math.max(0, weeklyXp - 120)} weekly XP`, detail: 'Practice rival' },
     { rank: 3, name: 'All-time progress', score: `${xpTotal} total XP`, detail: 'Your lifetime score' },
   ];
+  const friendRows: Array<{ rank: number; name: string; score: string; detail: string; current?: boolean }> = [
+    allRows[0],
+    ...friends.map((friend, index) => ({
+      rank: index + 2,
+      name: friend,
+      score: `${Math.max(0, weeklyXp - (index + 1) * 80)} weekly XP`,
+      detail: 'Friend',
+    })),
+  ];
+  const rows = scope === 'friends' ? friendRows : allRows;
 
   return (
     <div className="rounded-[22px] border border-stone-800/60 bg-stone-900 p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <Medal size={16} className="text-amber-300" />
-        <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Leaderboard</span>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Medal size={16} className="text-amber-300" />
+          <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Leaderboard</span>
+        </div>
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-stone-700/55">
+          {(['all', 'friends'] as LeaderboardScope[]).map((item) => (
+            <button
+              key={item}
+              onClick={() => onScopeChange(item)}
+              className={`px-4 py-2 text-xs font-bold capitalize transition-colors cursor-pointer ${
+                scope === item ? 'bg-sky-500 text-slate-950' : 'bg-stone-950 text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="space-y-2.5">
         {rows.map((row) => (
@@ -731,15 +809,6 @@ function FriendRow({ name, detail, active }: { name: string; detail: string; act
         <div className="truncate text-sm font-semibold text-white">{name}</div>
         <div className="text-xs text-stone-500">{detail}</div>
       </div>
-    </div>
-  );
-}
-
-function GoalRow({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Circle size={13} className="text-stone-600" />
-      <span>{text}</span>
     </div>
   );
 }
