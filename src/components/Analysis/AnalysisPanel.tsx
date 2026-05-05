@@ -35,21 +35,25 @@ export default function AnalysisPanel() {
       : postLineMode === 'top-moves' && (isAwaitingUserMove || !autoplayLichessMoves);
 
   return (
-    <div className="flex-shrink-0 px-4 pb-4 pt-3">
-      <div className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-        Based on Lichess games
+    <section className="mt-3 flex-shrink-0 overflow-hidden rounded-[20px] border border-stone-800/60 bg-stone-950/60">
+      <div className="border-b border-stone-800/60 bg-stone-900/65 px-4 py-3">
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-sky-300">
+          Lichess moves
+        </div>
+        <p className="mt-1 text-xs font-semibold text-stone-400">
+          Top {lichessTopMoves} continuations by game count.
+        </p>
       </div>
-      <p className="mb-2 text-[11px] text-slate-500">
-        Top {lichessTopMoves} continuations by game count.
-      </p>
+
+      <div className="px-4 py-3">
 
       {postLineMode === 'top-moves' && (
         <button
           onClick={toggleAutoplayLichessMoves}
-          className={`mb-2 flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+          className={`mb-3 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
             autoplayLichessMoves
-              ? 'border-emerald-300/30 bg-emerald-400/10 text-emerald-200'
-              : 'border-sky-300/30 bg-sky-400/10 text-sky-200'
+              ? 'border-emerald-300/30 bg-emerald-400/12 text-emerald-100'
+              : 'border-sky-300/30 bg-sky-400/12 text-sky-100'
           }`}
         >
           <span>Autoplay opponent response</span>
@@ -97,20 +101,17 @@ export default function AnalysisPanel() {
       )}
 
       {!loading && moves.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {canChooseMove && (
-            <p className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1.5 text-[11px] font-semibold text-emerald-200">
+            <p className="rounded-xl border border-emerald-400/25 bg-emerald-400/12 px-3 py-2 text-xs font-bold text-emerald-100">
               Choose a move from this position.
             </p>
           )}
-          <div className="mb-1 grid grid-cols-[42px_40px_52px_1fr_34px_34px_34px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+          <div className="grid grid-cols-[44px_42px_54px_1fr] gap-x-2 px-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
             <span>Move</span>
             <span className="text-center">Use</span>
             <span className="text-right">Games</span>
-            <span />
-            <span className="text-center">W%</span>
-            <span className="text-center">D%</span>
-            <span className="text-center">B%</span>
+            <span>Results</span>
           </div>
           {moves.map((move) => (
             <MoveRow
@@ -124,7 +125,8 @@ export default function AnalysisPanel() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -157,33 +159,29 @@ function MoveRow({
       onFocus={onPreview}
       onBlur={onClearPreview}
       aria-disabled={!canChoose}
-      className={`grid w-full grid-cols-[42px_40px_52px_1fr_34px_34px_34px] items-center gap-x-1 rounded-md border px-0.5 py-0.5 text-left transition-colors ${
+      className={`grid w-full grid-cols-[44px_42px_54px_1fr] items-center gap-x-2 rounded-xl border px-2 py-2 text-left transition-colors ${
         canChoose
-          ? 'cursor-pointer border-transparent hover:border-emerald-300/45 hover:bg-emerald-400/10 focus:border-emerald-300/55 focus:outline-none focus:ring-1 focus:ring-emerald-300/40'
-          : 'cursor-default border-transparent hover:border-slate-500/35 hover:bg-slate-800/35'
+          ? 'cursor-pointer border-stone-800/45 bg-stone-900/45 hover:border-emerald-300/45 hover:bg-emerald-400/10 focus:border-emerald-300/55 focus:outline-none focus:ring-1 focus:ring-emerald-300/40'
+          : 'cursor-default border-stone-800/45 bg-stone-900/35 hover:border-slate-500/35 hover:bg-slate-800/35'
       }`}
     >
-      <span className="font-mono text-xs font-bold text-white">{move.san}</span>
-      <span className="text-center text-[11px] font-semibold tabular-nums text-sky-300">
+      <span className="font-mono text-sm font-black text-white">{move.san}</span>
+      <span className="text-center text-xs font-black tabular-nums text-sky-300">
         {playPct}%
       </span>
-      <span className="text-right text-[11px] tabular-nums text-slate-300">{games}</span>
+      <span className="text-right text-xs font-semibold tabular-nums text-stone-300">{games}</span>
 
-      <div className="flex h-3 overflow-hidden rounded-sm" title={`${games} games`}>
-        <div className="bg-slate-100" style={{ width: `${whitePct}%` }} />
-        <div className="bg-slate-500" style={{ width: `${drawPct}%` }} />
-        <div className="border-l border-slate-700 bg-slate-900" style={{ width: `${blackPct}%` }} />
+      <div className="flex h-6 overflow-hidden rounded-lg border border-stone-700/60 bg-stone-800" title={`${games} games`}>
+        <div className="flex min-w-[28px] items-center justify-center bg-slate-100 px-1 text-[10px] font-black text-slate-950" style={{ width: `${whitePct}%` }}>
+          W {whitePct}%
+        </div>
+        <div className="flex min-w-[24px] items-center justify-center bg-slate-500 px-1 text-[10px] font-black text-white" style={{ width: `${drawPct}%` }}>
+          D {drawPct}%
+        </div>
+        <div className="flex min-w-[28px] items-center justify-center bg-slate-950 px-1 text-[10px] font-black text-white" style={{ width: `${blackPct}%` }}>
+          B {blackPct}%
+        </div>
       </div>
-
-      <span className="text-center text-[11px] font-semibold tabular-nums text-slate-200">
-        {whitePct}%
-      </span>
-      <span className="text-center text-[11px] tabular-nums text-slate-400">
-        {drawPct}%
-      </span>
-      <span className="text-center text-[11px] tabular-nums text-slate-500">
-        {blackPct}%
-      </span>
     </button>
   );
 }

@@ -16,6 +16,7 @@ import Header from './components/Header/Header';
 import AuthModal from './components/Auth/AuthModal';
 import ChessBoardPanel from './components/Board/ChessBoardPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
+import MoveList from './components/MoveList/MoveList';
 import CompletionModal from './components/Modals/CompletionModal';
 import FreePlayEndModal from './components/Modals/FreePlayEndModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
@@ -216,7 +217,18 @@ export default function App() {
       />
 
       <main ref={mainRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <div className={`mx-auto grid h-full w-full max-w-[1500px] gap-4 p-3 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_360px]'}`}>
+        <div className={`mx-auto grid h-full w-full max-w-[1660px] gap-4 p-3 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[330px_minmax(0,1fr)_360px]'}`}>
+          {!isSmallScreen && opening && (
+            <section className="min-h-0 overflow-hidden rounded-[28px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+              <TrainingLeftPanel
+                opening={opening}
+                mode={mode}
+                isLineUnlocked={isLineUnlocked}
+                onHomeClick={handleGoHome}
+              />
+            </section>
+          )}
+
           <section
             ref={boardContainerRef}
             className="flex min-h-0 min-w-0 items-start justify-center overflow-hidden rounded-[28px] bg-stone-950/35 px-2 pb-4 pt-3 sm:px-4"
@@ -226,14 +238,12 @@ export default function App() {
 
           {!isSmallScreen && opening && (
             <section className="min-h-0 overflow-hidden rounded-[28px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
-              <TrainingPanelContent
+              <TrainingRightPanel
                 opening={opening}
-                mode={mode}
                 postLine={postLine}
                 postLineError={postLineError}
                 postLineOutOfBook={postLineOutOfBook}
                 isLineUnlocked={isLineUnlocked}
-                onHomeClick={handleGoHome}
               />
             </section>
           )}
@@ -310,7 +320,72 @@ function TrainingPanelContent({
 }) {
   return (
       <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
+      <TrainingLeftPanel
+        opening={opening}
+        mode={mode}
+        isLineUnlocked={isLineUnlocked}
+        onHomeClick={onHomeClick}
+      />
+      <div className="mt-3">
+        <TrainingRightPanel
+          opening={opening}
+          postLine={postLine}
+          postLineError={postLineError}
+          postLineOutOfBook={postLineOutOfBook}
+          isLineUnlocked={isLineUnlocked}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TrainingLeftPanel({
+  opening,
+  mode,
+  isLineUnlocked,
+  onHomeClick,
+}: {
+  opening: Opening;
+  mode: string;
+  isLineUnlocked: (openingId: string, lineId: string) => boolean;
+  onHomeClick: () => void;
+}) {
+  return (
+    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
       <CoachCard />
+      {mode === 'time-trial' && (
+        <div className="mt-3">
+          <TimerDisplay />
+        </div>
+      )}
+      <div className="mt-auto space-y-3 pt-3">
+        <ModeSelector opening={opening} isLineUnlocked={isLineUnlocked} />
+        <CompactActions onHomeClick={onHomeClick} />
+      </div>
+    </div>
+  );
+}
+
+function TrainingRightPanel({
+  opening,
+  postLine,
+  postLineError,
+  postLineOutOfBook,
+  isLineUnlocked,
+}: {
+  opening: Opening;
+  postLine: boolean;
+  postLineError: string | null;
+  postLineOutOfBook: boolean;
+  isLineUnlocked: (openingId: string, lineId: string) => boolean;
+}) {
+  return (
+    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
+      <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
+
+      <section className="mt-3 min-h-[180px] rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+        <MoveList />
+      </section>
 
       {postLine && (
         <div className={`mt-3 rounded-2xl border px-4 py-3 ${postLineError || postLineOutOfBook ? 'border-amber-300/18 bg-amber-400/8' : 'border-emerald-300/18 bg-emerald-400/8'}`}>
@@ -324,19 +399,7 @@ function TrainingPanelContent({
         </div>
       )}
 
-      {mode === 'time-trial' && (
-        <div className="mt-3">
-          <TimerDisplay />
-        </div>
-      )}
-
       {postLine && <AnalysisPanel />}
-
-      <div className="mt-auto space-y-3 pt-3">
-        <ModeSelector opening={opening} isLineUnlocked={isLineUnlocked} />
-        <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
-        <CompactActions onHomeClick={onHomeClick} />
-      </div>
     </div>
   );
 }

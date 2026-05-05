@@ -10,8 +10,8 @@ import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
 const SELECTED_HIGHLIGHT = '#a9c7e2';
-const LAST_MOVE_FROM = '#f2c94c';
-const LAST_MOVE_TO = '#f59e0b';
+const LAST_MOVE_FROM = '#fde68a';
+const LAST_MOVE_TO = '#fbbf24';
 const HINT_HIGHLIGHT = '#38bdf8';
 const ANSWER_FROM_HIGHLIGHT = '#7dd3fc';
 const ANSWER_TO_HIGHLIGHT = '#0ea5e9';
@@ -530,14 +530,14 @@ function KnightArrowOverlay({
           <marker
             key={`knight-head-${index}`}
             id={`knight-head-${index}`}
-            markerWidth="8"
-            markerHeight="8"
-            refX="6.5"
-            refY="4"
+            markerWidth="5"
+            markerHeight="5"
+            refX="4.2"
+            refY="2.5"
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M0,0 L8,4 L0,8 Z" fill={color} />
+            <path d="M0,0 L5,2.5 L0,5 Z" fill={color} />
           </marker>
         ))}
       </defs>
@@ -548,13 +548,21 @@ function KnightArrowOverlay({
         const bend = horizontalFirst
           ? { x: start.x + Math.sign(end.x - start.x) * squareSize * 2, y: start.y }
           : { x: start.x, y: start.y + Math.sign(end.y - start.y) * squareSize * 2 };
+        const shrink = squareSize * 0.24;
+        const lastDx = end.x - bend.x;
+        const lastDy = end.y - bend.y;
+        const lastLen = Math.max(1, Math.hypot(lastDx, lastDy));
+        const arrowEnd = {
+          x: end.x - (lastDx / lastLen) * shrink,
+          y: end.y - (lastDy / lastLen) * shrink,
+        };
         return (
           <path
             key={`${from}-${to}-${index}`}
-            d={`M ${start.x} ${start.y} L ${bend.x} ${bend.y} L ${end.x} ${end.y}`}
+            d={`M ${start.x} ${start.y} L ${bend.x} ${bend.y} L ${arrowEnd.x} ${arrowEnd.y}`}
             fill="none"
             stroke={color}
-            strokeWidth={Math.max(5, boardSize * 0.012)}
+            strokeWidth={Math.max(4, boardSize * 0.009)}
             strokeLinecap="round"
             strokeLinejoin="round"
             markerEnd={`url(#knight-head-${index})`}
