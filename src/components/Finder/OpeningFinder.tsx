@@ -598,28 +598,24 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
             <Home size={16} />
             Back
           </button>
-          <section className="rounded-[26px] border border-stone-800/65 bg-stone-950/80 p-5 sm:p-7">
-            <div className="max-w-3xl">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Finder beta</div>
-              <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">Find your opening</h1>
-              <p className="mt-3 text-base leading-relaxed text-stone-300 sm:text-lg">
-                Choose a side, follow the most common replies, and see which routes become practiceable lines.
-              </p>
+          <section className="overflow-hidden rounded-[26px] border border-stone-800/65 bg-stone-950/80">
+            <div className="border-b border-stone-800/65 bg-[radial-gradient(circle_at_20%_0%,rgba(56,189,248,0.18),transparent_32%),linear-gradient(135deg,#0c0b0a,#1c1917)] p-5 sm:p-7">
+              <div className="max-w-3xl">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Opening finder</div>
+                <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">Find your opening</h1>
+                <p className="mt-3 text-base leading-relaxed text-stone-300 sm:text-lg">
+                  Choose a side, follow common replies, and see which routes become practiceable lines.
+                </p>
+              </div>
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-7">
               {(['white', 'black'] as const).map((color) => (
                 <button
                   key={color}
                   onClick={() => setPlayerColor(color)}
                   className="flex items-center gap-4 rounded-[18px] border border-stone-700/55 bg-stone-900/70 p-4 text-left transition-colors hover:border-sky-300/55 hover:bg-stone-800 cursor-pointer"
                 >
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
-                    color === 'white'
-                      ? 'border-sky-300/60 bg-sky-500 text-white'
-                      : 'border-sky-300/60 bg-sky-500 text-white'
-                  }`}>
-                    <PawnIcon />
-                  </div>
+                  <ColorPawnIcon color={color} size="lg" />
                   <div className="text-2xl font-black capitalize text-white">{color}</div>
                 </button>
               ))}
@@ -665,6 +661,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
       <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px] lg:overflow-hidden">
         <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
           <PanelHeading title="Possible openings" />
+          <FinderLegend text="Pawn = course side. Number = matching local lines." />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
@@ -705,9 +702,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 truncate text-sm font-black text-white">{branch.name}</div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold uppercase text-stone-300">
-                        {branch.color === 'both' ? 'all' : branch.color}
-                      </span>
+                      <ColorPill color={branch.color} />
                       <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold text-white">
                         {frequency}
                       </span>
@@ -825,6 +820,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
         <aside className="order-3 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
           <PanelHeading title={rightTitle} />
+          <FinderLegend text="Green bar = share of next-move options. Lines = matching local practice lines." />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
@@ -915,6 +911,30 @@ function PanelHeading({ title }: { title: string }) {
   );
 }
 
+function FinderLegend({ text }: { text: string }) {
+  return (
+    <div className="mt-2 rounded-xl border border-stone-800/65 bg-stone-900/55 px-3 py-2 text-[11px] font-semibold leading-relaxed text-stone-400">
+      {text}
+    </div>
+  );
+}
+
+function ColorPill({ color }: { color: Color | 'both' }) {
+  if (color === 'both') {
+    return (
+      <span className="inline-flex h-7 items-center gap-1 rounded-full bg-stone-800 px-2 text-[11px] font-black uppercase text-stone-300">
+        <ColorPawnIcon color="white" size="xs" />
+        <ColorPawnIcon color="black" size="xs" />
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex h-7 items-center rounded-full bg-stone-800 px-2">
+      <ColorPawnIcon color={color} size="xs" />
+    </span>
+  );
+}
+
 function TreeMoveButton({
   node,
   path,
@@ -969,9 +989,26 @@ function RailNotice({ text }: { text: string }) {
   );
 }
 
-function PawnIcon() {
+function ColorPawnIcon({ color, size = 'md' }: { color: Color; size?: 'xs' | 'md' | 'lg' }) {
+  const iconSize = size === 'lg' ? 29 : size === 'xs' ? 13 : 20;
+  const boxClass = size === 'lg'
+    ? 'h-12 w-12 rounded-2xl'
+    : size === 'xs'
+      ? 'h-5 w-5 rounded-lg'
+      : 'h-8 w-8 rounded-xl';
   return (
-    <svg width="29" height="29" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <span className={`inline-flex shrink-0 items-center justify-center border border-stone-600/60 bg-stone-300 ${boxClass}`}>
+      <PawnIcon
+        size={iconSize}
+        className={color === 'white' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]' : 'text-black'}
+      />
+    </span>
+  );
+}
+
+function PawnIcon({ size = 29, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
       <circle cx="12" cy="6.2" r="3.2" />
       <path d="M9.7 9.4h4.6l1.2 5.2h-7z" />
       <path d="M7.2 16h9.6l1.2 3.2H6z" />

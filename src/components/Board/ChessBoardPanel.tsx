@@ -10,9 +10,14 @@ import EvalBar from './EvalBar';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
 const SELECTED_HIGHLIGHT = '#a9c7e2';
-const LAST_MOVE_FROM = 'rgba(255, 200, 0, 0.26)';
-const LAST_MOVE_TO = 'rgba(255, 196, 0, 0.52)';
-const HINT_HIGHLIGHT = 'rgba(56, 189, 248, 0.72)';
+const LAST_MOVE_FROM = '#f2c94c';
+const LAST_MOVE_TO = '#f59e0b';
+const HINT_HIGHLIGHT = '#38bdf8';
+const ANSWER_FROM_HIGHLIGHT = '#7dd3fc';
+const ANSWER_TO_HIGHLIGHT = '#0ea5e9';
+const PREVIEW_FROM_HIGHLIGHT = '#6ee7b7';
+const PREVIEW_TO_HIGHLIGHT = '#10b981';
+const WRONG_HIGHLIGHT = '#fb7185';
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
 const MOVE_DOT = 'radial-gradient(circle, rgba(92,82,61,0.48) 0 18%, transparent 20%)';
@@ -246,26 +251,26 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     customSquareStyles[hintSquare] = {
       ...(customSquareStyles[hintSquare] ?? {}),
       backgroundColor: HINT_HIGHLIGHT,
-      boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.12)',
+      boxShadow: 'inset 0 0 0 2px #ffffff',
     };
   }
 
   if (guidedAnswerArrow) {
     customSquareStyles[guidedAnswerArrow[0]] = {
       ...(customSquareStyles[guidedAnswerArrow[0]] ?? {}),
-      backgroundColor: 'rgba(56, 189, 248, 0.22)',
+      backgroundColor: ANSWER_FROM_HIGHLIGHT,
     };
     customSquareStyles[guidedAnswerArrow[1]] = {
       ...(customSquareStyles[guidedAnswerArrow[1]] ?? {}),
-      backgroundColor: 'rgba(14, 165, 233, 0.54)',
+      backgroundColor: ANSWER_TO_HIGHLIGHT,
     };
   }
 
   if (!isReviewing && wrongMoveSquare) {
     customSquareStyles[wrongMoveSquare] = {
       ...(customSquareStyles[wrongMoveSquare] ?? {}),
-      backgroundColor: 'rgba(244, 63, 94, 0.36)',
-      boxShadow: 'inset 0 0 0 4px rgba(255,255,255,0.28)',
+      backgroundColor: WRONG_HIGHLIGHT,
+      boxShadow: 'inset 0 0 0 4px #ffffff',
     };
   }
 
@@ -276,11 +281,11 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   if (previewArrow && !isReviewing) {
     customSquareStyles[previewArrow[0]] = {
       ...(customSquareStyles[previewArrow[0]] ?? {}),
-      backgroundColor: 'rgba(52, 211, 153, 0.26)',
+      backgroundColor: PREVIEW_FROM_HIGHLIGHT,
     };
     customSquareStyles[previewArrow[1]] = {
       ...(customSquareStyles[previewArrow[1]] ?? {}),
-      backgroundColor: 'rgba(16, 185, 129, 0.48)',
+      backgroundColor: PREVIEW_TO_HIGHLIGHT,
     };
     const arrow: [Square, Square, string] = [previewArrow[0], previewArrow[1], 'rgba(52, 211, 153, 0.95)'];
     if (isKnightArrow(previewArrow[0], previewArrow[1])) knightArrows.push(arrow);
@@ -540,7 +545,9 @@ function KnightArrowOverlay({
         const start = center(from);
         const end = center(to);
         const horizontalFirst = Math.abs(start.x - end.x) > Math.abs(start.y - end.y);
-        const bend = horizontalFirst ? { x: end.x, y: start.y } : { x: start.x, y: end.y };
+        const bend = horizontalFirst
+          ? { x: start.x + Math.sign(end.x - start.x) * squareSize * 2, y: start.y }
+          : { x: start.x, y: start.y + Math.sign(end.y - start.y) * squareSize * 2 };
         return (
           <path
             key={`${from}-${to}-${index}`}

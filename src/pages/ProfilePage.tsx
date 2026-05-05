@@ -378,9 +378,12 @@ function ActivityChart({
   chartRange: ChartRange;
   onRangeChange: (range: ChartRange) => void;
 }) {
+  const axisMarks = [chart.maxXp, Math.round(chart.maxXp / 2), 0];
+
   return (
-    <div className="rounded-[22px] border border-stone-800/60 bg-stone-900 p-5">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="overflow-hidden rounded-[22px] border border-stone-800/60 bg-stone-900">
+      <div className="border-b border-stone-800/65 bg-stone-950/50 p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <BarChart2 size={16} className="text-sky-300" />
           <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
@@ -403,37 +406,74 @@ function ActivityChart({
           ))}
         </div>
       </div>
-      <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="font-semibold text-sky-300">{chart.totalXp} XP</span>
-        <span className="text-xs text-stone-500">Scale: 0-{chart.maxXp} XP</span>
       </div>
-      <div className="flex h-28 items-end gap-1.5">
-        {chart.buckets.map((bucket, index) => {
-          const heightPct = Math.round((bucket.xp / chart.maxXp) * 100);
-          const showLabel =
-            chartRange === 'week' ||
-            chartRange === 'year' ||
-            chart.buckets.length <= 12 ||
-            index === 0 ||
-            index === chart.buckets.length - 1 ||
-            index % 5 === 0;
-          return (
-            <div key={bucket.key} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-              <div
-                className={`w-full rounded-t-sm transition-all duration-500 ${
-                  bucket.isCurrent ? 'bg-sky-400' : bucket.xp > 0 ? 'bg-stone-500' : 'bg-stone-800'
-                } ${bucket.xp > 0 ? 'min-h-[4px]' : ''}`}
-                style={{ height: `${heightPct}%` }}
-                title={`${bucket.label}: ${bucket.xp} XP`}
-              />
-              <span
-                className={`h-3 text-[10px] ${bucket.isCurrent ? 'font-bold text-sky-300' : 'text-stone-600'}`}
-              >
-                {showLabel ? bucket.label : ''}
-              </span>
+
+      <div className="p-5">
+        <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div>
+            <div className="text-3xl font-black text-sky-300">{chart.totalXp} XP</div>
+            <div className="mt-1 text-xs font-semibold text-stone-500">
+              Peak day {chart.peakXp} XP · chart max {chart.maxXp} XP
             </div>
-          );
-        })}
+          </div>
+          <div className="rounded-2xl border border-stone-800/70 bg-stone-950/55 px-3 py-2 text-xs font-semibold text-stone-400">
+            {chart.activeDays}/{chart.buckets.length} active
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[42px_1fr] gap-3">
+          <div className="relative h-40 text-right text-[10px] font-semibold text-stone-600">
+            {axisMarks.map((mark, index) => (
+              <div
+                key={mark}
+                className="absolute right-0"
+                style={{ top: `${index * 50}%`, transform: 'translateY(-50%)' }}
+              >
+                {mark}
+              </div>
+            ))}
+          </div>
+          <div className="relative h-40">
+            <div className="absolute inset-0 flex flex-col justify-between">
+              {axisMarks.map((mark) => (
+                <div key={mark} className="border-t border-stone-800/70" />
+              ))}
+            </div>
+            <div className="absolute inset-0 flex items-end gap-1.5">
+              {chart.buckets.map((bucket, index) => {
+                const heightPct = Math.round((bucket.xp / chart.maxXp) * 100);
+                const showLabel =
+                  chartRange === 'week' ||
+                  chartRange === 'year' ||
+                  chart.buckets.length <= 12 ||
+                  index === 0 ||
+                  index === chart.buckets.length - 1 ||
+                  index % 5 === 0;
+                return (
+                  <div key={bucket.key} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1">
+                    <div className="relative flex flex-1 items-end">
+                      {bucket.xp > 0 && (
+                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-black text-sky-200">
+                          {bucket.xp}
+                        </div>
+                      )}
+                      <div
+                        className={`w-full rounded-t-md transition-all duration-500 ${
+                          bucket.isCurrent ? 'bg-sky-400' : bucket.xp > 0 ? 'bg-sky-600/80' : 'bg-stone-800/75'
+                        } ${bucket.xp > 0 ? 'min-h-[5px]' : ''}`}
+                        style={{ height: `${heightPct}%` }}
+                        title={`${bucket.label}: ${bucket.xp} XP`}
+                      />
+                    </div>
+                    <span className={`h-4 truncate text-center text-[10px] ${bucket.isCurrent ? 'font-bold text-sky-300' : 'text-stone-600'}`}>
+                      {showLabel ? bucket.label : ''}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -824,10 +864,12 @@ function buildChart(daily: Record<string, { xp: number }>, range: ChartRange) {
           ? buildMonthlyBuckets(daily, today, 12)
           : buildAllTimeBuckets(daily, today);
   const totalXp = buckets.reduce((sum, bucket) => sum + bucket.xp, 0);
-  const maxXp = niceMax(Math.max(...buckets.map((bucket) => bucket.xp), 1));
+  const peakXp = Math.max(...buckets.map((bucket) => bucket.xp), 1);
+  const maxXp = niceMax(peakXp);
   const weeklyXp = buildDailyBuckets(daily, today, 7, 'weekday').reduce((sum, bucket) => sum + bucket.xp, 0);
+  const activeDays = buckets.filter((bucket) => bucket.xp > 0).length;
 
-  return { buckets, totalXp, maxXp, weeklyXp };
+  return { buckets, totalXp, maxXp, weeklyXp, peakXp, activeDays };
 }
 
 function buildDailyBuckets(
@@ -881,6 +923,8 @@ function buildAllTimeBuckets(daily: Record<string, { xp: number }>, today: Date)
 
 function niceMax(value: number) {
   if (value <= 10) return 10;
+  if (value <= 100) return Math.ceil(value / 10) * 10;
+  if (value <= 1000) return Math.ceil(value / 100) * 100;
   const magnitude = 10 ** Math.floor(Math.log10(value));
   const normalised = value / magnitude;
   const nice = normalised <= 2 ? 2 : normalised <= 5 ? 5 : 10;

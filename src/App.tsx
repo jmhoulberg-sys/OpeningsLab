@@ -60,6 +60,7 @@ export default function App() {
 
   const handleBoardContainerResize = useCallback((entries: ResizeObserverEntry[]) => {
     const { width, height } = entries[0].contentRect;
+    if (width < 260 || height < 360) return;
     const maxW = width - EVAL_BAR_W;
     const maxH = height - BOARD_CHROME_H;
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
@@ -81,6 +82,19 @@ export default function App() {
       roBoard.disconnect();
     };
   }, [handleBoardContainerResize, handleMainResize, showHome]);
+
+  useEffect(() => {
+    if (showHome || showFinder || showSettings || showProfile) return;
+    const frame = window.requestAnimationFrame(() => {
+      const node = boardContainerRef.current;
+      if (!node) return;
+      const { width, height } = node.getBoundingClientRect();
+      if (width < 260 || height < 360) return;
+      const size = Math.min(820, Math.max(240, Math.min(width - EVAL_BAR_W, height - BOARD_CHROME_H)));
+      setBoardSize(Math.floor(size));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [showHome, showFinder, showSettings, showProfile]);
 
   useEffect(() => {
     if (phase === 'line-select' && opening && !isSetupComplete(opening.id)) {
@@ -150,7 +164,6 @@ export default function App() {
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
-          onOpenFinder={handleOpenFinder}
         />
         <AuthModal />
       </>
