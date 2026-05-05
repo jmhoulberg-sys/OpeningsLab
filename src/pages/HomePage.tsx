@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { LogIn, Route, Settings, UserCircle2 } from 'lucide-react';
 import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
@@ -35,6 +35,7 @@ interface HomePageProps {
   onStartOpeningLine: (opening: Opening, line: OpeningLine) => void;
   onSettingsClick: () => void;
   onProfileClick: () => void;
+  onOpenFinder: () => void;
 }
 
 export default function HomePage({
@@ -42,6 +43,7 @@ export default function HomePage({
   onStartOpeningLine,
   onSettingsClick,
   onProfileClick,
+  onOpenFinder,
 }: HomePageProps) {
   const openingProgress = useProgressStore((state) => state.openings);
   const isDue = useProgressStore((state) => state.isDue);
@@ -161,18 +163,7 @@ export default function HomePage({
             <BrandMark />
           </div>
 
-          <div className="hidden min-w-0 justify-self-center lg:block">
-            <div className="flex h-[72px] min-w-[430px] items-center justify-center rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
-              <div>
-                <div className="text-center text-lg font-bold leading-tight text-white">
-                  OpeningsLab
-                </div>
-                <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
-                  Board-first opening training
-                </div>
-              </div>
-            </div>
-          </div>
+          <div />
 
           <div className="flex items-center gap-2.5 justify-self-end">
             <StreakBadge />
@@ -182,7 +173,7 @@ export default function HomePage({
                 className="hidden h-[68px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
                 title="My Profile"
               >
-                <UserCircle2 size={18} className="text-sky-300" />
+                <UserCircle2 size={18} className="text-stone-300" />
                 <div className="min-w-0">
                   <div className="max-w-[120px] truncate text-left font-semibold text-white">
                     {accountLabel}
@@ -201,6 +192,13 @@ export default function HomePage({
                 Sign in
               </button>
             )}
+            <button
+              onClick={onOpenFinder}
+              className="flex h-[68px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            >
+              <Route size={18} />
+              <span className="hidden md:inline">Finder beta</span>
+            </button>
             <button
               onClick={onSettingsClick}
               title="Settings"

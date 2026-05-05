@@ -142,13 +142,13 @@ export function HeroSection({
   onContinueClick,
 }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-stone-800/55 bg-stone-900 px-5 py-6 sm:px-7 sm:py-7">
-      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <section className="relative overflow-hidden rounded-[24px] border border-stone-800/55 bg-stone-900 px-5 py-5 sm:px-6">
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             {headline}
           </h1>
-          <p className="mt-2 text-base text-stone-300 sm:text-lg">
+          <p className="mt-1.5 text-base text-stone-300">
             {subheadline}
           </p>
         </div>
@@ -205,17 +205,17 @@ export function ProgressOverview({
 }: ProgressOverviewProps) {
   return (
     <section className="grid gap-3 lg:grid-cols-[1.35fr_1fr_1fr]">
-      <div className="rounded-[20px] border border-sky-300/15 bg-stone-900/75 p-4">
+      <div className="rounded-[18px] border border-stone-800/55 bg-stone-900/75 p-3.5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">
+            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">
               Level progress
             </div>
-            <div className="mt-1 text-3xl font-black text-white">
+            <div className="mt-0.5 text-3xl font-black text-white">
               {isLoggedIn ? `Level ${level}` : 'Sign in to see level'}
             </div>
           </div>
-          <div className="rounded-2xl bg-sky-400/18 p-3 text-sky-200">
+          <div className="rounded-2xl bg-stone-800 p-3 text-stone-200">
             <Crown size={24} />
           </div>
         </div>
@@ -253,7 +253,7 @@ export function TodayPanel({ today, onContinue, onReview, onStartNew }: TodayPan
     <section className="rounded-[22px] border border-stone-800/55 bg-stone-900/55 p-3">
       <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] lg:items-center">
         <div className="px-1">
-          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Today</div>
+          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">Today</div>
           <h2 className="mt-1 text-xl font-black text-white">Choose your next run</h2>
           <p className="mt-0.5 text-sm text-stone-400">Continue, review, or learn something fresh.</p>
         </div>
@@ -336,7 +336,7 @@ export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
             key={step.id}
             className="rounded-[18px] bg-stone-800/55 p-4"
           >
-            <div className="mb-2 text-2xl font-extrabold text-sky-300">
+            <div className="mb-2 text-2xl font-extrabold text-stone-300">
               {index + 1}
             </div>
             <h3 className="text-sm font-semibold text-white">{step.label}</h3>
@@ -404,7 +404,7 @@ export function OpeningLibrarySection({
               onClick={() => setActiveFilter(filter.id)}
               className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                 active
-                  ? 'border-sky-400/45 bg-sky-500 text-slate-950'
+                  ? 'border-stone-300/45 bg-stone-200 text-stone-950'
                   : 'border-stone-700/45 bg-stone-900 text-stone-300 hover:bg-stone-800 hover:text-white'
               }`}
             >
@@ -442,11 +442,11 @@ function MetricCard({
   tone: 'sky' | 'emerald';
 }) {
   const toneClasses = tone === 'sky'
-    ? 'border-sky-300/15 bg-sky-400/16 text-sky-200'
+    ? 'border-stone-700/45 bg-stone-800 text-stone-200'
     : 'border-emerald-300/15 bg-emerald-400/16 text-emerald-200';
 
   return (
-    <div className="rounded-[20px] border border-stone-800/55 bg-stone-900/75 p-4">
+    <div className="rounded-[18px] border border-stone-800/55 bg-stone-900/75 p-3.5">
       <div className="flex items-center justify-between gap-3">
         <div className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">
           {eyebrow}
@@ -455,7 +455,7 @@ function MetricCard({
           {icon}
         </div>
       </div>
-      <div className="mt-2 text-3xl font-black text-white">{value}</div>
+      <div className="mt-1.5 text-3xl font-black text-white">{value}</div>
       <div className="mt-0.5 text-xs font-semibold text-stone-400">{description}</div>
     </div>
   );
@@ -477,7 +477,7 @@ function TodayActionButton({
   onClick: () => void;
 }) {
   const toneClasses = {
-    sky: 'border-sky-300/25 bg-sky-500/14 text-sky-100 hover:bg-sky-500/22',
+    sky: 'border-stone-700/45 bg-stone-800/80 text-stone-100 hover:bg-stone-700/80',
     emerald: 'border-emerald-300/25 bg-emerald-400/12 text-emerald-100 hover:bg-emerald-400/18',
     amber: 'border-amber-300/25 bg-amber-300/12 text-amber-100 hover:bg-amber-300/18',
   }[tone];
@@ -591,7 +591,6 @@ function compareOpeningProgress(a: OpeningSummary, b: OpeningSummary) {
 }
 
 function SectionHeading({
-  eyebrow,
   title,
   description,
 }: {
@@ -601,10 +600,7 @@ function SectionHeading({
 }) {
   return (
     <div className="max-w-xl">
-      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/80">
-        {eyebrow}
-      </div>
-      <h2 className="mt-1.5 text-2xl font-bold text-white sm:text-3xl">{title}</h2>
+      <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
       <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
         {description}
       </p>

@@ -6,6 +6,7 @@ import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
 import { STARTING_FEN, applyMove, fenAfterMoves } from '../../engine/chessEngine';
+import { useProgressStore } from '../../store/progressStore';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -29,6 +30,14 @@ interface RouteMoveChoice {
   san: string;
   sources: string[];
   practiceTargets: number;
+}
+
+interface BranchProgressNode {
+  san: string;
+  sources: string[];
+  totalLines: number;
+  completedLines: number;
+  progressPct: number;
 }
 
 type CatalogBranch = {
@@ -215,7 +224,13 @@ function getUniqueOpenings(matches: LocalLineMatch[], color: Color) {
   return [...byId.values()];
 }
 
-function getCatalogBranches(path: string[]) {
+function colorRank(color: Color | 'both', playerColor: Color) {
+  if (color === playerColor) return 0;
+  if (color === 'both') return 1;
+  return 2;
+}
+
+function getCatalogBranches(path: string[], playerColor: Color) {
   const matching = CATALOG_BRANCHES
     .filter((branch) => pathStartsWith(branch.path, path) || pathStartsWith(path, branch.path));
   const hasSpecificBranch = matching.some((branch) => !branch.generic && branch.path.length >= path.length);
@@ -223,6 +238,8 @@ function getCatalogBranches(path: string[]) {
   return matching
     .filter((branch) => !(branch.generic && path.length >= 2 && hasSpecificBranch))
     .sort((a, b) => {
+      const colorDelta = colorRank(a.color, playerColor) - colorRank(b.color, playerColor);
+      if (colorDelta !== 0) return colorDelta;
       const aExact = pathsEqual(a.path, path) ? 1 : 0;
       const bExact = pathsEqual(b.path, path) ? 1 : 0;
       if (bExact !== aExact) return bExact - aExact;
@@ -274,6 +291,61 @@ function getRouteMoveChoices(path: string[], color: Color, fen: string) {
     if (b.sources.length !== a.sources.length) return b.sources.length - a.sources.length;
     return a.san.localeCompare(b.san);
   });
+}
+
+function getBranchProgressNodes(
+  path: string[],
+  color: Color,
+  choices: RouteMoveChoice[],
+  isLineUnlocked: (openingId: string, lineId: string) => boolean,
+) {
+  const nodes = new Map<string, BranchProgressNode>();
+
+  choices.forEach((choice) => {
+    nodes.set(normalizeSan(choice.san), {
+      san: choice.san,
+      sources: choice.sources,
+      totalLines: 0,
+      completedLines: 0,
+      progressPct: 0,
+    });
+  });
+
+  OPENINGS
+    .filter((opening) => opening.playerColor === color)
+    .forEach((opening) => {
+      opening.lines.forEach((line) => {
+        const moves = lineMoves(line);
+        if (!pathStartsWith(moves, path)) return;
+        const nextSan = moves[path.length];
+        if (!nextSan) return;
+
+        const key = normalizeSan(nextSan);
+        const current = nodes.get(key) ?? {
+          san: nextSan,
+          sources: [],
+          totalLines: 0,
+          completedLines: 0,
+          progressPct: 0,
+        };
+
+        if (!current.sources.includes(opening.name)) current.sources.push(opening.name);
+        current.totalLines += 1;
+        if (isLineUnlocked(opening.id, line.id)) current.completedLines += 1;
+        nodes.set(key, current);
+      });
+    });
+
+  return [...nodes.values()]
+    .map((node) => ({
+      ...node,
+      progressPct: node.totalLines > 0 ? Math.round((node.completedLines / node.totalLines) * 100) : 0,
+    }))
+    .sort((a, b) => {
+      if (b.totalLines !== a.totalLines) return b.totalLines - a.totalLines;
+      if (b.progressPct !== a.progressPct) return b.progressPct - a.progressPct;
+      return a.san.localeCompare(b.san);
+    });
 }
 
 function getPositionName(path: string[]) {
@@ -378,6 +450,7 @@ function writeFavoriteIds(ids: Set<string>) {
 }
 
 export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }: OpeningFinderProps) {
+  const isLineUnlocked = useProgressStore((state) => state.isLineUnlocked);
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -400,8 +473,12 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
     [activePath.join('|'), playerColor, currentFen],
   );
   const catalogBranches = useMemo(
-    () => getCatalogBranches(activePath),
+    () => getCatalogBranches(activePath, playerColor ?? 'white'),
     [activePath.join('|')],
+  );
+  const branchProgressNodes = useMemo(
+    () => getBranchProgressNodes(activePath, playerColor ?? 'white', routeMoveChoices, isLineUnlocked),
+    [activePath.join('|'), playerColor, routeMoveChoices, isLineUnlocked],
   );
   const exactCatalogBranch = useMemo(
     () => getExactCatalogBranch(activePath),
@@ -521,8 +598,8 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                 >
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
                     color === 'white'
-                      ? 'border-stone-600 bg-white text-stone-950'
-                      : 'border-stone-700 bg-stone-950 text-white'
+                      ? 'border-sky-300/45 bg-sky-500/22 text-white'
+                      : 'border-sky-300/45 bg-sky-500/22 text-stone-950'
                   }`}>
                     <PawnIcon />
                   </div>
@@ -536,7 +613,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
     );
   }
 
-  const rightTitle = turn === playerColor ? 'Your course moves' : 'Likely course replies';
+  const rightTitle = turn === playerColor ? 'Your completion tree' : 'Opponent response tree';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
@@ -570,7 +647,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
       <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px]">
         <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
-          <PanelHeading eyebrow="Routes" title="Possible openings" />
+          <PanelHeading title="Possible openings" />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
@@ -578,9 +655,6 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                   Course found
                 </div>
                 <div className="mt-1 text-base font-black text-white">{featuredCourseOpening.name}</div>
-                <div className="mt-1 text-xs leading-relaxed text-stone-300">
-                  {featuredCourseOpening.description}
-                </div>
                 <button
                   onClick={() => onOpenOpening(featuredCourseOpening)}
                   className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
@@ -642,8 +716,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                       </span>
                     </div>
                   </div>
-                  <div className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-stone-400">{branch.description}</div>
-                  <div className="mt-1.5 truncate text-[11px] font-semibold text-sky-200/80">{branch.path.join(' ')}</div>
+                  <div className="mt-1.5 truncate text-[11px] font-semibold text-stone-400">{branch.path.join(' ')}</div>
                 </button>
               );
             })}
@@ -730,7 +803,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         </section>
 
         <aside className="min-h-0 overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5">
-          <PanelHeading eyebrow="Route choices" title={rightTitle} />
+          <PanelHeading title={rightTitle} />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
@@ -751,43 +824,19 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
               </div>
             )}
 
-            {routeMoveChoices.length === 0 && (
-              <RailNotice text="No local route moves from this position yet. Step back or choose another route." />
+            {branchProgressNodes.length === 0 && (
+              <RailNotice text="No local tree moves from this position yet. Step back or choose another route." />
             )}
-            {routeMoveChoices.map((move) => (
-              <button
-                key={move.san}
-                onClick={() => chooseMove(move.san)}
-                onMouseEnter={() => setPreviewSan(move.san)}
-                onFocus={() => setPreviewSan(move.san)}
-                onMouseLeave={() => setPreviewSan(null)}
-                onBlur={() => setPreviewSan(null)}
-                className="w-full rounded-xl border border-stone-800/70 bg-stone-900/70 p-2.5 text-left transition-colors hover:bg-stone-800 cursor-pointer"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-mono text-sm font-black text-white">{getMoveNumber(activePath, move.san)}</div>
-                  {move.practiceTargets > 0 && (
-                    <span className="rounded-full bg-emerald-400/12 px-2 py-1 text-[11px] font-bold text-emerald-300">
-                      practice
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 text-xs font-semibold leading-relaxed text-stone-400">
-                  {move.sources.slice(0, 3).join(', ')}
-                  {move.sources.length > 3 ? ` +${move.sources.length - 3} more` : ''}
-                </div>
-              </button>
+            {branchProgressNodes.map((node) => (
+              <TreeMoveButton
+                key={node.san}
+                node={node}
+                path={activePath}
+                onChoose={() => chooseMove(node.san)}
+                onPreview={() => setPreviewSan(node.san)}
+                onClearPreview={() => setPreviewSan(null)}
+              />
             ))}
-
-            <div className="mt-4 rounded-2xl border border-stone-800/70 bg-stone-900/45 p-3">
-              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-500">
-                Opening database
-              </div>
-              <div className="mt-1 text-sm font-bold text-stone-300">Coming soon</div>
-              <p className="mt-1 text-xs leading-relaxed text-stone-500">
-                Frequencies will plug into the same panel when the Vercel Lichess API is enabled.
-              </p>
-            </div>
           </div>
         </aside>
       </main>
@@ -837,12 +886,58 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
   );
 }
 
-function PanelHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+function PanelHeading({ title }: { title: string }) {
   return (
     <div>
-      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-300/85">{eyebrow}</div>
-      <h2 className="mt-1 text-lg font-black text-white">{title}</h2>
+      <h2 className="text-lg font-black text-white">{title}</h2>
     </div>
+  );
+}
+
+function TreeMoveButton({
+  node,
+  path,
+  onChoose,
+  onPreview,
+  onClearPreview,
+}: {
+  node: BranchProgressNode;
+  path: string[];
+  onChoose: () => void;
+  onPreview: () => void;
+  onClearPreview: () => void;
+}) {
+  return (
+    <button
+      onClick={onChoose}
+      onMouseEnter={onPreview}
+      onFocus={onPreview}
+      onMouseLeave={onClearPreview}
+      onBlur={onClearPreview}
+      className="w-full rounded-xl border border-stone-800/70 bg-stone-900/70 p-2.5 text-left transition-colors hover:border-stone-600 hover:bg-stone-800 cursor-pointer"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-mono text-sm font-black text-white">{getMoveNumber(path, node.san)}</div>
+        <span className="text-xs font-black tabular-nums text-emerald-300">
+          {node.progressPct}%
+        </span>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-stone-800">
+        <div
+          className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
+          style={{ width: `${node.progressPct}%` }}
+        />
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-stone-400">
+        <span className="truncate">
+          {node.sources.slice(0, 2).join(', ')}
+          {node.sources.length > 2 ? ` +${node.sources.length - 2}` : ''}
+        </span>
+        <span className="shrink-0 tabular-nums">
+          {node.completedLines}/{node.totalLines || node.sources.length}
+        </span>
+      </div>
+    </button>
   );
 }
 

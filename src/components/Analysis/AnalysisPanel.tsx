@@ -30,8 +30,9 @@ export default function AnalysisPanel() {
 
   if (!showTopMoves) return null;
   const canChooseMove =
-    (postLineMode === 'top-moves-choice' || (postLineMode === 'top-moves' && !autoplayLichessMoves)) &&
-    !isAwaitingUserMove;
+    postLineMode === 'top-moves-choice'
+      ? !isAwaitingUserMove
+      : postLineMode === 'top-moves' && (isAwaitingUserMove || !autoplayLichessMoves);
 
   return (
     <div className="flex-shrink-0 px-4 pb-4 pt-3">
@@ -51,7 +52,7 @@ export default function AnalysisPanel() {
               : 'border-sky-300/30 bg-sky-400/10 text-sky-200'
           }`}
         >
-          <span>Autoplay player moves</span>
+          <span>Autoplay opponent response</span>
           <span>{autoplayLichessMoves ? 'On' : 'Off'}</span>
         </button>
       )}
@@ -99,7 +100,7 @@ export default function AnalysisPanel() {
         <div className="space-y-1.5">
           {canChooseMove && (
             <p className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1.5 text-[11px] font-semibold text-emerald-200">
-              Choose the move you want to train against.
+              Choose a move from this position.
             </p>
           )}
           <div className="mb-1 grid grid-cols-[42px_40px_52px_1fr_34px_34px_34px] gap-x-1 px-0.5 text-[10px] uppercase tracking-wider text-slate-500">
@@ -156,10 +157,10 @@ function MoveRow({
       onFocus={onPreview}
       onBlur={onClearPreview}
       aria-disabled={!canChoose}
-      className={`grid w-full grid-cols-[42px_40px_52px_1fr_34px_34px_34px] items-center gap-x-1 rounded-md px-0.5 py-0.5 text-left transition-colors ${
+      className={`grid w-full grid-cols-[42px_40px_52px_1fr_34px_34px_34px] items-center gap-x-1 rounded-md border px-0.5 py-0.5 text-left transition-colors ${
         canChoose
-          ? 'cursor-pointer hover:bg-emerald-400/10 focus:outline-none focus:ring-1 focus:ring-emerald-300/40'
-          : 'cursor-default'
+          ? 'cursor-pointer border-transparent hover:border-emerald-300/45 hover:bg-emerald-400/10 focus:border-emerald-300/55 focus:outline-none focus:ring-1 focus:ring-emerald-300/40'
+          : 'cursor-default border-transparent hover:border-slate-500/35 hover:bg-slate-800/35'
       }`}
     >
       <span className="font-mono text-xs font-bold text-white">{move.san}</span>

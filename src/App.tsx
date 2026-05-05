@@ -165,6 +165,7 @@ export default function App() {
           onStartOpeningLine={handleStartOpeningLine}
           onSettingsClick={() => setShowSettings(true)}
           onProfileClick={handleProfileClick}
+          onOpenFinder={handleOpenFinder}
         />
         <AuthModal />
         <SettingsModal
@@ -360,8 +361,8 @@ function CoachCard() {
           <BookOpen size={17} className="text-sky-300" />
           Coach
         </div>
-        <span className="text-xs font-semibold text-stone-500">
-          {selectedLine?.name ?? opening?.name ?? 'Training'}
+        <span className="min-h-[16px] text-xs font-semibold text-stone-500">
+          {selectedLine?.name ?? ''}
         </span>
       </div>
       <div className="min-h-[76px] rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">

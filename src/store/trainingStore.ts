@@ -213,6 +213,15 @@ function countStudentMovesInLine(opening: Opening, line: OpeningLine) {
   return line.moves.filter((_, index) => isStudentMove(opening, index)).length;
 }
 
+function isPlayerTurnFen(fen: string, opening: Opening) {
+  try {
+    const turn = new Chess(fen).turn() === 'w' ? 'white' : 'black';
+    return turn === opening.playerColor;
+  } catch {
+    return false;
+  }
+}
+
 function shuffleLines(lines: OpeningLine[]) {
   const next = [...lines];
   for (let i = next.length - 1; i > 0; i -= 1) {
@@ -539,6 +548,13 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
           return 'correct';
         }
 
+        if (
+          state.postLineMode === 'top-moves-choice' ||
+          (state.postLineMode === 'top-moves' && !state.autoplayLichessMoves)
+        ) {
+          return 'correct';
+        }
+
         setTimeout(() => get().advanceOpponent(), 350);
         return 'correct';
       }
@@ -744,6 +760,15 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         let opponentSan: string | null = null;
 
         if (state.postLineMode === 'top-moves' || state.postLineMode === 'top-moves-choice') {
+          if (isPlayerTurnFen(state.currentFen, opening)) {
+            set({
+              isAwaitingUserMove: true,
+              postLineOutOfBook: false,
+              postLineError: null,
+            });
+            return;
+          }
+
           const { lichessTopMoves, lichessSpeeds, lichessRatings, lichessVariant } = useSettingsStore.getState();
           const decision = await pickLichessBookMove(state.currentFen, {
             topMoves: lichessTopMoves,
@@ -1062,10 +1087,16 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
 
     choosePostLineMove(uci) {
       const state = get();
+      const canChoosePlayerMove =
+        state.opening &&
+        state.postLineMode === 'top-moves' &&
+        state.isAwaitingUserMove &&
+        isPlayerTurnFen(state.currentFen, state.opening);
       if (
         !state.postLine ||
         (state.postLineMode !== 'top-moves-choice' &&
-          !(state.postLineMode === 'top-moves' && !state.autoplayLichessMoves))
+          !(state.postLineMode === 'top-moves' && !state.autoplayLichessMoves) &&
+          !canChoosePlayerMove)
       ) return;
 
       const legalMove = applyUciMove(state.currentFen, uci);
@@ -1083,7 +1114,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
       if (gameEnded) {
         const chess = new Chess(legalMove.fen);
         let result: 'win' | 'loss' | 'draw' = 'draw';
-        if (chess.isCheckmate()) result = 'loss';
+        if (chess.isCheckmate()) result = canChoosePlayerMove ? 'win' : 'loss';
         else if (chess.isDraw() || chess.isStalemate()) result = 'draw';
         useProgressionStore.getState().awardTopResponseResult(result);
         set({
@@ -1104,6 +1135,12 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         return;
       }
 
+      const nextIsPlayerTurn = state.opening ? isPlayerTurnFen(legalMove.fen, state.opening) : true;
+      const shouldAutoplayOpponent =
+        state.postLineMode === 'top-moves' &&
+        state.autoplayLichessMoves &&
+        !nextIsPlayerTurn;
+
       set({
         currentFen: legalMove.fen,
         playedMoves: [...state.playedMoves, legalMove.san],
@@ -1113,8 +1150,12 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         postLineError: null,
         postLineChoices: [],
         previewUciMove: null,
-        isAwaitingUserMove: true,
+        isAwaitingUserMove: nextIsPlayerTurn,
       });
+
+      if (shouldAutoplayOpponent) {
+        setTimeout(() => get().advanceOpponent(), 350);
+      }
     },
 
     continuePostLineAgainstComputer(mode) {
