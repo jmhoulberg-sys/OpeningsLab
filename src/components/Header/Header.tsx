@@ -19,7 +19,6 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
     ? displayName.trim()
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
-  const xpToNext = Math.max(0, levelInfo.nextLevelXp - xpTotal);
   const headerTitle = opening ? opening.name : 'Board-first opening training';
   const headerSubtitle = selectedLine
     ? selectedLine.name
@@ -42,12 +41,12 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
         <div className="hidden min-w-0 justify-self-center lg:block">
           <div className="flex h-[72px] min-w-[430px] items-center justify-center rounded-[22px] border border-stone-800/60 bg-stone-900/88 px-5 shadow-[0_12px_34px_rgba(0,0,0,0.2)]">
             <div>
-            <div className="text-center text-lg font-bold leading-tight text-white">
-              {headerTitle}
-            </div>
-            <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
-              {headerSubtitle}
-            </div>
+              <div className="text-center text-lg font-bold leading-tight text-white">
+                {headerTitle}
+              </div>
+              <div className="mt-1 max-w-[520px] truncate text-center text-sm text-stone-400">
+                {headerSubtitle}
+              </div>
             </div>
           </div>
         </div>
@@ -60,13 +59,16 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
               className="hidden h-[68px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-stone-200 transition-colors hover:bg-stone-700 sm:flex cursor-pointer"
               title="My Profile"
             >
-              <UserCircle2 size={17} className="text-sky-300" />
+              <UserCircle2 size={17} className="text-stone-300" />
               <div className="min-w-0">
                 <div className="max-w-[120px] truncate text-left font-semibold text-white">
                   {accountLabel}
                 </div>
-                <div className="mt-0.5 text-left text-[11px] text-stone-500">
-                  Level {levelInfo.level} · {xpToNext} XP to next
+                <div className="mt-1 h-1.5 w-[120px] rounded-full bg-stone-700">
+                  <div
+                    className="h-1.5 rounded-full bg-emerald-400"
+                    style={{ width: `${levelInfo.progressPct}%` }}
+                  />
                 </div>
               </div>
             </button>

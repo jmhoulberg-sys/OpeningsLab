@@ -12,7 +12,7 @@ export function replayMoves(sans: string[]): Chess | null {
   for (const san of sans) {
     try {
       const result = chess.move(san);
-      if (!result) return null;
+    if (!result) return null;
     } catch {
       return null;
     }
@@ -159,13 +159,30 @@ export function applyUciMove(
 ): { fen: string; san: string } | null {
   try {
     const chess = new Chess(fen);
+    const from = uci.slice(0, 2);
+    const rawTo = uci.slice(2, 4);
+    const promotion = (uci[4] as 'q' | 'r' | 'b' | 'n' | undefined) ?? undefined;
+    const legalMove = chess.moves({ verbose: true }).find((move) => {
+      const direct = move.from === from && move.to === rawTo && (move.promotion ?? undefined) === promotion;
+      const rookSquareCastle =
+        (move.san === 'O-O' || move.san === 'O-O+' || move.san === 'O-O#') &&
+        move.from === from &&
+        (rawTo === 'h1' || rawTo === 'h8');
+      const rookSquareLongCastle =
+        (move.san === 'O-O-O' || move.san === 'O-O-O+' || move.san === 'O-O-O#') &&
+        move.from === from &&
+        (rawTo === 'a1' || rawTo === 'a8');
+      return direct || rookSquareCastle || rookSquareLongCastle;
+    });
+    if (!legalMove) return null;
+
     const result = chess.move({
-      from: uci.slice(0, 2),
-      to: uci.slice(2, 4),
-      promotion: (uci[4] as 'q' | 'r' | 'b' | 'n' | undefined) ?? undefined,
+      from: legalMove.from,
+      to: legalMove.to,
+      promotion: legalMove.promotion,
     });
 
-    if (!result) return null;
+      if (!result) return null;
 
     return {
       fen: chess.fen(),

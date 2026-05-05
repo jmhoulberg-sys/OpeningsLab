@@ -6,7 +6,6 @@ import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
 import { STARTING_FEN, applyMove, fenAfterMoves } from '../../engine/chessEngine';
-import { useProgressStore } from '../../store/progressStore';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -35,9 +34,8 @@ interface RouteMoveChoice {
 interface BranchProgressNode {
   san: string;
   sources: string[];
-  totalLines: number;
-  completedLines: number;
-  progressPct: number;
+  frequency: number;
+  frequencyPct: number;
 }
 
 type CatalogBranch = {
@@ -293,11 +291,25 @@ function getRouteMoveChoices(path: string[], color: Color, fen: string) {
   });
 }
 
-function getBranchProgressNodes(
+function getCatalogBranchFrequency(branch: CatalogBranch, color: Color) {
+  const localLineCount = OPENINGS
+    .filter((opening) => opening.playerColor === color)
+    .reduce((total, opening) => {
+      return total + opening.lines.filter((line) => pathStartsWith(lineMoves(line), branch.path)).length;
+    }, 0);
+  const catalogCount = CATALOG_BRANCHES.filter((candidate) =>
+    candidate.id !== branch.id &&
+    (candidate.color === color || candidate.color === 'both') &&
+    pathStartsWith(candidate.path, branch.path)
+  ).length;
+
+  return localLineCount + catalogCount + 1;
+}
+
+function getBranchFrequencyNodes(
   path: string[],
   color: Color,
   choices: RouteMoveChoice[],
-  isLineUnlocked: (openingId: string, lineId: string) => boolean,
 ) {
   const nodes = new Map<string, BranchProgressNode>();
 
@@ -305,9 +317,8 @@ function getBranchProgressNodes(
     nodes.set(normalizeSan(choice.san), {
       san: choice.san,
       sources: choice.sources,
-      totalLines: 0,
-      completedLines: 0,
-      progressPct: 0,
+      frequency: Math.max(1, choice.sources.length),
+      frequencyPct: 0,
     });
   });
 
@@ -324,26 +335,26 @@ function getBranchProgressNodes(
         const current = nodes.get(key) ?? {
           san: nextSan,
           sources: [],
-          totalLines: 0,
-          completedLines: 0,
-          progressPct: 0,
+          frequency: 0,
+          frequencyPct: 0,
         };
 
         if (!current.sources.includes(opening.name)) current.sources.push(opening.name);
-        current.totalLines += 1;
-        if (isLineUnlocked(opening.id, line.id)) current.completedLines += 1;
+        current.frequency += 1;
         nodes.set(key, current);
       });
     });
 
-  return [...nodes.values()]
+  const nodeList = [...nodes.values()];
+  const totalFrequency = nodeList.reduce((total, node) => total + Math.max(1, node.frequency), 0);
+
+  return nodeList
     .map((node) => ({
       ...node,
-      progressPct: node.totalLines > 0 ? Math.round((node.completedLines / node.totalLines) * 100) : 0,
+      frequencyPct: totalFrequency > 0 ? Math.round((Math.max(1, node.frequency) / totalFrequency) * 100) : 0,
     }))
     .sort((a, b) => {
-      if (b.totalLines !== a.totalLines) return b.totalLines - a.totalLines;
-      if (b.progressPct !== a.progressPct) return b.progressPct - a.progressPct;
+      if (b.frequency !== a.frequency) return b.frequency - a.frequency;
       return a.san.localeCompare(b.san);
     });
 }
@@ -450,7 +461,6 @@ function writeFavoriteIds(ids: Set<string>) {
 }
 
 export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }: OpeningFinderProps) {
-  const isLineUnlocked = useProgressStore((state) => state.isLineUnlocked);
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -473,12 +483,19 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
     [activePath.join('|'), playerColor, currentFen],
   );
   const catalogBranches = useMemo(
-    () => getCatalogBranches(activePath, playerColor ?? 'white'),
-    [activePath.join('|')],
+    () => {
+      const color = playerColor ?? 'white';
+      return getCatalogBranches(activePath, color).sort((a, b) => {
+        const colorDelta = colorRank(a.color, color) - colorRank(b.color, color);
+        if (colorDelta !== 0) return colorDelta;
+        return getCatalogBranchFrequency(b, color) - getCatalogBranchFrequency(a, color);
+      });
+    },
+    [activePath.join('|'), playerColor],
   );
-  const branchProgressNodes = useMemo(
-    () => getBranchProgressNodes(activePath, playerColor ?? 'white', routeMoveChoices, isLineUnlocked),
-    [activePath.join('|'), playerColor, routeMoveChoices, isLineUnlocked],
+  const branchFrequencyNodes = useMemo(
+    () => getBranchFrequencyNodes(activePath, playerColor ?? 'white', routeMoveChoices),
+    [activePath.join('|'), playerColor, routeMoveChoices],
   );
   const exactCatalogBranch = useMemo(
     () => getExactCatalogBranch(activePath),
@@ -598,8 +615,8 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                 >
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
                     color === 'white'
-                      ? 'border-sky-300/45 bg-sky-500/22 text-white'
-                      : 'border-sky-300/45 bg-sky-500/22 text-stone-950'
+                      ? 'border-sky-300/60 bg-sky-500 text-white'
+                      : 'border-sky-300/60 bg-sky-500 text-white'
                   }`}>
                     <PawnIcon />
                   </div>
@@ -670,6 +687,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
               const nextSan = getBranchNextMove(activePath, branch);
               const favoriteId = `catalog:${branch.id}`;
               const favorite = favoriteIds.has(favoriteId);
+              const frequency = getCatalogBranchFrequency(branch, playerColor);
               return (
                 <button
                   key={branch.id}
@@ -689,6 +707,9 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold uppercase text-stone-300">
                         {branch.color === 'both' ? 'all' : branch.color}
+                      </span>
+                      <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold text-white">
+                        {frequency}
                       </span>
                       <span
                         role="button"
@@ -824,10 +845,10 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
               </div>
             )}
 
-            {branchProgressNodes.length === 0 && (
+            {branchFrequencyNodes.length === 0 && (
               <RailNotice text="No local tree moves from this position yet. Step back or choose another route." />
             )}
-            {branchProgressNodes.map((node) => (
+            {branchFrequencyNodes.map((node) => (
               <TreeMoveButton
                 key={node.san}
                 node={node}
@@ -918,23 +939,22 @@ function TreeMoveButton({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="font-mono text-sm font-black text-white">{getMoveNumber(path, node.san)}</div>
-        <span className="text-xs font-black tabular-nums text-emerald-300">
-          {node.progressPct}%
+        <span className="text-xs font-semibold tabular-nums text-stone-400">
+          {node.frequency} lines
         </span>
       </div>
-      <div className="mt-2 h-2 rounded-full bg-stone-800">
+      <div className="mt-2 h-5 overflow-hidden rounded-full bg-stone-800">
         <div
-          className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
-          style={{ width: `${node.progressPct}%` }}
-        />
+          className="flex h-full min-w-[42px] items-center justify-end rounded-full bg-emerald-500 px-2 text-[11px] font-black tabular-nums text-white transition-all duration-500"
+          style={{ width: `${Math.max(8, node.frequencyPct)}%` }}
+        >
+          {node.frequencyPct}%
+        </div>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-stone-400">
+      <div className="mt-2 text-xs font-semibold text-stone-400">
         <span className="truncate">
           {node.sources.slice(0, 2).join(', ')}
           {node.sources.length > 2 ? ` +${node.sources.length - 2}` : ''}
-        </span>
-        <span className="shrink-0 tabular-nums">
-          {node.completedLines}/{node.totalLines || node.sources.length}
         </span>
       </div>
     </button>

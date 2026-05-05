@@ -8,7 +8,6 @@ import {
   getLevelInfo,
   getQuestProgress,
   getTodayProgress,
-  getWeeklyXp,
   useProgressionStore,
 } from '../store/progressionStore';
 import {
@@ -16,9 +15,7 @@ import {
   HeroSection,
   HowItWorksStrip,
   OpeningLibrarySection,
-  ProgressOverview,
   QuestStrip,
-  TodayPanel,
   type ContinueTrainingSummary,
   type OpeningSummary,
 } from '../components/Home/HomeSections';
@@ -57,10 +54,7 @@ export default function HomePage({
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
   const todayProgress = getTodayProgress(daily);
-  const weeklyXp = getWeeklyXp(daily);
   const quests = getQuestProgress(todayProgress);
-  const questsComplete = quests.filter((quest) => quest.progress >= quest.target).length;
-  const xpToNextLevel = Math.max(0, levelInfo.nextLevelXp - xpTotal);
 
   const openingSummaries: OpeningSummary[] = OPENINGS.map((opening) => {
     const progress = openingProgress[opening.id];
@@ -100,11 +94,6 @@ export default function HomePage({
     : defaultFeaturedOpenings;
 
   const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
-  const reviewSummary = getDueReviewSummary(openingSummaries, openingProgress, isDue);
-  const nextOpening = openingSummaries.find((summary) => summary.firstLine && !summary.setupComplete)
-    ?? openingSummaries.find((summary) => summary.firstLine)
-    ?? openingSummaries[0];
-  const dueCount = countDueReviews(openingSummaries);
 
   const heroPrimaryLabel = continueSummary ? 'Continue Training' : HOME_HERO.primaryCta;
 
@@ -121,39 +110,6 @@ export default function HomePage({
     const defaultOpening = defaultFeaturedOpenings[0]?.opening ?? OPENINGS.find((opening) => opening.lines.length > 0);
     if (defaultOpening) onSelectOpening(defaultOpening);
   }
-
-  function handleReviewAction() {
-    if (reviewSummary) {
-      onStartOpeningLine(reviewSummary.opening, reviewSummary.line);
-      return;
-    }
-    scrollToLibrary();
-  }
-
-  function handleStartNewAction() {
-    if (nextOpening?.firstLine) {
-      onStartOpeningLine(nextOpening.opening, nextOpening.firstLine);
-      return;
-    }
-    scrollToLibrary();
-  }
-
-  const todaySummary = {
-    dueCount,
-    weeklyXp,
-    todayXp: todayProgress.xp,
-    continueSummary,
-    continueLabel: continueSummary
-      ? `${continueSummary.completedLines}/${continueSummary.totalLines} lines complete`
-      : undefined,
-    reviewOpening: reviewSummary?.opening,
-    reviewLine: reviewSummary?.line,
-    reviewLabel: reviewSummary
-      ? `${dueCount} line${dueCount === 1 ? '' : 's'} due across your openings`
-      : 'Nothing due yet. Keep building new lines.',
-    newOpening: nextOpening?.opening,
-    newLine: nextOpening?.firstLine ?? undefined,
-  };
 
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
@@ -178,8 +134,11 @@ export default function HomePage({
                   <div className="max-w-[120px] truncate text-left font-semibold text-white">
                     {accountLabel}
                   </div>
-                  <div className="mt-0.5 text-left text-[11px] text-stone-500">
-                    Level {levelInfo.level}
+                  <div className="mt-1 h-1.5 w-[120px] rounded-full bg-stone-700">
+                    <div
+                      className="h-1.5 rounded-full bg-emerald-400"
+                      style={{ width: `${levelInfo.progressPct}%` }}
+                    />
                   </div>
                 </div>
               </button>
@@ -234,18 +193,7 @@ export default function HomePage({
               <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
             </div>
           </>
-        ) : (
-          <ProgressOverview
-            isLoggedIn={isLoggedIn}
-            level={levelInfo.level}
-            progressPct={levelInfo.progressPct}
-            xpToNextLevel={xpToNextLevel}
-            weeklyXp={weeklyXp}
-            todayXp={todayProgress.xp}
-            totalQuestsComplete={questsComplete}
-            totalQuests={quests.length}
-          />
-        )}
+        ) : null}
 
         {showFeaturedOpenings && (
           <div className="mt-5" ref={featuredRef}>
@@ -256,17 +204,6 @@ export default function HomePage({
               description={isLoggedIn && learningOpenings.length > 0 ? 'Openings you have already started, sorted by progress.' : undefined}
               onOpenOpening={onSelectOpening}
               onStartLine={onStartOpeningLine}
-            />
-          </div>
-        )}
-
-        {isLoggedIn && (
-          <div className="mt-5">
-            <TodayPanel
-              today={todaySummary}
-              onContinue={handlePrimaryAction}
-              onReview={handleReviewAction}
-              onStartNew={handleStartNewAction}
             />
           </div>
         )}
@@ -304,10 +241,6 @@ function getOpeningStatusLabel(setupComplete: boolean, completedLines: number, t
   if (completedLines >= Math.max(2, Math.ceil(totalLines / 2))) return 'Practice ready';
   if (setupComplete || completedLines > 0) return 'Learning';
   return 'New';
-}
-
-function countDueReviews(summaries: OpeningSummary[]) {
-  return summaries.reduce((total, summary) => total + summary.dueLines, 0);
 }
 
 function getContinueTrainingSummary(
@@ -354,29 +287,4 @@ function getContinueTrainingSummary(
     totalLines: next.totalLines,
     setupComplete: next.setupComplete,
   };
-}
-
-function getDueReviewSummary(
-  summaries: OpeningSummary[],
-  progressState: ReturnType<typeof useProgressStore.getState>['openings'],
-  isDue: ReturnType<typeof useProgressStore.getState>['isDue'],
-): ContinueTrainingSummary | undefined {
-  for (const summary of summaries) {
-    const dueLine = summary.opening.lines.find((line) => {
-      const lineProgress = progressState[summary.opening.id]?.lines[line.id];
-      return lineProgress?.unlocked && isDue(summary.opening.id, line.id);
-    });
-
-    if (dueLine) {
-      return {
-        opening: summary.opening,
-        line: dueLine,
-        completedLines: summary.completedLines,
-        totalLines: summary.totalLines,
-        setupComplete: summary.setupComplete,
-      };
-    }
-  }
-
-  return undefined;
 }

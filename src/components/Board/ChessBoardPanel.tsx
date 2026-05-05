@@ -28,9 +28,33 @@ function resolveArrow(fen: string, san: string): [Square, Square] | null {
   }
 }
 
-function resolveUciArrow(uci: string): [Square, Square] | null {
+function resolveUciArrow(fen: string, uci: string): [Square, Square] | null {
   if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return null;
-  return [uci.slice(0, 2) as Square, uci.slice(2, 4) as Square];
+  try {
+    const chess = new Chess(fen);
+    const from = uci.slice(0, 2);
+    const rawTo = uci.slice(2, 4);
+    const promotion = uci[4];
+    const move = chess.moves({ verbose: true }).find((candidate) => {
+      const direct =
+        candidate.from === from &&
+        candidate.to === rawTo &&
+        (!promotion || candidate.promotion === promotion);
+      const shortCastle =
+        candidate.from === from &&
+        candidate.san.startsWith('O-O') &&
+        !candidate.san.startsWith('O-O-O') &&
+        (rawTo === 'h1' || rawTo === 'h8');
+      const longCastle =
+        candidate.from === from &&
+        candidate.san.startsWith('O-O-O') &&
+        (rawTo === 'a1' || rawTo === 'a8');
+      return direct || shortCastle || longCastle;
+    });
+    return move ? [move.from as Square, move.to as Square] : null;
+  } catch {
+    return null;
+  }
 }
 
 function legalDestinations(fen: string, from: Square): Square[] {
@@ -179,6 +203,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     expectedSan
     ? resolveArrow(currentFen, expectedSan)
     : null;
+  const canInteractWithBoard = isAwaitingUserMove || postLine;
 
   if (
     !isReviewing &&
@@ -239,7 +264,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   }
 
   const customArrows: [Square, Square, string][] = [];
-  const previewArrow = previewUciMove ? resolveUciArrow(previewUciMove) : null;
+  const previewArrow = previewUciMove ? resolveUciArrow(currentFen, previewUciMove) : null;
 
   if (previewArrow && !isReviewing) {
     customSquareStyles[previewArrow[0]] = {
@@ -274,7 +299,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         clearWrongMove();
         return;
       }
-      if (!isAwaitingUserMove) return;
+      if (!canInteractWithBoard) return;
 
       if (selectedSquare) {
         if (selectedSquare === square) {
@@ -291,7 +316,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     [
       clearWrongMove,
       handleBoardMove,
-      isAwaitingUserMove,
+      canInteractWithBoard,
       isReviewing,
       navigateToMove,
       selectedSquare,
@@ -305,7 +330,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
         navigateToMove(null);
         return false;
       }
-      if (wrongMoveFen || !isAwaitingUserMove) return false;
+      if (wrongMoveFen || !canInteractWithBoard) return false;
       setSelectedSquare(null);
 
       const isPromotion =
@@ -321,7 +346,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       const result = handleBoardMove(from, to);
       return result === 'correct' || result === 'wrong';
     },
-    [handleBoardMove, isAwaitingUserMove, isReviewing, navigateToMove, wrongMoveFen],
+    [canInteractWithBoard, handleBoardMove, isReviewing, navigateToMove, wrongMoveFen],
   );
 
   const onPromotionPieceSelect = useCallback(
@@ -348,6 +373,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const isDraggable =
     !isReviewing &&
     !wrongMoveFen &&
+    canInteractWithBoard &&
     (phase === 'training' || phase === 'setup');
   const boardColumnWidth = `${boardSize}px`;
 
@@ -424,7 +450,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
               customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
               customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
               animationDuration={isReviewing ? 0 : 200}
-              {...(postLine && isAwaitingUserMove
+              {...(postLine && canInteractWithBoard
                 ? {
                     promotionDialogVariant: 'modal' as const,
                     onPromotionPieceSelect,

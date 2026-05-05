@@ -443,8 +443,12 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
     handleBoardMove(from, to, promotion) {
       const state = get();
       if (!state.opening) return 'ignored';
-      if (!state.isAwaitingUserMove) return 'ignored';
       if (state.phase !== 'setup' && state.phase !== 'training') return 'ignored';
+      const canChoosePostLineMoveOnBoard =
+        state.postLine &&
+        (state.postLineMode === 'top-moves-choice' ||
+          (state.postLineMode === 'top-moves' && !state.autoplayLichessMoves));
+      if (!state.isAwaitingUserMove && !canChoosePostLineMoveOnBoard) return 'ignored';
       // If in review mode, snap back to live first but don't process the move
       if (state.viewMoveIndex !== null) {
         set({ viewMoveIndex: null });
@@ -513,12 +517,13 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         if (!newFen) return 'ignored';
 
         const newIdx = state.currentMoveIndex + 1;
+        const nextIsPlayerTurn = isPlayerTurnFen(newFen, state.opening);
         set({
           currentFen: newFen,
           playedMoves: [...state.playedMoves, san],
           fenHistory: [...state.fenHistory, newFen],
           currentMoveIndex: newIdx,
-          isAwaitingUserMove: false,
+          isAwaitingUserMove: nextIsPlayerTurn,
           wrongMoveSan: null,
           showingCorrectMove: false,
           postLineError: null,
@@ -549,6 +554,7 @@ export const useTrainingStore = create<TrainingState & TrainingActions>()(
         }
 
         if (
+          nextIsPlayerTurn ||
           state.postLineMode === 'top-moves-choice' ||
           (state.postLineMode === 'top-moves' && !state.autoplayLichessMoves)
         ) {

@@ -67,7 +67,7 @@ export default function AnalysisPanel() {
         </p>
       )}
 
-      {!loading && !postLineError && postLineOutOfBook && (
+      {!loading && postLineOutOfBook && (
         <div className="space-y-2">
           <p className="text-xs italic text-amber-300">
             Out of database. Continue against a computer level.
