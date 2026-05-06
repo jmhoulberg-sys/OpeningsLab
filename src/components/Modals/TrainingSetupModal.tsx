@@ -101,8 +101,7 @@ export default function TrainingSetupModal() {
       >
         <div className="flex items-center justify-between border-b border-stone-800/70 px-5 py-4">
           <div>
-            <div className="text-xs font-bold uppercase tracking-[0.18em] text-sky-300">Next run</div>
-            <h2 className="mt-1 text-xl font-black text-white">Choose training mode</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-sky-300">Next run</h2>
           </div>
           <button
             onClick={() => setDismissed(true)}
@@ -114,56 +113,43 @@ export default function TrainingSetupModal() {
         </div>
 
         <div className="max-h-[calc(100vh-7rem)] overflow-y-auto px-5 py-5">
-          <section className="rounded-[20px] border border-sky-300/15 bg-stone-950/70 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-black text-white">
-                <BookOpen size={17} className="text-sky-300" />
-                Coach
-              </div>
-              <span className="text-xs font-semibold text-stone-500">{opening.name}</span>
-            </div>
-            <div className="max-w-[560px] rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950">
-              {getCoachCopy(selectedMode, learnableLines.length)}
-            </div>
-          </section>
-
-          <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-900/55 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Progress</div>
-                <div className="mt-1 text-sm font-black text-white">
-                  {completedLines}/{totalLines} lines mastered
-                </div>
-              </div>
-              <div className="text-sm font-black text-emerald-300">{progressPct}%</div>
-            </div>
-            <div className="mt-3 h-2 rounded-full bg-stone-800">
-              <div
-                className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </section>
-
           <ModePicker
             selectedMode={selectedMode}
             setSelectedMode={setSelectedMode}
             learnedLines={completedLines}
             totalLines={totalLines}
             drillUnlocked={drillUnlocked}
+            speedUnlocked={speedUnlocked}
           />
 
           <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
             <div className="mb-2 flex items-center justify-between gap-3 px-1">
-              <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Line</div>
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Line</div>
+                <div className="mt-1 text-sm font-black text-white">{getSelectedModeTitle(selectedMode)}</div>
+              </div>
               <div className="text-xs font-semibold text-stone-500">
                 {visibleLines.length} available
               </div>
             </div>
+            <div className="mb-3 rounded-2xl border border-stone-800/55 bg-stone-900/55 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-black text-white">
+                  {completedLines}/{totalLines} lines mastered
+                </div>
+                <div className="text-xs font-black text-emerald-300">{progressPct}%</div>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-stone-800">
+                <div
+                  className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
 
-            <div className="grid gap-2 lg:grid-cols-2">
+            <div className="space-y-2">
               {selectedMode === 'drill' ? (
-                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-100 lg:col-span-2">
+                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-sm font-semibold text-emerald-100">
                   Drill will shuffle your unlocked lines from the setup position. No line repeats in the same run.
                   <button
                     onClick={() => launchLine(opening.lines[0], 'drill')}
@@ -175,7 +161,7 @@ export default function TrainingSetupModal() {
                   </button>
                 </div>
               ) : visibleLines.length === 0 && (
-                <div className="rounded-2xl border border-stone-800/70 bg-stone-900/70 p-4 text-sm font-semibold text-stone-400 lg:col-span-2">
+                <div className="rounded-2xl border border-stone-800/70 bg-stone-900/70 p-4 text-sm font-semibold text-stone-400">
                   Learn one line first. Each learned line becomes one practice line.
                 </div>
               )}
@@ -209,12 +195,14 @@ function ModePicker({
   learnedLines,
   totalLines,
   drillUnlocked,
+  speedUnlocked,
 }: {
   selectedMode: SetupMode;
   setSelectedMode: (mode: SetupMode) => void;
   learnedLines: number;
   totalLines: number;
   drillUnlocked: boolean;
+  speedUnlocked: boolean;
 }) {
   const practiceLineCount = learnedLines;
   const modes: Array<{
@@ -265,33 +253,29 @@ function ModePicker({
       locked: !drillUnlocked,
       lockLabel: 'Learn 3 lines',
     },
+    {
+      value: 'time-trial',
+      label: 'Time',
+      icon: <CalendarClock size={16} />,
+      tone: 'amber',
+      help: 'Race mastered lines',
+      group: 'practice',
+      locked: !speedUnlocked,
+      lockLabel: 'Learn 3 lines',
+    },
   ];
-  const learnMode = modes.find((mode) => mode.group === 'learn')!;
-  const practiceMode = modes.find((mode) => mode.value === 'step-by-step')!;
-  const fullLineMode = modes.find((mode) => mode.value === 'full-line')!;
 
   return (
-    <section className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Mode</div>
-        <div className="text-[11px] font-semibold text-stone-500">Learn one line, then practice that line</div>
-      </div>
-      <div className="space-y-2">
-        <ModeButton mode={learnMode} active={selectedMode === learnMode.value} setSelectedMode={setSelectedMode} />
-        <ModeButton mode={practiceMode} active={selectedMode === practiceMode.value} setSelectedMode={setSelectedMode} />
-        <ModeButton mode={fullLineMode} active={selectedMode === fullLineMode.value} setSelectedMode={setSelectedMode} />
-        <ModeButton mode={modes.find((mode) => mode.value === 'drill')!} active={selectedMode === 'drill'} setSelectedMode={setSelectedMode} />
-        <div className="grid gap-2 sm:grid-cols-2">
-          {[
-            ['Time', 'Learn 3 lines to unlock'],
-            ['Puzzles', 'Learn 2 lines to unlock'],
-          ].map(([label, help]) => (
-            <div key={label} className="min-h-[62px] rounded-2xl border border-stone-800/45 bg-stone-900/35 px-3 py-2 text-stone-600">
-              <div className="text-sm font-black">{label}</div>
-              <div className="mt-1 text-[11px] font-bold">{help}</div>
-            </div>
-          ))}
-        </div>
+    <section className="rounded-[20px] border border-sky-300/15 bg-stone-950/70 p-3">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+        {modes.map((mode) => (
+          <ModeButton
+            key={mode.value}
+            mode={mode}
+            active={selectedMode === mode.value}
+            setSelectedMode={setSelectedMode}
+          />
+        ))}
       </div>
     </section>
   );
@@ -320,7 +304,7 @@ function ModeButton({
         if (!mode.locked) setSelectedMode(mode.value);
       }}
       disabled={mode.locked}
-      className={`min-h-[62px] w-full rounded-2xl border px-3 py-2 text-left transition-all ${
+      className={`min-h-[76px] w-full rounded-2xl border px-3 py-2 text-left transition-all ${
         active
           ? getActiveModeClasses(mode.tone)
           : mode.locked
@@ -405,7 +389,8 @@ function LineChoice({
           : 'border-stone-800/70'
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="flex min-w-0 items-start gap-3">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
             unlocked ? 'bg-emerald-400/10 text-emerald-300' : 'bg-stone-900 text-stone-500'
@@ -443,23 +428,24 @@ function LineChoice({
         >
           <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} />
         </button>
-      </div>
+        </div>
 
-      <button
-        onClick={onLaunch}
-        disabled={modeLocked || isUnlocking}
-        className={`mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-3.5 text-sm font-black transition-colors ${
-          modeLocked || isUnlocking
-            ? 'cursor-not-allowed bg-stone-900 text-stone-600'
-            : mode === 'learn'
-              ? 'bg-sky-500 text-slate-950 hover:bg-sky-400 cursor-pointer'
-              : 'bg-emerald-400 text-slate-950 hover:bg-emerald-300 cursor-pointer'
-        }`}
-      >
-        {mode === 'learn' ? <BookOpen size={16} /> : <Route size={16} />}
-        {isUnlocking ? 'Opening walkthrough...' : actionLabel}
-        {!modeLocked && <ChevronRight size={16} />}
-      </button>
+        <button
+          onClick={onLaunch}
+          disabled={modeLocked || isUnlocking}
+          className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-3.5 text-sm font-black transition-colors md:w-[210px] ${
+            modeLocked || isUnlocking
+              ? 'cursor-not-allowed bg-stone-900 text-stone-600'
+              : mode === 'learn'
+                ? 'bg-sky-500 text-slate-950 hover:bg-sky-400 cursor-pointer'
+                : 'bg-emerald-400 text-slate-950 hover:bg-emerald-300 cursor-pointer'
+          }`}
+        >
+          {mode === 'learn' ? <BookOpen size={16} /> : <Route size={16} />}
+          <span className="truncate">{isUnlocking ? 'Opening...' : actionLabel}</span>
+          {!modeLocked && <ChevronRight size={16} />}
+        </button>
+      </div>
     </div>
   );
 }
@@ -472,22 +458,12 @@ function getActionLabel(mode: SetupMode, unlocked: boolean) {
   return 'Start speed run';
 }
 
-function getCoachCopy(mode: SetupMode, lockedCount: number) {
-  if (mode === 'learn') {
-    return lockedCount > 0
-      ? 'Start with a walkthrough. I will show the move and explain the idea, so you can learn the pattern before testing it.'
-      : 'All lines are mastered. Use Learn if you want a calm refresher before a harder run.';
-  }
-  if (mode === 'step-by-step') {
-    return 'Use Step when you know the idea but still want each move checked as you go.';
-  }
-  if (mode === 'full-line') {
-    return 'Full line is the real test: play the whole sequence cleanly and prove the pattern is yours.';
-  }
-  if (mode === 'drill') {
-    return 'Drill mixes your unlocked lines from the setup position so you have to recognize the branch from memory.';
-  }
-  return 'Speed is locked until you have three mastered lines. Accuracy comes first, then tempo.';
+function getSelectedModeTitle(mode: SetupMode) {
+  if (mode === 'learn') return 'Learn lines';
+  if (mode === 'step-by-step') return 'Step practice lines';
+  if (mode === 'full-line') return 'Full line runs';
+  if (mode === 'drill') return 'Drill run';
+  return 'Timed runs';
 }
 
 function getPlainLanguageSummary(line: OpeningLine) {
