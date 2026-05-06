@@ -381,7 +381,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
 
       <div className="relative flex items-center justify-center" style={{ width: boardSize, height: boardSize }}>
         {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
-          <div className="absolute left-[-30px] top-0">
+          <div className="absolute left-[-38px] top-0">
           <EvalBar fen={displayFen} height={boardSize} playerColor={opening?.playerColor ?? 'white'} />
           </div>
         )}

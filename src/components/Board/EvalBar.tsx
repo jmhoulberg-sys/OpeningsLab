@@ -1,3 +1,4 @@
+import { useMemo, useRef } from 'react';
 import { Chess } from 'chess.js';
 
 interface EvalBarProps {
@@ -15,7 +16,7 @@ const PIECE_VALUES: Record<string, number> = {
   k: 0,
 };
 
-function evaluateFen(fen: string) {
+function evaluateFen(fen: string): number | null {
   try {
     const chess = new Chess(fen);
     if (chess.isCheckmate()) {
@@ -31,12 +32,9 @@ function evaluateFen(fen: string) {
       });
     });
 
-    const turn = chess.turn();
-    const mobility = chess.moves().length * 3;
-    score += turn === 'w' ? mobility : -mobility;
     return score;
   } catch {
-    return 0;
+    return null;
   }
 }
 
@@ -53,30 +51,35 @@ function formatScore(score: number, playerColor: 'white' | 'black') {
 }
 
 export default function EvalBar({ fen, height, playerColor = 'white' }: EvalBarProps) {
-  const score = evaluateFen(fen);
+  const lastScoreRef = useRef(0);
+  const evaluatedScore = useMemo(() => evaluateFen(fen), [fen]);
+  if (evaluatedScore !== null) {
+    lastScoreRef.current = evaluatedScore;
+  }
+  const score = evaluatedScore ?? lastScoreRef.current;
   const whitePercent = scoreToWhitePercent(score);
   const blackPercent = 100 - whitePercent;
   const flipped = playerColor === 'black';
-  const topSection = flipped ? { color: 'bg-slate-100', pct: whitePercent } : { color: 'bg-slate-900', pct: blackPercent };
-  const bottomSection = flipped ? { color: 'bg-slate-900', pct: blackPercent } : { color: 'bg-slate-100', pct: whitePercent };
+  const topSection = flipped ? { color: '#f8fafc', pct: whitePercent } : { color: '#050505', pct: blackPercent };
+  const bottomSection = flipped ? { color: '#050505', pct: blackPercent } : { color: '#f8fafc', pct: whitePercent };
 
   return (
-    <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: 14 }}>
+    <div className="flex flex-col items-center gap-1 flex-shrink-0" style={{ width: 22 }}>
       <div
-        className="relative w-full overflow-hidden rounded flex flex-col"
+        className="relative w-full overflow-hidden rounded-md border border-stone-900/80 flex flex-col"
         style={{ height: height - 20 }}
       >
         <div
-          className={`w-full ${topSection.color}`}
-          style={{ height: `${topSection.pct}%` }}
+          className="w-full"
+          style={{ height: `${topSection.pct}%`, backgroundColor: topSection.color }}
         />
-        <div className="w-full h-px bg-slate-500 flex-shrink-0" />
+        <div className="w-full h-px bg-stone-500 flex-shrink-0" />
         <div
-          className={`w-full ${bottomSection.color}`}
-          style={{ height: `${bottomSection.pct}%` }}
+          className="w-full"
+          style={{ height: `${bottomSection.pct}%`, backgroundColor: bottomSection.color }}
         />
       </div>
-      <span className="text-[9px] font-bold text-slate-500 leading-none">{formatScore(score, playerColor)}</span>
+      <span className="text-[9px] font-bold text-stone-400 leading-none">{formatScore(score, playerColor)}</span>
     </div>
   );
 }
