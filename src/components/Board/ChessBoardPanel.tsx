@@ -98,8 +98,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     clearWrongMove,
     playedMoves,
     currentMoveIndex,
-    streak,
-    mistakes,
     hintSquare,
     previewUciMove,
   } = useTrainingStore();
@@ -110,13 +108,8 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
   const [promotionPending, setPromotionPending] = useState<{ from: Square; to: Square } | null>(
     null,
   );
-  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'correct' | 'wrong' } | null>(
-    null,
-  );
 
   const prevBlockRef = useRef(repetitionBlock);
-  const prevStreakRef = useRef(streak);
-  const prevMistakesRef = useRef(mistakes);
   const flashKeyRef = useRef(0);
 
   const boardOrientation: 'white' | 'black' = opening?.playerColor ?? 'white';
@@ -135,34 +128,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     }
     prevBlockRef.current = repetitionBlock;
   }, [repetitionBlock]);
-
-  useEffect(() => {
-    if (streak > prevStreakRef.current) {
-      const messages = ['Nice!', 'Sharp!', 'Excellent!', "That's it!", 'On the money!', 'Perfect!'];
-      setFeedbackMsg({
-        text: messages[Math.floor(Math.random() * messages.length)],
-        type: 'correct',
-      });
-      const timer = setTimeout(() => setFeedbackMsg(null), 2500);
-      prevStreakRef.current = streak;
-      return () => clearTimeout(timer);
-    }
-    prevStreakRef.current = streak;
-  }, [streak]);
-
-  useEffect(() => {
-    if (mistakes > prevMistakesRef.current) {
-      const messages = ['Not quite!', 'Wrong move!', 'Remember the plan!', 'Stay on the line!'];
-      setFeedbackMsg({
-        text: messages[Math.floor(Math.random() * messages.length)],
-        type: 'wrong',
-      });
-      const timer = setTimeout(() => setFeedbackMsg(null), 2500);
-      prevMistakesRef.current = mistakes;
-      return () => clearTimeout(timer);
-    }
-    prevMistakesRef.current = mistakes;
-  }, [mistakes]);
 
   let progressLabel = '';
   let progressDone = 0;
@@ -414,27 +379,6 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
       </div>
       )}
 
-      {(feedbackMsg || (wrongMoveFen && !showingCorrectMove)) && (
-      <div className="flex h-4 items-center justify-center">
-        {feedbackMsg && (
-          <span
-            className={`rounded-full px-4 py-1 text-xs font-bold ${
-              feedbackMsg.type === 'correct'
-                ? 'bg-emerald-500/90 text-slate-950'
-                : 'bg-rose-500/90 text-white'
-            }`}
-          >
-            {feedbackMsg.text}
-          </span>
-        )}
-        {!feedbackMsg && wrongMoveFen && !showingCorrectMove && (
-          <span className="rounded-full bg-rose-500/85 px-3 py-1 text-xs font-semibold text-white">
-            Play it again
-          </span>
-        )}
-      </div>
-      )}
-
       <div className="relative flex items-center justify-center" style={{ width: boardSize, height: boardSize }}>
         {showEvalBar && !postLine && (phase === 'training' || phase === 'setup' || phase === 'completed') && (
           <div className="absolute left-[-30px] top-0">
@@ -609,12 +553,14 @@ export function BoardNavRow() {
 
   const inSession = phase === 'training' || phase === 'setup';
   const hideHint = mode === 'time-trial';
-  const canHint = inSession && isAwaitingUserMove && !postLine && !hideHint;
-  const isGuidedLearn = canHint && mode === 'learn' && phase === 'training';
+  const showHintArea = inSession && !postLine && !hideHint;
+  const canHint = showHintArea && isAwaitingUserMove;
+  const isGuidedLearn = showHintArea && mode === 'learn' && phase === 'training';
 
-  const showHintBtn = canHint && !isGuidedLearn && !hintSquare && !showingCorrectMove;
-  const showAnswerBtn = canHint && !isGuidedLearn && (!!hintSquare || showingCorrectMove);
-  const answerDisabled = showingCorrectMove;
+  const showHintBtn = showHintArea && !isGuidedLearn && !hintSquare && !showingCorrectMove;
+  const showAnswerBtn = showHintArea && !isGuidedLearn && (!!hintSquare || showingCorrectMove);
+  const hintDisabled = !canHint;
+  const answerDisabled = !canHint || showingCorrectMove;
 
   return (
       <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(72px,1fr)] items-center gap-2">
@@ -628,8 +574,13 @@ export function BoardNavRow() {
           {!hideHint && showHintBtn && (
             <button
               onClick={showHint}
+              disabled={hintDisabled}
               title="Hint"
-              className="inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-400 px-4 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+              className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold transition-colors ${
+                hintDisabled
+                  ? 'cursor-not-allowed border-emerald-200/10 bg-emerald-400/35 text-slate-950/70'
+                  : 'cursor-pointer border-emerald-200/25 bg-emerald-400 text-slate-950 hover:bg-emerald-300'
+              }`}
           >
             <Lightbulb size={15} />
             Hint
@@ -676,12 +627,8 @@ export function BoardNavRow() {
       </div>
 
         <div className="order-3 flex min-w-0 items-center justify-end">
-        <div className={`inline-flex h-10 min-w-0 items-center justify-center rounded-2xl px-3 text-sm font-semibold ${
-          mistakes > 0
-            ? 'bg-rose-500/12 text-rose-300'
-            : 'bg-stone-900/75 text-stone-400'
-        }`}>
-          Mistakes {mistakes}
+        <div className="inline-flex h-10 min-w-0 items-center justify-center rounded-2xl bg-stone-900/75 px-3 text-sm font-semibold text-white">
+          Mistakes: {mistakes}
         </div>
       </div>
     </div>
