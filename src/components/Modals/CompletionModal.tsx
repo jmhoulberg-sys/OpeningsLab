@@ -178,8 +178,8 @@ function StreakStep({
 }) {
   return (
     <>
-      <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-amber-400/10 text-amber-300 sm:h-28 sm:w-28 sm:rounded-[32px]">
-        <Flame size={64} fill="currentColor" />
+      <div className="streak-flame mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-amber-400/10 text-amber-300 sm:h-28 sm:w-28 sm:rounded-[32px]">
+        <Flame className="streak-flame-icon" size={64} fill="currentColor" />
       </div>
       <div className="mt-5 text-6xl font-black leading-none text-amber-400 sm:text-7xl">
         {Math.max(1, currentStreak)}

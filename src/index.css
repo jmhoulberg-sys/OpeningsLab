@@ -140,3 +140,26 @@
 .unlock-lock {
   animation: unlockLock 0.7s ease-out forwards;
 }
+
+@keyframes streakFlamePop {
+  0% { transform: scale(0.72); box-shadow: 0 0 0 rgba(251, 191, 36, 0); }
+  35% { transform: scale(1.1); box-shadow: 0 0 34px rgba(251, 146, 60, 0.42); }
+  62% { transform: scale(0.96); box-shadow: 0 0 22px rgba(251, 191, 36, 0.32); }
+  100% { transform: scale(1); box-shadow: 0 0 28px rgba(251, 146, 60, 0.25); }
+}
+
+@keyframes streakFlameFlicker {
+  0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.55)); }
+  25% { transform: translateY(-2px) rotate(4deg) scale(1.06); filter: drop-shadow(0 0 16px rgba(249, 115, 22, 0.72)); }
+  50% { transform: translateY(1px) rotate(-1deg) scale(0.98); filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.58)); }
+  75% { transform: translateY(-1px) rotate(3deg) scale(1.04); filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.7)); }
+}
+
+.streak-flame {
+  animation: streakFlamePop 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.streak-flame-icon {
+  transform-origin: 50% 72%;
+  animation: streakFlameFlicker 0.95s ease-in-out 0.12s infinite;
+}

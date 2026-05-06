@@ -96,7 +96,7 @@ export default function AnalysisPanel() {
 
       {!loading && moves.length > 0 && (
         <div className="space-y-2">
-          <div className="grid grid-cols-[36px_34px_50px_1fr] gap-x-1.5 px-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
+          <div className="grid grid-cols-[42px_32px_40px_minmax(150px,1fr)] gap-x-1 px-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
             <span>Move</span>
             <span className="text-center">Use</span>
             <span className="text-right">Games</span>
@@ -148,7 +148,7 @@ function MoveRow({
       onFocus={onPreview}
       onBlur={onClearPreview}
       aria-disabled={!canChoose}
-      className={`grid w-full grid-cols-[36px_34px_50px_1fr] items-center gap-x-1.5 rounded-xl border px-2 py-2 text-left transition-colors ${
+      className={`grid w-full grid-cols-[42px_32px_40px_minmax(150px,1fr)] items-center gap-x-1 rounded-xl border px-2 py-2 text-left transition-colors ${
         canChoose
           ? 'cursor-pointer border-stone-800/45 bg-stone-900/45 hover:border-sky-300/45 hover:bg-sky-400/10 focus:border-sky-300/55 focus:outline-none focus:ring-1 focus:ring-sky-300/40'
           : 'cursor-default border-stone-800/45 bg-stone-900/35 hover:border-slate-500/35 hover:bg-slate-800/35'
@@ -160,14 +160,14 @@ function MoveRow({
       </span>
       <span className="text-right text-[11px] font-semibold tabular-nums text-stone-300">{games}</span>
 
-      <div className="flex h-6 overflow-hidden rounded-lg border border-stone-700/60 bg-stone-800" title={`${games} games`}>
-        <div className="flex min-w-[24px] items-center justify-center bg-slate-100 px-1 text-[10px] font-black text-slate-950" style={{ width: `${whitePct}%` }}>
+      <div className="flex h-6 min-w-0 overflow-hidden rounded-lg border border-stone-700/60 bg-stone-800" title={`${games} games`}>
+        <div className="flex min-w-[20px] items-center justify-center bg-slate-100 px-1 text-[10px] font-black text-slate-950" style={{ width: `${whitePct}%` }}>
           {whitePct}%
         </div>
-        <div className="flex min-w-[22px] items-center justify-center bg-slate-500 px-1 text-[10px] font-black text-white" style={{ width: `${drawPct}%` }}>
+        <div className="flex min-w-[18px] items-center justify-center bg-slate-500 px-1 text-[10px] font-black text-white" style={{ width: `${drawPct}%` }}>
           {drawPct}%
         </div>
-        <div className="flex min-w-[24px] items-center justify-center bg-slate-950 px-1 text-[10px] font-black text-white" style={{ width: `${blackPct}%` }}>
+        <div className="flex min-w-[20px] items-center justify-center bg-slate-950 px-1 text-[10px] font-black text-white" style={{ width: `${blackPct}%` }}>
           {blackPct}%
         </div>
       </div>

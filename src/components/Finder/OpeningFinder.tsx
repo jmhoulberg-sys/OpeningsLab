@@ -599,7 +599,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
             Back
           </button>
           <section className="overflow-hidden rounded-[26px] border border-stone-800/65 bg-stone-950/80">
-            <div className="border-b border-stone-800/65 bg-[radial-gradient(circle_at_20%_0%,rgba(56,189,248,0.18),transparent_32%),linear-gradient(135deg,#0c0b0a,#1c1917)] p-5 sm:p-7">
+            <div className="border-b border-stone-800/65 bg-stone-950 p-5 sm:p-7">
               <div className="max-w-3xl">
                 <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Opening finder</div>
                 <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">Find your opening</h1>
@@ -626,7 +626,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
     );
   }
 
-  const rightTitle = turn === playerColor ? 'Your completion tree' : 'Opponent response tree';
+  const rightTitle = turn === playerColor ? 'Most played moves' : 'Opponent responses';
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
@@ -658,7 +658,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[300px_minmax(0,1fr)_340px] lg:overflow-hidden">
+      <main className="mx-auto grid min-h-0 w-full max-w-[1660px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[320px_minmax(0,1fr)_360px] lg:overflow-hidden">
         <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
           <PanelHeading title="Possible openings" />
           <FinderLegend text="Pawn = course side. Number = matching local lines." />
@@ -820,7 +820,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
         <aside className="order-3 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
           <PanelHeading title={rightTitle} />
-          <FinderLegend text="Green bar = share of next-move options. Lines = matching local practice lines." />
+          <FinderLegend text="Percent = how often this move appears from here." />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
@@ -957,25 +957,28 @@ function TreeMoveButton({
       onBlur={onClearPreview}
       className="w-full rounded-xl border border-stone-800/70 bg-stone-900/70 p-2.5 text-left transition-colors hover:border-stone-600 hover:bg-stone-800 cursor-pointer"
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="font-mono text-sm font-black text-white">{getMoveNumber(path, node.san)}</div>
-        <span className="text-xs font-semibold tabular-nums text-stone-400">
-          {node.frequency} lines
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1 truncate font-mono text-sm font-black text-white">
+          {getMoveNumber(path, node.san)}
+        </div>
+        <span className="shrink-0 text-xs font-semibold tabular-nums text-stone-400">
+          Lines: {node.frequency}
         </span>
       </div>
-      <div className="mt-2 h-5 overflow-hidden rounded-full bg-stone-800">
-        <div
-          className="flex h-full min-w-[42px] items-center justify-end rounded-full bg-emerald-500 px-2 text-[11px] font-black tabular-nums text-white transition-all duration-500"
-          style={{ width: `${Math.max(8, node.frequencyPct)}%` }}
-        >
-          {node.frequencyPct}%
-        </div>
-      </div>
-      <div className="mt-2 text-xs font-semibold text-stone-400">
-        <span className="truncate">
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-400">
           {node.sources.slice(0, 2).join(', ')}
           {node.sources.length > 2 ? ` +${node.sources.length - 2}` : ''}
+        </div>
+        <span className="shrink-0 rounded-full bg-emerald-400/12 px-2 py-1 text-xs font-black tabular-nums text-emerald-300">
+          {node.frequencyPct}%
         </span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-800">
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+          style={{ width: `${Math.max(3, node.frequencyPct)}%` }}
+        />
       </div>
     </button>
   );
@@ -997,10 +1000,10 @@ function ColorPawnIcon({ color, size = 'md' }: { color: Color; size?: 'xs' | 'md
       ? 'h-5 w-5 rounded-lg'
       : 'h-8 w-8 rounded-xl';
   return (
-    <span className={`inline-flex shrink-0 items-center justify-center border border-stone-600/60 bg-stone-300 ${boxClass}`}>
+    <span className={`inline-flex shrink-0 items-center justify-center border border-sky-200/35 bg-sky-500 ${boxClass}`}>
       <PawnIcon
         size={iconSize}
-        className={color === 'white' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]' : 'text-black'}
+        className={color === 'white' ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]' : 'text-slate-950'}
       />
     </span>
   );

@@ -217,9 +217,9 @@ export default function App() {
       />
 
       <main ref={mainRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <div className={`mx-auto grid h-full w-full max-w-[1660px] gap-4 p-3 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[330px_minmax(0,1fr)_360px]'}`}>
+        <div className={`mx-auto grid h-full w-full max-w-[1720px] gap-3 p-2 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[360px_minmax(0,1fr)_390px]'}`}>
           {!isSmallScreen && opening && (
-            <section className="min-h-0 overflow-hidden rounded-[28px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+            <section className="min-h-0 overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
               <TrainingLeftPanel
                 opening={opening}
                 mode={mode}
@@ -231,13 +231,13 @@ export default function App() {
 
           <section
             ref={boardContainerRef}
-            className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-[28px] bg-stone-950/35 p-2"
+            className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-[22px] bg-stone-950/35 p-1"
           >
             <ChessBoardPanel boardSize={boardSize} />
           </section>
 
           {!isSmallScreen && opening && (
-            <section className="min-h-0 overflow-hidden rounded-[28px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+            <section className="min-h-0 overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
               <TrainingRightPanel
                 opening={opening}
                 postLine={postLine}

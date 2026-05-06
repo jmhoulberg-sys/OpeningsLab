@@ -520,14 +520,14 @@ function KnightArrowOverlay({
           <marker
             key={`knight-head-${index}`}
             id={`knight-head-${index}`}
-            markerWidth="5"
-            markerHeight="5"
-            refX="4.2"
-            refY="2.5"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M0,0 L5,2.5 L0,5 Z" fill={color} />
+            <path d="M0,0 L6,3 L0,6 Z" fill={color} />
           </marker>
         ))}
       </defs>
@@ -552,7 +552,7 @@ function KnightArrowOverlay({
             d={`M ${start.x} ${start.y} L ${bend.x} ${bend.y} L ${arrowEnd.x} ${arrowEnd.y}`}
             fill="none"
             stroke={color}
-            strokeWidth={Math.max(4, boardSize * 0.009)}
+            strokeWidth={Math.max(7, boardSize * 0.014)}
             strokeLinecap="round"
             strokeLinejoin="round"
             markerEnd={`url(#knight-head-${index})`}
@@ -617,12 +617,12 @@ export function BoardNavRow() {
   const answerDisabled = showingCorrectMove;
 
   return (
-      <div className="grid w-full grid-cols-2 items-center gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-2.5">
-        <div className="order-2 flex min-w-0 items-center justify-start sm:order-1">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(72px,1fr)] items-center gap-2">
+        <div className="order-1 flex min-w-0 items-center justify-start">
           {isGuidedLearn && (
-            <div className="inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-4 text-sm font-bold text-sky-200">
+            <div className="inline-flex h-10 min-w-0 max-w-full items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-500/14 px-3 text-sm font-bold text-sky-200">
               <Sparkles size={15} />
-              Answer shown
+              <span className="truncate">Answer shown</span>
             </div>
           )}
           {!hideHint && showHintBtn && (
@@ -652,7 +652,7 @@ export function BoardNavRow() {
         )}
       </div>
 
-      <div className="order-1 col-span-2 flex items-center justify-center gap-2 sm:order-2 sm:col-span-1 sm:gap-3">
+      <div className="order-2 flex items-center justify-center gap-2">
         <NavButton
           onClick={goBack}
           disabled={!canBack}
@@ -676,7 +676,7 @@ export function BoardNavRow() {
       </div>
 
         <div className="order-3 flex min-w-0 items-center justify-end">
-        <div className={`inline-flex h-10 min-w-[92px] items-center justify-center rounded-2xl px-3 text-sm font-semibold sm:min-w-[100px] sm:px-4 ${
+        <div className={`inline-flex h-10 min-w-0 items-center justify-center rounded-2xl px-3 text-sm font-semibold ${
           mistakes > 0
             ? 'bg-rose-500/12 text-rose-300'
             : 'bg-stone-900/75 text-stone-400'
