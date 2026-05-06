@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Home, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
 import { STARTING_FEN, applyMove, fenAfterMoves } from '../../engine/chessEngine';
+import BrandMark from '../Brand/BrandMark';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -593,10 +594,10 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col justify-center">
           <button
             onClick={onBack}
-            className="mb-5 inline-flex w-fit items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 py-2 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+            className="mb-5 inline-flex w-fit rounded-xl border border-stone-700/45 bg-stone-900 px-3 py-2 transition-colors hover:bg-stone-800 cursor-pointer"
+            aria-label="Back to home"
           >
-            <Home size={16} />
-            Back
+            <BrandMark />
           </button>
           <section className="overflow-hidden rounded-[26px] border border-stone-800/65 bg-stone-950/80">
             <div className="border-b border-stone-800/65 bg-stone-950 p-5 sm:p-7">
@@ -634,10 +635,10 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
         <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3">
           <button
             onClick={onBack}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+            className="inline-flex h-11 items-center rounded-xl border border-stone-700/45 bg-stone-900 px-3 transition-colors hover:bg-stone-800 cursor-pointer"
+            aria-label="Back to home"
           >
-            <ArrowLeft size={16} />
-            Back
+            <BrandMark />
           </button>
           <div className="min-w-0 text-center">
             <div className="truncate text-lg font-black text-white">{getPositionName(activePath)}</div>
@@ -661,7 +662,6 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
       <main className="mx-auto grid min-h-0 w-full max-w-[1660px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[320px_minmax(0,1fr)_360px] lg:overflow-hidden">
         <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
           <PanelHeading title="Possible openings" />
-          <FinderLegend text="Pawn = course side. Number = matching local lines." />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
@@ -703,9 +703,6 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                     <div className="min-w-0 truncate text-sm font-black text-white">{branch.name}</div>
                     <div className="flex items-center gap-2">
                       <ColorPill color={branch.color} />
-                      <span className="rounded-full bg-stone-800 px-2 py-1 text-[11px] font-semibold text-white">
-                        {frequency}
-                      </span>
                       <span
                         role="button"
                         tabIndex={0}
@@ -732,7 +729,10 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
                       </span>
                     </div>
                   </div>
-                  <div className="mt-1.5 truncate text-[11px] font-semibold text-stone-400">{branch.path.join(' ')}</div>
+                  <div className="mt-1.5 flex items-center gap-3 text-[11px] font-semibold text-stone-400">
+                    <span className="min-w-0 flex-1 truncate">{branch.path.join(' ')}</span>
+                    <span className="shrink-0 tabular-nums text-stone-300">{frequency} lines</span>
+                  </div>
                 </button>
               );
             })}
@@ -820,7 +820,6 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
         <aside className="order-3 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
           <PanelHeading title={rightTitle} />
-          <FinderLegend text="Percent = how often this move appears from here." />
           <div className="mt-2 space-y-2">
             {featuredCourseOpening && (
               <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
@@ -911,14 +910,6 @@ function PanelHeading({ title }: { title: string }) {
   );
 }
 
-function FinderLegend({ text }: { text: string }) {
-  return (
-    <div className="mt-2 rounded-xl border border-stone-800/65 bg-stone-900/55 px-3 py-2 text-[11px] font-semibold leading-relaxed text-stone-400">
-      {text}
-    </div>
-  );
-}
-
 function ColorPill({ color }: { color: Color | 'both' }) {
   if (color === 'both') {
     return (
@@ -970,13 +961,13 @@ function TreeMoveButton({
           {node.sources.slice(0, 2).join(', ')}
           {node.sources.length > 2 ? ` +${node.sources.length - 2}` : ''}
         </div>
-        <span className="shrink-0 rounded-full bg-emerald-400/12 px-2 py-1 text-xs font-black tabular-nums text-emerald-300">
+        <span className="shrink-0 rounded-full bg-white/10 px-2 py-1 text-xs font-black tabular-nums text-white">
           {node.frequencyPct}%
         </span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-800">
         <div
-          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+          className="h-full rounded-full bg-white transition-all duration-500"
           style={{ width: `${Math.max(3, node.frequencyPct)}%` }}
         />
       </div>
@@ -1033,21 +1024,31 @@ function RouteBar({
   onBack: () => void;
   onForward: () => void;
 }) {
+  const canBack = cursor > 0;
+  const canForward = cursor < total;
   return (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-center">
       <div className="flex gap-2">
         <button
           onClick={onBack}
-          disabled={cursor === 0}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 transition-colors hover:border-sky-300/45 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          disabled={!canBack}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors cursor-pointer ${
+            canBack
+              ? 'border-sky-200/60 bg-sky-500 text-slate-950 shadow-[0_0_18px_rgba(14,165,233,0.28)] hover:bg-sky-400'
+              : 'cursor-not-allowed border-stone-700/60 bg-stone-900 text-stone-600'
+          }`}
           aria-label="Step back"
         >
           <ChevronLeft size={18} />
         </button>
         <button
           onClick={onForward}
-          disabled={cursor >= total}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 transition-colors hover:border-sky-300/45 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+          disabled={!canForward}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors cursor-pointer ${
+            canForward
+              ? 'border-sky-200/60 bg-sky-500 text-slate-950 shadow-[0_0_18px_rgba(14,165,233,0.28)] hover:bg-sky-400'
+              : 'cursor-not-allowed border-stone-700/60 bg-stone-900 text-stone-600'
+          }`}
           aria-label="Step forward"
         >
           <ChevronRight size={18} />
