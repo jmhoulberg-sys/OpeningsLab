@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { LogIn, Route, Settings, UserCircle2 } from 'lucide-react';
+import { LogIn, Settings, UserCircle2 } from 'lucide-react';
 import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
@@ -82,7 +82,7 @@ export default function HomePage({
     .map((id) => openingSummaries.find((summary) => summary.opening.id === id))
     .filter((summary): summary is OpeningSummary => summary !== undefined);
   const learningOpenings = openingSummaries
-    .filter((summary) => summary.firstLine && (summary.setupComplete || summary.completedLines > 0))
+    .filter((summary) => summary.firstLine && summary.completedLines < summary.totalLines && (summary.setupComplete || summary.completedLines > 0))
     .sort((a, b) => {
       if (b.masteryPct !== a.masteryPct) return b.masteryPct - a.masteryPct;
       if (b.completedLines !== a.completedLines) return b.completedLines - a.completedLines;
@@ -92,6 +92,9 @@ export default function HomePage({
   const featuredOpenings = isLoggedIn && learningOpenings.length > 0
     ? learningOpenings.slice(0, 4)
     : defaultFeaturedOpenings;
+  const masteredOpenings = openingSummaries
+    .filter((summary) => summary.firstLine && summary.totalLines > 0 && summary.completedLines === summary.totalLines)
+    .sort((a, b) => a.opening.name.localeCompare(b.opening.name));
 
   const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
 
@@ -152,13 +155,6 @@ export default function HomePage({
               </button>
             )}
             <button
-              onClick={onOpenFinder}
-              className="flex h-[68px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
-            >
-              <Route size={18} />
-              <span className="hidden md:inline">Finder beta</span>
-            </button>
-            <button
               onClick={onSettingsClick}
               title="Settings"
               className="h-[68px] rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-slate-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
@@ -208,6 +204,20 @@ export default function HomePage({
           </div>
         )}
 
+        {isLoggedIn && masteredOpenings.length > 0 && (
+          <div className="mt-5">
+            <FeaturedOpeningsSection
+              openings={masteredOpenings}
+              eyebrow="Mastered"
+              title="Mastered openings"
+              description="Completed courses, kept close by for quick review."
+              compactCards
+              onOpenOpening={onSelectOpening}
+              onStartLine={onStartOpeningLine}
+            />
+          </div>
+        )}
+
         {isLoggedIn && (
           <div className="mt-8">
             <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
@@ -217,6 +227,7 @@ export default function HomePage({
         <div className="mt-8" ref={libraryRef}>
           <OpeningLibrarySection
             openings={openingSummaries}
+            onOpenFinder={onOpenFinder}
             onOpenOpening={onSelectOpening}
             onStartLine={onStartOpeningLine}
           />

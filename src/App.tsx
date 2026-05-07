@@ -3,14 +3,14 @@ import {
   ArrowLeft,
   BookOpen,
   ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   House,
   Lock,
-  PanelRight,
   RotateCcw,
   Route,
   Sparkles,
   Target,
-  X,
 } from 'lucide-react';
 import Header from './components/Header/Header';
 import AuthModal from './components/Auth/AuthModal';
@@ -32,9 +32,10 @@ import { getSetupFen } from './engine/chessEngine';
 import { fetchLichessBookPosition } from './services/lichessBookService';
 import type { Opening, OpeningLine, TrainingMode } from './types';
 
-const SIDEBAR_BREAK = 1100;
+const SIDEBAR_BREAK = 1280;
 const BOARD_CHROME_H = 44;
 const EVAL_BAR_W = 0;
+type AppPage = 'home' | 'board' | 'profile' | 'finder';
 
 export default function App() {
   const { opening, phase, postLine, postLineOutOfBook, postLineError, mode, startOpening, selectLine } = useTrainingStore();
@@ -53,6 +54,24 @@ export default function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
+  const appPageRef = useRef<AppPage>('home');
+
+  const applyPage = useCallback((page: AppPage) => {
+    appPageRef.current = page;
+    setShowHome(page === 'home');
+    setShowProfile(page === 'profile');
+    setShowFinder(page === 'finder');
+    setShowSettings(false);
+    setSidebarOpen(false);
+  }, []);
+
+  const navigatePage = useCallback((page: AppPage) => {
+    applyPage(page);
+    if (typeof window === 'undefined') return;
+    const currentPage = window.history.state?.openingsLabPage as AppPage | undefined;
+    if (currentPage === page) return;
+    window.history.pushState({ openingsLabPage: page }, '', window.location.href);
+  }, [applyPage]);
 
   const handleMainResize = useCallback((entries: ResizeObserverEntry[]) => {
     const width = entries[0].contentRect.width;
@@ -67,6 +86,33 @@ export default function App() {
     const size = Math.min(820, Math.max(240, Math.min(maxW, maxH)));
     setBoardSize(Math.floor(size));
   }, []);
+
+  useEffect(() => {
+    window.history.replaceState(
+      { ...(window.history.state ?? {}), openingsLabPage: appPageRef.current },
+      '',
+      window.location.href,
+    );
+
+    function handlePopState(event: PopStateEvent) {
+      const page = event.state?.openingsLabPage as AppPage | undefined;
+      applyPage(page ?? 'home');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [applyPage]);
+
+  useEffect(() => {
+    function syncScreenSize() {
+      const width = mainRef.current?.getBoundingClientRect().width ?? window.innerWidth;
+      setIsSmallScreen(width < SIDEBAR_BREAK);
+    }
+
+    syncScreenSize();
+    window.addEventListener('resize', syncScreenSize);
+    return () => window.removeEventListener('resize', syncScreenSize);
+  }, [showHome, showFinder, showSettings, showProfile]);
 
   useEffect(() => {
     const mainEl = mainRef.current;
@@ -107,7 +153,7 @@ export default function App() {
     if (!startedRef.current) {
       startedRef.current = true;
     }
-    setShowHome(false);
+    navigatePage('board');
     startOpening(selectedOpening);
   }
 
@@ -115,37 +161,28 @@ export default function App() {
     if (!startedRef.current) {
       startedRef.current = true;
     }
-    setShowHome(false);
+    navigatePage('board');
     startOpening(selectedOpening);
   }
 
   function handleGoHome() {
-    setShowHome(true);
-    setShowProfile(false);
-    setShowFinder(false);
+    navigatePage('home');
     startedRef.current = false;
   }
 
   function handleProfileClick() {
-    setShowHome(false);
-    setShowFinder(false);
-    setShowSettings(false);
-    setShowProfile(true);
+    navigatePage('profile');
   }
 
   function handleOpenFinder() {
-    setShowHome(false);
-    setShowProfile(false);
-    setShowSettings(false);
-    setShowFinder(true);
+    navigatePage('finder');
   }
 
   function handleStartFinderLine(selectedOpening: Opening, line: OpeningLine) {
     if (!startedRef.current) {
       startedRef.current = true;
     }
-    setShowHome(false);
-    setShowFinder(false);
+    navigatePage('board');
     startOpening(selectedOpening);
     selectLine(line);
   }
@@ -154,8 +191,7 @@ export default function App() {
     if (!startedRef.current) {
       startedRef.current = true;
     }
-    setShowHome(false);
-    setShowFinder(false);
+    navigatePage('board');
     startOpening(selectedOpening);
   }
 
@@ -174,7 +210,7 @@ export default function App() {
   if (showProfile) {
     return (
       <>
-        <ProfilePage onBack={() => setShowProfile(false)} />
+        <ProfilePage onBack={() => window.history.back()} />
         <AuthModal />
       </>
     );
@@ -185,6 +221,8 @@ export default function App() {
       <>
         <OpeningFinder
           onBack={handleGoHome}
+          onSettingsClick={() => setShowSettings(true)}
+          onProfileClick={handleProfileClick}
           onOpenOpening={handleStartFinderOpening}
           onStartPractice={handleStartFinderLine}
         />
@@ -252,11 +290,11 @@ export default function App() {
         {isSmallScreen && !sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-xl border border-stone-700/40 bg-stone-900 px-3 py-2 text-sm font-semibold text-stone-300 shadow-xl shadow-black/40 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
-            title="Open panel"
+            className="absolute right-0 top-1/2 z-20 flex h-16 w-9 -translate-y-1/2 items-center justify-center rounded-l-2xl border border-r-0 border-stone-700/50 bg-stone-900 text-stone-200 shadow-xl shadow-black/40 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+            title="Open sidebar"
+            aria-label="Open sidebar"
           >
-            <PanelRight size={15} />
-            <span className="hidden sm:inline">Panel</span>
+            <ChevronsLeft size={19} />
           </button>
         )}
 
@@ -274,10 +312,11 @@ export default function App() {
             <div className="relative h-full">
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-3 top-3 z-10 rounded-lg border border-stone-700/40 bg-stone-800 px-2 py-1.5 text-stone-400 transition-colors hover:bg-stone-700 hover:text-stone-200 cursor-pointer"
-                title="Close panel"
+                className="absolute left-0 top-1/2 z-10 flex h-16 w-9 -translate-x-full -translate-y-1/2 items-center justify-center rounded-l-2xl border border-r-0 border-stone-700/50 bg-stone-900 text-stone-300 shadow-xl shadow-black/40 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+                title="Close sidebar"
+                aria-label="Close sidebar"
               >
-                <X size={16} />
+                <ChevronsRight size={19} />
               </button>
               <TrainingPanelContent
                 opening={opening}
@@ -707,7 +746,7 @@ function OpeningLineDropdown({
     let cancelled = false;
     if (!setupDone || !open) return;
 
-    fetchLichessBookPosition(getSetupFen(opening), { topMoves: 10, playedSans: opening.setupMoves })
+    fetchLichessBookPosition(getSetupFen(opening), { topMoves: 50, playedSans: opening.setupMoves })
       .then((result) => {
         if (cancelled || result.status !== 'ok' || !result.position) return;
         const total = Math.max(1, result.position.totalGames);
@@ -753,7 +792,11 @@ function OpeningLineDropdown({
             <span>{completedLines}/{opening.lines.length} mastered</span>
             <span>{setupDone ? 'Ready' : 'Setup first'}</span>
           </div>
-          {opening.lines.map((line) => {
+          {[...opening.lines].sort((a, b) => {
+            const frequencyDelta = (lineFrequencies[b.id] ?? -1) - (lineFrequencies[a.id] ?? -1);
+            if (frequencyDelta !== 0) return frequencyDelta;
+            return a.name.localeCompare(b.name);
+          }).map((line) => {
             const mastered = isLineUnlocked(opening.id, line.id);
             const available = setupDone;
             const active = selectedLine?.id === line.id;

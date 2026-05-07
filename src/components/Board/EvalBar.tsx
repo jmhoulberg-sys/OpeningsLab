@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 
 interface EvalBarProps {
@@ -15,6 +15,24 @@ const PIECE_VALUES: Record<string, number> = {
   q: 900,
   k: 0,
 };
+
+let engineWorker: Worker | null = null;
+let engineReady = false;
+let activeEvalToken = 0;
+
+function getEngineWorker() {
+  if (typeof window === 'undefined') return null;
+  if (engineWorker) return engineWorker;
+  try {
+    engineWorker = new Worker('/stockfish/stockfish-18-lite-single.js');
+    engineWorker.postMessage('uci');
+    engineWorker.postMessage('isready');
+    return engineWorker;
+  } catch {
+    engineWorker = null;
+    return null;
+  }
+}
 
 function evaluateFen(fen: string): number | null {
   try {
@@ -52,7 +70,62 @@ function formatScore(score: number, playerColor: 'white' | 'black') {
 
 export default function EvalBar({ fen, height, playerColor = 'white' }: EvalBarProps) {
   const lastScoreRef = useRef(0);
-  const evaluatedScore = useMemo(() => evaluateFen(fen), [fen]);
+  const [engineScore, setEngineScore] = useState<number | null>(null);
+  const materialScore = useMemo(() => evaluateFen(fen), [fen]);
+  const evaluatedScore = engineScore ?? materialScore;
+
+  useEffect(() => {
+    let cancelled = false;
+    const token = ++activeEvalToken;
+    const worker = getEngineWorker();
+    if (!worker) {
+      setEngineScore(null);
+      return;
+    }
+
+    let latestScore: number | null = null;
+    const timeout = window.setTimeout(() => {
+      if (!cancelled && token === activeEvalToken) setEngineScore(null);
+    }, 2500);
+
+    function handleMessage(event: MessageEvent<string>) {
+      const message = String(event.data);
+      if (message === 'readyok') {
+        engineReady = true;
+      }
+
+      const cpMatch = message.match(/\bscore cp (-?\d+)/);
+      if (cpMatch) {
+        latestScore = Number(cpMatch[1]);
+      }
+
+      const mateMatch = message.match(/\bscore mate (-?\d+)/);
+      if (mateMatch) {
+        latestScore = Number(mateMatch[1]) > 0 ? 1200 : -1200;
+      }
+
+      if (message.startsWith('bestmove')) {
+        window.clearTimeout(timeout);
+        if (!cancelled && token === activeEvalToken && latestScore !== null) {
+          setEngineScore(latestScore);
+        }
+      }
+    }
+
+    worker.addEventListener('message', handleMessage);
+    if (!engineReady) worker.postMessage('isready');
+    worker.postMessage('ucinewgame');
+    worker.postMessage(`position fen ${fen}`);
+    worker.postMessage('go depth 10');
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      worker.postMessage('stop');
+      worker.removeEventListener('message', handleMessage);
+    };
+  }, [fen]);
+
   if (evaluatedScore !== null) {
     lastScoreRef.current = evaluatedScore;
   }

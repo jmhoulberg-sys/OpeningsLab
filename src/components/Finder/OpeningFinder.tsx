@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { Chess } from 'chess.js';
 import type { Color, Opening, OpeningLine } from '../../types';
 import { OPENINGS } from '../../data/openings';
 import { STARTING_FEN, applyMove, fenAfterMoves } from '../../engine/chessEngine';
-import BrandMark from '../Brand/BrandMark';
+import Header from '../Header/Header';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -14,6 +14,8 @@ const NORMALIZE_RE = /[+#!?]/g;
 
 interface OpeningFinderProps {
   onBack: () => void;
+  onSettingsClick: () => void;
+  onProfileClick: () => void;
   onOpenOpening: (opening: Opening) => void;
   onStartPractice: (opening: Opening, line: OpeningLine) => void;
 }
@@ -461,7 +463,7 @@ function writeFavoriteIds(ids: Set<string>) {
   window.localStorage.setItem('opening-finder-favorites', JSON.stringify([...ids]));
 }
 
-export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }: OpeningFinderProps) {
+export default function OpeningFinder({ onBack, onSettingsClick, onProfileClick, onOpenOpening, onStartPractice }: OpeningFinderProps) {
   const [playerColor, setPlayerColor] = useState<Color | null>(null);
   const [path, setPath] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -590,19 +592,19 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
   if (!playerColor) {
     return (
-      <div className="min-h-screen bg-brand-bg px-4 py-6 text-slate-100 sm:px-6">
-        <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col justify-center">
-          <button
-            onClick={onBack}
-            className="mb-5 inline-flex w-fit rounded-xl border border-stone-700/45 bg-stone-900 px-3 py-2 transition-colors hover:bg-stone-800 cursor-pointer"
-            aria-label="Back to home"
-          >
-            <BrandMark />
-          </button>
+      <div className="min-h-screen bg-brand-bg text-slate-100">
+        <Header
+          onSettingsClick={onSettingsClick}
+          onHomeClick={onBack}
+          onProfileClick={onProfileClick}
+          titleOverride="Openings explorer"
+          subtitleOverride="Choose a side, then explore the opening tree"
+        />
+        <div className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-5xl flex-col justify-center px-4 py-6 sm:px-6">
           <section className="overflow-hidden rounded-[26px] border border-stone-800/65 bg-stone-950/80">
             <div className="border-b border-stone-800/65 bg-stone-950 p-5 sm:p-7">
               <div className="max-w-3xl">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Opening finder</div>
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Openings explorer</div>
                 <h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">Find your opening</h1>
                 <p className="mt-3 text-base leading-relaxed text-stone-300 sm:text-lg">
                   Choose a side, follow common replies, and see which routes become practiceable lines.
@@ -631,21 +633,15 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
-      <header className="border-b border-stone-800/80 bg-stone-950 px-4 py-3">
-        <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3">
-          <button
-            onClick={onBack}
-            className="inline-flex h-11 items-center rounded-xl border border-stone-700/45 bg-stone-900 px-3 transition-colors hover:bg-stone-800 cursor-pointer"
-            aria-label="Back to home"
-          >
-            <BrandMark />
-          </button>
-          <div className="min-w-0 text-center">
-            <div className="truncate text-lg font-black text-white">{getPositionName(activePath)}</div>
-            <div className="mt-0.5 truncate text-xs font-semibold text-stone-500">
-              Playing {playerColor}. {activePath.length ? activePath.join(' ') : 'Choose the first move.'}
-            </div>
-          </div>
+      <Header
+        onSettingsClick={onSettingsClick}
+        onHomeClick={onBack}
+        onProfileClick={onProfileClick}
+        titleOverride="Openings explorer"
+        subtitleOverride={`${getPositionName(activePath)}. Playing ${playerColor}. ${activePath.length ? activePath.join(' ') : 'Choose the first move.'}`}
+      />
+      <div className="border-b border-stone-800/80 bg-stone-950 px-4 py-2">
+        <div className="mx-auto flex max-w-[1600px] justify-end">
           <button
             onClick={() => {
               setPath([]);
@@ -657,7 +653,7 @@ export default function OpeningFinder({ onBack, onOpenOpening, onStartPractice }
             Reset
           </button>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto grid min-h-0 w-full max-w-[1660px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[320px_minmax(0,1fr)_360px] lg:overflow-hidden">
         <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
@@ -1027,7 +1023,7 @@ function RouteBar({
   const canBack = cursor > 0;
   const canForward = cursor < total;
   return (
-    <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+    <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
       <div className="flex gap-2">
         <button
           onClick={onBack}
@@ -1072,11 +1068,6 @@ function RouteBar({
         </div>
       </div>
 
-      <div className="hidden items-center gap-2 text-xs font-semibold text-stone-500 sm:flex">
-        <ArrowLeft size={13} />
-        explore
-        <ArrowRight size={13} />
-      </div>
     </div>
   );
 }

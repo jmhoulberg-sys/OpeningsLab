@@ -17,7 +17,7 @@ describe('validateAndNormalizeRequest', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.topMoves).toBe(10);
+    expect(result.value.topMoves).toBe(50);
     expect(result.value.speeds).toEqual(['blitz', 'rapid', 'classical']);
     expect(result.value.ratings).toEqual([1600, 1800, 2000, 2200, 2500]);
   });

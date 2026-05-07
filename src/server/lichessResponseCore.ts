@@ -119,10 +119,10 @@ export function validateAndNormalizeRequest(
     return { ok: false, message: 'Provide fen or play in the request body' };
   }
 
-  const topMoves = Math.max(
+  const explorerMoves = Math.max(
     1,
     Math.min(
-      10,
+      50,
       typeof topMovesInput === 'number' && Number.isFinite(topMovesInput)
         ? Math.floor(topMovesInput)
         : DEFAULT_TOP_MOVES,
@@ -150,7 +150,7 @@ export function validateAndNormalizeRequest(
     value: {
       fen,
       play,
-      topMoves,
+      topMoves: explorerMoves,
       speeds: speeds.length > 0 ? speeds : [...DEFAULT_SPEEDS],
       ratings: ratings.length > 0 ? ratings : [...DEFAULT_RATINGS],
       variant,

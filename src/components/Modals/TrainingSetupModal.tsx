@@ -14,6 +14,8 @@ import type { OpeningLine, TrainingMode } from '../../types';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { getSetupFen } from '../../engine/chessEngine';
+import { fetchLichessBookPosition } from '../../services/lichessBookService';
 
 type SetupMode = TrainingMode;
 
@@ -25,6 +27,7 @@ export default function TrainingSetupModal() {
   const [newlyUnlockedId, setNewlyUnlockedId] = useState<string | null>(null);
   const [unlockingLineId, setUnlockingLineId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [lineFrequencies, setLineFrequencies] = useState<Record<string, number>>({});
   const previousUnlockedRef = useRef<string[]>([]);
 
   const openingId = opening?.id ?? '';
@@ -41,10 +44,52 @@ export default function TrainingSetupModal() {
   const speedUnlocked = completedLines >= 3;
   const drillUnlocked = completedLines >= 3;
   const visibleLines = useMemo(() => {
-    if (selectedMode === 'learn' && learnableLines.length > 0) return learnableLines;
-    if (selectedMode !== 'learn') return lineStates.filter((entry) => entry.unlocked);
-    return lineStates;
-  }, [learnableLines, lineStates, selectedMode]);
+    const base =
+      selectedMode === 'learn' && learnableLines.length > 0
+        ? learnableLines
+        : selectedMode !== 'learn'
+          ? lineStates.filter((entry) => entry.unlocked)
+          : lineStates;
+
+    return [...base].sort((a, b) => {
+      const frequencyDelta = (lineFrequencies[b.line.id] ?? -1) - (lineFrequencies[a.line.id] ?? -1);
+      if (frequencyDelta !== 0) return frequencyDelta;
+      return a.line.name.localeCompare(b.line.name);
+    });
+  }, [learnableLines, lineFrequencies, lineStates, selectedMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (phase !== 'line-select' || !opening) {
+      setLineFrequencies({});
+      return;
+    }
+
+    fetchLichessBookPosition(getSetupFen(opening), { topMoves: 50, playedSans: opening.setupMoves })
+      .then((result) => {
+        if (cancelled || result.status !== 'ok' || !result.position) return;
+        const total = Math.max(1, result.position.totalGames);
+        const bySan = new Map(
+          result.position.moves.map((move) => [
+            normaliseSan(move.san),
+            Math.round((move.popularity / total) * 100),
+          ]),
+        );
+        setLineFrequencies(Object.fromEntries(
+          opening.lines.map((line) => {
+            const nextMove = line.moves[opening.setupMoves.length]?.san;
+            return [line.id, nextMove ? bySan.get(normaliseSan(nextMove)) ?? 0 : 0];
+          }),
+        ));
+      })
+      .catch(() => {
+        if (!cancelled) setLineFrequencies({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [opening, openingId, phase]);
 
   useEffect(() => {
     const previousUnlocked = previousUnlockedRef.current;
@@ -176,6 +221,7 @@ export default function TrainingSetupModal() {
                   enableDueBadge={enableSRReminders}
                   isFavorite={isFavorite(opening.id, line.id)}
                   isDue={isDue(opening.id, line.id)}
+                  frequencyPct={lineFrequencies[line.id]}
                   modeLocked={selectedMode === 'time-trial' && !speedUnlocked}
                   onToggleFavorite={() => toggleFavorite(opening.id, line.id)}
                   onLaunch={() => launchLine(line, selectedMode)}
@@ -362,6 +408,7 @@ function LineChoice({
   enableDueBadge,
   isFavorite,
   isDue,
+  frequencyPct,
   modeLocked,
   onToggleFavorite,
   onLaunch,
@@ -374,6 +421,7 @@ function LineChoice({
   enableDueBadge: boolean;
   isFavorite: boolean;
   isDue: boolean;
+  frequencyPct?: number;
   modeLocked: boolean;
   onToggleFavorite: () => void;
   onLaunch: () => void;
@@ -404,6 +452,11 @@ function LineChoice({
             {getLineDifferenceSummary(line)}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
+            {frequencyPct != null && (
+              <span className="rounded-full bg-stone-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-stone-300">
+                Met in {frequencyPct}% of games
+              </span>
+            )}
             {isNewlyUnlocked && (
               <span className="rounded-full bg-sky-500/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-300">
                 Newly mastered
@@ -503,4 +556,8 @@ function toOneSentence(text: string) {
   const clean = text.replace(/\s+/g, ' ').trim();
   const match = clean.match(/^.*?[.!?](?:\s|$)/);
   return match ? match[0].trim() : clean;
+}
+
+function normaliseSan(value: string) {
+  return value.replace(/[+#!?]/g, '').trim();
 }

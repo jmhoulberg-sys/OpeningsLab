@@ -4,6 +4,7 @@ import {
   CalendarClock,
   Crown,
   Play,
+  Route,
   Sparkles,
   Trophy,
 } from 'lucide-react';
@@ -111,12 +112,14 @@ interface FeaturedOpeningsSectionProps {
   title?: string;
   description?: string;
   eyebrow?: string;
+  compactCards?: boolean;
   onOpenOpening: (opening: Opening) => void;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }
 
 interface OpeningLibrarySectionProps {
   openings: OpeningSummary[];
+  onOpenFinder: () => void;
   onOpenOpening: (opening: Opening) => void;
   onStartLine: (opening: Opening, line: OpeningLine) => void;
 }
@@ -291,8 +294,8 @@ export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
     <section className="space-y-3">
       <SectionHeading
         eyebrow="Daily quests"
-        title="Today’s training streak"
-        description={isLoggedIn ? 'Clear these to bank XP and keep momentum.' : 'Log in to save daily progress.'}
+        title="Today's training streak"
+        description={isLoggedIn ? 'Complete one line today to keep the streak alive.' : 'Log in to save your streak and daily progress.'}
       />
       <div className="grid gap-3 md:grid-cols-3">
         {quests.map((quest) => {
@@ -353,6 +356,7 @@ export function FeaturedOpeningsSection({
   title = 'Board-first courses',
   description = 'Clean starts, clear line counts, fast entry.',
   eyebrow = 'Featured openings',
+  compactCards = false,
   onStartLine,
 }: FeaturedOpeningsSectionProps) {
   return (
@@ -367,7 +371,7 @@ export function FeaturedOpeningsSection({
           <OpeningCard
             key={summary.opening.id}
             summary={summary}
-            compact={false}
+            compact={compactCards}
             onStartLine={onStartLine}
           />
         ))}
@@ -378,6 +382,7 @@ export function FeaturedOpeningsSection({
 
 export function OpeningLibrarySection({
   openings,
+  onOpenFinder,
   onStartLine,
 }: OpeningLibrarySectionProps) {
   const [activeFilter, setActiveFilter] = useState<OpeningFilter>('all');
@@ -394,6 +399,15 @@ export function OpeningLibrarySection({
         eyebrow="Library"
         title="All openings"
         description="Sorted by your progress, with filters for color and themes."
+        action={(
+          <button
+            onClick={onOpenFinder}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+          >
+            <Route size={17} />
+            Openings explorer
+          </button>
+        )}
       />
       <div className="flex flex-wrap gap-2">
         {OPENING_FILTERS.map((filter) => {
@@ -593,17 +607,22 @@ function compareOpeningProgress(a: OpeningSummary, b: OpeningSummary) {
 function SectionHeading({
   title,
   description,
+  action,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  action?: ReactNode;
 }) {
   return (
-    <div className="max-w-xl">
-      <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-      <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
-        {description}
-      </p>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-xl">
+        <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
+        <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
+          {description}
+        </p>
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

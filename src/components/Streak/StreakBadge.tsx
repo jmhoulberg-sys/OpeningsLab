@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Flame } from 'lucide-react';
+import { Check, Flame } from 'lucide-react';
 import { getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
 
 interface StreakBadgeProps {
@@ -11,6 +11,15 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
   const [open, setOpen] = useState(false);
   const streak = getCurrentStreak(daily);
   const days = getRecentStreakDays(daily);
+  const today = days[days.length - 1];
+  const yesterday = days[days.length - 2];
+  const canKeepStreak = !today?.active && !!yesterday?.active;
+  const mutedFlame = canKeepStreak || streak === 0;
+  const helperText = today?.active
+    ? "Today's line is complete."
+    : canKeepStreak
+      ? 'Complete a line to keep your streak going.'
+      : 'Complete a line to start a streak.';
 
   return (
     <div className="relative">
@@ -22,7 +31,11 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
         title={`${streak} day streak`}
         aria-expanded={open}
       >
-        <Flame size={compact ? 18 : 22} className="text-amber-400" fill="currentColor" />
+        <Flame
+          size={compact ? 18 : 22}
+          className={mutedFlame ? 'text-stone-500' : 'text-amber-400'}
+          fill={mutedFlame ? 'none' : 'currentColor'}
+        />
         <span className="font-black">{streak}</span>
       </button>
 
@@ -34,11 +47,15 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
                 {streak} day streak
               </div>
               <div className="mt-1 text-sm font-semibold text-stone-300">
-                {streak > 0 ? "You've done your line for today!" : 'Complete one line to start.'}
+                {helperText}
               </div>
             </div>
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-300/35 bg-amber-400/12 text-amber-300">
-              <Flame size={31} fill="currentColor" />
+            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${
+              mutedFlame
+                ? 'border-stone-700 bg-stone-800/60 text-stone-500'
+                : 'border-amber-300/35 bg-amber-400/12 text-amber-300'
+            }`}>
+              <Flame size={31} fill={mutedFlame ? 'none' : 'currentColor'} />
             </div>
           </div>
           <div className="mt-4 grid grid-cols-7 gap-1.5 rounded-lg bg-stone-900/85 p-2">
@@ -54,7 +71,7 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
                       : 'bg-stone-700 text-stone-500'
                   }`}
                 >
-                  {day.active ? '✓' : ''}
+                  {day.active ? <Check size={15} strokeWidth={3} /> : ''}
                 </div>
               </div>
             ))}

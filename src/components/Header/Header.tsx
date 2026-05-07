@@ -9,9 +9,11 @@ interface HeaderProps {
   onSettingsClick: () => void;
   onHomeClick: () => void;
   onProfileClick: () => void;
+  titleOverride?: string;
+  subtitleOverride?: string;
 }
 
-export default function Header({ onSettingsClick, onHomeClick, onProfileClick }: HeaderProps) {
+export default function Header({ onSettingsClick, onHomeClick, onProfileClick, titleOverride, subtitleOverride }: HeaderProps) {
   const { opening, selectedLine } = useTrainingStore();
   const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
@@ -19,12 +21,12 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
     ? displayName.trim()
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
-  const headerTitle = opening ? opening.name : 'Board-first opening training';
-  const headerSubtitle = selectedLine
+  const headerTitle = titleOverride ?? (opening ? opening.name : 'Board-first opening training');
+  const headerSubtitle = subtitleOverride ?? (selectedLine
     ? selectedLine.name
     : opening
       ? 'Finish setup, unlock the next line, then practice it your way'
-      : 'Choose a course and start training';
+      : 'Choose a course and start training');
 
   return (
     <header className="border-b border-stone-800/80 bg-stone-950">
