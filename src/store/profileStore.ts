@@ -288,3 +288,10 @@ export const useProfileStore = create<ProfileState>()(
     },
   ),
 );
+
+export function getCurrentProfileKey() {
+  const state = useProfileStore.getState();
+  if (!state.isLoggedIn) return null;
+  const usernameKey = normaliseUsername(state.displayName);
+  return usernameKey || state.profileId;
+}

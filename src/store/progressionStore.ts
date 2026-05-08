@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getCurrentProfileKey } from './profileStore';
 
 const SETUP_XP = 15;
 const NEW_LINE_XP = 25;
@@ -28,6 +29,7 @@ interface ProgressionState {
   setupAwards: string[];
   discoveredLines: string[];
   daily: Record<string, DailyProgress>;
+  dailyByProfile: Record<string, Record<string, DailyProgress>>;
 }
 
 interface ProgressionActions {
@@ -42,6 +44,7 @@ interface PersistedProgressionState {
   setupAwards?: unknown;
   discoveredLines?: unknown;
   daily?: unknown;
+  dailyByProfile?: unknown;
 }
 
 function getTodayKey() {
@@ -85,25 +88,55 @@ function sanitiseDailyRecord(value: unknown): Record<string, DailyProgress> {
   );
 }
 
+function sanitiseProfileDailyRecord(value: unknown): Record<string, Record<string, DailyProgress>> {
+  if (!value || typeof value !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key.trim().length > 0)
+      .map(([key, daily]) => [key, sanitiseDailyRecord(daily)]),
+  );
+}
+
 function sanitiseState(state?: PersistedProgressionState): ProgressionState {
   return {
     xpTotal: asNumber(state?.xpTotal),
     setupAwards: asStringArray(state?.setupAwards),
     discoveredLines: asStringArray(state?.discoveredLines),
     daily: sanitiseDailyRecord(state?.daily),
+    dailyByProfile: sanitiseProfileDailyRecord(state?.dailyByProfile),
   };
 }
 
-function updateDaily(
+function updateAccountDaily(
   state: ProgressionState,
   todayKey: string,
   updater: (daily: DailyProgress) => DailyProgress,
 ) {
-  const current = sanitiseDaily(state.daily[todayKey]);
+  const profileKey = getCurrentProfileKey();
+  if (!profileKey) return sanitiseProfileDailyRecord(state.dailyByProfile);
+
+  const currentProfileDaily = sanitiseDailyRecord(state.dailyByProfile[profileKey]);
+  const current = sanitiseDaily(currentProfileDaily[todayKey]);
   return {
-    ...sanitiseDailyRecord(state.daily),
-    [todayKey]: updater(current),
+    ...sanitiseProfileDailyRecord(state.dailyByProfile),
+    [profileKey]: {
+      ...currentProfileDaily,
+      [todayKey]: updater(current),
+    },
   };
+}
+
+function normaliseProfileKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function getAccountDailyProgress(
+  dailyByProfile: Record<string, Record<string, DailyProgress>>,
+  displayName: string,
+  isLoggedIn: boolean,
+) {
+  if (!isLoggedIn) return {};
+  return sanitiseDailyRecord(dailyByProfile[normaliseProfileKey(displayName)] ?? {});
 }
 
 export function getLevelInfo(xpTotal: number): LevelInfo {
@@ -227,6 +260,7 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
       setupAwards: [],
       discoveredLines: [],
       daily: {},
+      dailyByProfile: {},
 
       awardSetup(openingId) {
         set((state) => {
@@ -236,7 +270,8 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
             xpTotal: state.xpTotal + SETUP_XP,
             setupAwards: [...state.setupAwards, openingId],
             discoveredLines: state.discoveredLines,
-            daily: updateDaily(state, today, (daily) => ({
+            daily: state.daily,
+            dailyByProfile: updateAccountDaily(state, today, (daily) => ({
               ...daily,
               xp: daily.xp + SETUP_XP,
             })),
@@ -255,7 +290,8 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
             xpTotal: state.xpTotal + gainedXp,
             setupAwards: state.setupAwards,
             discoveredLines: isNewLine ? [...state.discoveredLines, lineKey] : state.discoveredLines,
-            daily: updateDaily(state, today, (daily) => ({
+            daily: state.daily,
+            dailyByProfile: updateAccountDaily(state, today, (daily) => ({
               xp: daily.xp + gainedXp,
               sessions: daily.sessions + 1,
               linesCompleted: daily.linesCompleted.includes(lineKey)
@@ -280,7 +316,8 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
             xpTotal: state.xpTotal + gainedXp,
             setupAwards: state.setupAwards,
             discoveredLines: state.discoveredLines,
-            daily: updateDaily(state, today, (daily) => ({
+            daily: state.daily,
+            dailyByProfile: updateAccountDaily(state, today, (daily) => ({
               ...daily,
               xp: daily.xp + gainedXp,
               topResponseWins: daily.topResponseWins + (result === 'win' ? 1 : 0),
@@ -295,6 +332,7 @@ export const useProgressionStore = create<ProgressionState & ProgressionActions>
           setupAwards: [],
           discoveredLines: [],
           daily: {},
+          dailyByProfile: {},
         });
       },
     }),

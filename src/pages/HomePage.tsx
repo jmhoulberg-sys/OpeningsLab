@@ -1,11 +1,12 @@
 import { useRef } from 'react';
-import { LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { Flame, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
 import { useProfileStore } from '../store/profileStore';
 import {
   getLevelInfo,
+  getAccountDailyProgress,
   getQuestProgress,
   getTodayProgress,
   useProgressionStore,
@@ -45,7 +46,7 @@ export default function HomePage({
   const openingProgress = useProgressStore((state) => state.openings);
   const isDue = useProgressStore((state) => state.isDue);
   const xpTotal = useProgressionStore((state) => state.xpTotal);
-  const daily = useProgressionStore((state) => state.daily);
+  const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
   const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
   const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
@@ -53,7 +54,8 @@ export default function HomePage({
     ? displayName.trim()
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
-  const todayProgress = getTodayProgress(daily);
+  const accountDaily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
+  const todayProgress = getTodayProgress(accountDaily);
   const quests = getQuestProgress(todayProgress);
 
   const openingSummaries: OpeningSummary[] = OPENINGS.map((opening) => {
@@ -125,7 +127,20 @@ export default function HomePage({
           <div />
 
           <div className="flex items-center gap-2.5 justify-self-end">
-            <StreakBadge />
+            {isLoggedIn ? (
+              <div className="relative z-[90]">
+                <StreakBadge />
+              </div>
+            ) : (
+              <button
+                onClick={() => openAuthModal('login')}
+                className="hidden h-[68px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-900 px-4 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white sm:flex cursor-pointer"
+                title="Log in to see streak"
+              >
+                <Flame size={18} className="text-stone-500" />
+                Log in to see streak
+              </button>
+            )}
             {isLoggedIn ? (
               <button
                 onClick={onProfileClick}

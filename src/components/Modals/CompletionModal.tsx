@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { Check, Flame, Star } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProgressStore } from '../../store/progressStore';
-import { getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
+import { useProfileStore } from '../../store/profileStore';
+import {
+  getAccountDailyProgress,
+  getCurrentStreak,
+  getRecentStreakDays,
+  useProgressionStore,
+} from '../../store/progressionStore';
 import { isGameOver } from '../../engine/chessEngine';
 import { Chess } from 'chess.js';
 
@@ -24,7 +30,9 @@ export default function CompletionModal() {
   } = useTrainingStore();
 
   const { recordLineAttempt, recordSpacedRepetition, getLineProgress } = useProgressStore();
-  const daily = useProgressionStore((state) => state.daily);
+  const { isLoggedIn, displayName } = useProfileStore();
+  const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
+  const daily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
   const [earnedXp, setEarnedXp] = useState(0);
   const [lineJustUnlocked, setLineJustUnlocked] = useState(false);
   const [showStreakStep, setShowStreakStep] = useState(false);
@@ -33,10 +41,16 @@ export default function CompletionModal() {
     if (phase === 'completed' && opening && selectedLine) {
       stopTimer();
       const recordsProgress = mode === 'learn' || mode === 'step-by-step' || mode === 'full-line';
-      const todayWasEmpty = !getRecentStreakDays(useProgressionStore.getState().daily, 1)[0]?.active;
+      const profileState = useProfileStore.getState();
+      const currentDaily = getAccountDailyProgress(
+        useProgressionStore.getState().dailyByProfile,
+        profileState.displayName,
+        profileState.isLoggedIn,
+      );
+      const todayWasEmpty = !getRecentStreakDays(currentDaily, 1)[0]?.active;
       const lineWasNew = !useProgressStore.getState().getLineProgress(opening.id, selectedLine.id)?.unlocked;
       setLineJustUnlocked(recordsProgress && lineWasNew && mistakes === 0);
-      setShowStreakStep(recordsProgress && todayWasEmpty);
+      setShowStreakStep(recordsProgress && profileState.isLoggedIn && todayWasEmpty);
       setEarnedXp(recordsProgress ? 10 + (lineWasNew ? 25 : 0) + (mistakes === 0 ? 40 : 0) : 0);
       if (recordsProgress) {
         recordLineAttempt(opening.id, selectedLine.id, mistakes);

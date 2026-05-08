@@ -1,14 +1,26 @@
 import { useState } from 'react';
 import { Check, Flame } from 'lucide-react';
-import { getCarriedStreak, getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
+import { useProfileStore } from '../../store/profileStore';
+import {
+  getAccountDailyProgress,
+  getCarriedStreak,
+  getCurrentStreak,
+  getRecentStreakDays,
+  useProgressionStore,
+} from '../../store/progressionStore';
 
 interface StreakBadgeProps {
   compact?: boolean;
 }
 
 export default function StreakBadge({ compact = false }: StreakBadgeProps) {
-  const daily = useProgressionStore((state) => state.daily);
+  const { isLoggedIn, displayName } = useProfileStore();
+  const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
+  const daily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
   const [open, setOpen] = useState(false);
+
+  if (!isLoggedIn) return null;
+
   const streak = getCurrentStreak(daily);
   const carriedStreak = getCarriedStreak(daily);
   const days = getRecentStreakDays(daily);
@@ -42,7 +54,7 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-72 rounded-xl border border-stone-700/70 bg-stone-950 p-4 text-left shadow-xl shadow-black/45">
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[120] w-72 rounded-xl border border-stone-700/70 bg-stone-950 p-4 text-left shadow-xl shadow-black/45">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-xl font-black text-white">

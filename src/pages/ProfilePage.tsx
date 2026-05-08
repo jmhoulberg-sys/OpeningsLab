@@ -20,6 +20,7 @@ import {
 import { useProfileStore } from '../store/profileStore';
 import {
   useProgressionStore,
+  getAccountDailyProgress,
   getLevelInfo,
   getTodayProgress,
   getQuestProgress,
@@ -52,7 +53,7 @@ const RANGE_LABELS: Record<ChartRange, string> = {
 export default function ProfilePage({ onBack }: ProfilePageProps) {
   const { isLoggedIn, displayName, logout, exportData, importData, openAuthModal } =
     useProfileStore();
-  const { xpTotal, daily, setupAwards } = useProgressionStore();
+  const { xpTotal, dailyByProfile, setupAwards } = useProgressionStore();
   const { openings: progressOpenings } = useProgressStore();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('stats');
@@ -64,7 +65,8 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   const [leaderboardScope, setLeaderboardScope] = useState<LeaderboardScope>('all');
 
   const levelInfo = getLevelInfo(xpTotal);
-  const today = getTodayProgress(daily);
+  const accountDaily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
+  const today = getTodayProgress(accountDaily);
   const quests = getQuestProgress(today);
   const accountLabel =
     typeof displayName === 'string' && displayName.trim()
@@ -91,7 +93,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     0,
   );
 
-  const chart = useMemo(() => buildChart(daily, chartRange), [daily, chartRange]);
+  const chart = useMemo(() => buildChart(accountDaily, chartRange), [accountDaily, chartRange]);
   const openingRows = useMemo(() => {
     return OPENINGS.map((op) => {
       const total = op.lines.length;

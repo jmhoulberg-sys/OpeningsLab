@@ -1,4 +1,4 @@
-import { LogIn, Settings, UserCircle2 } from 'lucide-react';
+import { Flame, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import { useTrainingStore } from '../../store/trainingStore';
 import { useProfileStore } from '../../store/profileStore';
 import { getLevelInfo, useProgressionStore } from '../../store/progressionStore';
@@ -29,7 +29,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick, t
       : 'Choose a course and start training');
 
   return (
-    <header className="border-b border-stone-800/80 bg-stone-950">
+    <header className="relative z-[80] border-b border-stone-800/80 bg-stone-950">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         <button
           onClick={onHomeClick}
@@ -54,9 +54,20 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick, t
         </div>
 
         <div className="flex items-center gap-1.5 justify-self-end sm:gap-2.5">
-          <div className="scale-90 sm:scale-100">
-            <StreakBadge />
-          </div>
+          {isLoggedIn ? (
+            <div className="relative z-[90] scale-90 sm:scale-100">
+              <StreakBadge />
+            </div>
+          ) : (
+            <button
+              onClick={() => openAuthModal('login')}
+              className="hidden h-[68px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-900 px-4 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white sm:flex cursor-pointer"
+              title="Log in to see streak"
+            >
+              <Flame size={18} className="text-stone-500" />
+              Log in to see streak
+            </button>
+          )}
           {isLoggedIn ? (
             <button
               onClick={onProfileClick}
