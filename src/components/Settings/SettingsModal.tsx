@@ -262,8 +262,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 const active = pieceStyle === style;
                 const label = {
                   classic: 'Classic',
-                  modern: 'Modern',
-                  'modern-outline': 'Modern outline',
+                  'set-1': '1',
+                  'set-2': '2',
+                  'set-3': '3',
+                  'set-4': '4',
+                  'set-5': '5',
                 }[style];
                 return (
                   <button

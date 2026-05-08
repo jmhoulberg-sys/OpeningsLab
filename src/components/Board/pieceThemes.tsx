@@ -2,53 +2,41 @@ import type { ReactElement } from 'react';
 import type { CustomPieces, Piece } from 'react-chessboard/dist/chessboard/types';
 import type { PieceStyle } from '../../store/settingsStore';
 
-const MODERN_PIECE_DIR = '/pieces/modern';
+const ONLINE_PIECE_SETS: Partial<Record<PieceStyle, string>> = {
+  'set-1': 'chessnut',
+  'set-2': 'fantasy',
+  'set-3': 'spatial',
+  'set-4': 'celtic',
+  'set-5': 'rhosgfx',
+};
 
-function getPieceFilter(isWhite: boolean, withOutline: boolean) {
-  const base = isWhite ? 'invert(1)' : '';
-  if (!withOutline) return base || undefined;
+const PIECES = ['wK', 'wQ', 'wR', 'wB', 'wN', 'wP', 'bK', 'bQ', 'bR', 'bB', 'bN', 'bP'] as Piece[];
 
-  const outlineColor = isWhite ? '#111111' : '#ffffff';
-  const outline = [
-    `drop-shadow(1px 0 0 ${outlineColor})`,
-    `drop-shadow(-1px 0 0 ${outlineColor})`,
-    `drop-shadow(0 1px 0 ${outlineColor})`,
-    `drop-shadow(0 -1px 0 ${outlineColor})`,
-  ].join(' ');
-  return [base, outline].filter(Boolean).join(' ');
-}
-
-function createModernPieces(withOutline: boolean): CustomPieces {
+function createImagePieces(setName: string): CustomPieces {
   return Object.fromEntries(
-  (['wK', 'wQ', 'wR', 'wB', 'wN', 'wP', 'bK', 'bQ', 'bR', 'bB', 'bN', 'bP'] as Piece[]).map((piece) => [
-    piece,
-    ({ squareWidth }: { squareWidth: number }): ReactElement => {
-      const isWhite = piece[0] === 'w';
-
-      return (
+    PIECES.map((piece) => [
+      piece,
+      ({ squareWidth }: { squareWidth: number }): ReactElement => (
         <img
-          src={`${MODERN_PIECE_DIR}/b${piece[1]}.png`}
+          src={`/pieces/online/${setName}/${piece}.svg`}
           alt=""
           draggable={false}
           style={{
             display: 'block',
-            filter: getPieceFilter(isWhite, withOutline),
             height: squareWidth,
             pointerEvents: 'none',
             width: squareWidth,
           }}
         />
-      );
-    },
-  ]),
-) as CustomPieces;
+      ),
+    ]),
+  ) as CustomPieces;
 }
 
-const MODERN_PIECES = createModernPieces(false);
-const MODERN_OUTLINE_PIECES = createModernPieces(true);
+const CUSTOM_PIECES = Object.fromEntries(
+  Object.entries(ONLINE_PIECE_SETS).map(([style, setName]) => [style, createImagePieces(setName)]),
+) as Partial<Record<PieceStyle, CustomPieces>>;
 
 export function getCustomPieces(pieceStyle: PieceStyle): CustomPieces | undefined {
-  if (pieceStyle === 'modern') return MODERN_PIECES;
-  if (pieceStyle === 'modern-outline') return MODERN_OUTLINE_PIECES;
-  return undefined;
+  return CUSTOM_PIECES[pieceStyle];
 }
