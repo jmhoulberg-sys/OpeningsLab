@@ -143,12 +143,12 @@ export default function EvalBar({ fen, height, playerColor = 'white' }: EvalBarP
         style={{ height: height - 20 }}
       >
         <div
-          className="w-full"
+          className="w-full transition-[height] duration-700 ease-out"
           style={{ height: `${topSection.pct}%`, backgroundColor: topSection.color }}
         />
         <div className="w-full h-px bg-stone-500 flex-shrink-0" />
         <div
-          className="w-full"
+          className="w-full transition-[height] duration-700 ease-out"
           style={{ height: `${bottomSection.pct}%`, backgroundColor: bottomSection.color }}
         />
       </div>

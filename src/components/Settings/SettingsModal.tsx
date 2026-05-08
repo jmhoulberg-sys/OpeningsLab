@@ -6,6 +6,7 @@ import {
   DEFAULT_LICHESS_SPEEDS,
   LICHESS_RATING_OPTIONS,
   LICHESS_SPEED_OPTIONS,
+  PIECE_STYLE_OPTIONS,
   useSettingsStore,
 } from '../../store/settingsStore';
 import { useProfileStore } from '../../store/profileStore';
@@ -33,6 +34,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setEnableSRReminders,
     showEvalBar,
     setShowEvalBar,
+    pieceStyle,
+    setPieceStyle,
   } = useSettingsStore();
   const {
     isLoggedIn,
@@ -248,6 +251,31 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <ToggleButton active={showEvalBar} onClick={() => setShowEvalBar(!showEvalBar)}>
               {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
             </ToggleButton>
+          </section>
+
+          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+              Piece Style
+            </label>
+            <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
+              {PIECE_STYLE_OPTIONS.map((style) => {
+                const active = pieceStyle === style;
+                const label = style === 'classic' ? 'Classic' : 'Modern';
+                return (
+                  <button
+                    key={style}
+                    onClick={() => setPieceStyle(style)}
+                    className={`flex-1 py-2 text-sm font-semibold transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-sky-500 text-slate-950'
+                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">

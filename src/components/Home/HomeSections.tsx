@@ -11,6 +11,8 @@ import {
 import { Chessboard } from 'react-chessboard';
 import type { Opening, OpeningLine } from '../../types';
 import { fenAfterMoves } from '../../engine/chessEngine';
+import { useSettingsStore } from '../../store/settingsStore';
+import { getCustomPieces } from '../Board/pieceThemes';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -292,11 +294,7 @@ export function TodayPanel({ today, onContinue, onReview, onStartNew }: TodayPan
 export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
   return (
     <section className="space-y-3">
-      <SectionHeading
-        eyebrow="Daily quests"
-        title="Today's training streak"
-        description={isLoggedIn ? 'Complete one line today to keep the streak alive.' : 'Log in to save your streak and daily progress.'}
-      />
+      <SectionHeading eyebrow="Daily quests" title="Today's training session" />
       <div className="grid gap-3 md:grid-cols-3">
         {quests.map((quest) => {
           const pct = Math.round((quest.progress / quest.target) * 100);
@@ -337,13 +335,15 @@ export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="rounded-[18px] bg-stone-800/55 p-4"
+            className="flex min-h-[108px] items-center gap-4 rounded-[18px] bg-stone-800/55 p-4"
           >
-            <div className="mb-2 text-2xl font-extrabold text-stone-300">
+            <div className="shrink-0 text-5xl font-extrabold leading-none text-sky-400">
               {index + 1}
             </div>
-            <h3 className="text-sm font-semibold text-white">{step.label}</h3>
-            <p className="mt-1 text-sm text-stone-400">{step.description}</p>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-white">{step.label}</h3>
+              <p className="mt-1 text-sm text-stone-400">{step.description}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -611,16 +611,18 @@ function SectionHeading({
 }: {
   eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-xl">
         <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-        <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
-          {description}
-        </p>
+        {description && (
+          <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
+            {description}
+          </p>
+        )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -638,6 +640,8 @@ function BoardPreview({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(240);
+  const pieceStyle = useSettingsStore((state) => state.pieceStyle);
+  const customPieces = getCustomPieces(pieceStyle);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -671,6 +675,7 @@ function BoardPreview({
         }}
         customDarkSquareStyle={{ backgroundColor: WOOD_DARK }}
         customLightSquareStyle={{ backgroundColor: WOOD_LIGHT }}
+        customPieces={customPieces}
         animationDuration={0}
       />
       {isClickable && (

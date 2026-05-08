@@ -7,6 +7,7 @@ import { useTrainingStore } from '../../store/trainingStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { isStudentMove } from '../../engine/chessEngine';
 import EvalBar from './EvalBar';
+import { getCustomPieces } from './pieceThemes';
 
 const ANSWER_ARROW_COLOR = 'rgba(0, 222, 136, 1)';
 const SELECTED_HIGHLIGHT = '#a9c7e2';
@@ -101,7 +102,8 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
     hintSquare,
     previewUciMove,
   } = useTrainingStore();
-  const { showEvalBar } = useSettingsStore();
+  const { showEvalBar, pieceStyle } = useSettingsStore();
+  const customPieces = getCustomPieces(pieceStyle);
 
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [boardFlashing, setBoardFlashing] = useState(false);
@@ -404,6 +406,7 @@ export default function ChessBoardPanel({ boardSize = 520 }: { boardSize?: numbe
               arePiecesDraggable={isDraggable}
               customSquareStyles={customSquareStyles}
               customArrows={customArrows}
+              customPieces={customPieces}
               boardWidth={boardSize}
               customBoardStyle={{
                 borderRadius: '18px',

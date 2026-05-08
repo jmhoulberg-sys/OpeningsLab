@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Flame } from 'lucide-react';
-import { getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
+import { getCarriedStreak, getCurrentStreak, getRecentStreakDays, useProgressionStore } from '../../store/progressionStore';
 
 interface StreakBadgeProps {
   compact?: boolean;
@@ -10,11 +10,13 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
   const daily = useProgressionStore((state) => state.daily);
   const [open, setOpen] = useState(false);
   const streak = getCurrentStreak(daily);
+  const carriedStreak = getCarriedStreak(daily);
   const days = getRecentStreakDays(daily);
   const today = days[days.length - 1];
   const yesterday = days[days.length - 2];
   const canKeepStreak = !today?.active && !!yesterday?.active;
-  const mutedFlame = canKeepStreak || streak === 0;
+  const displayStreak = today?.active ? streak : carriedStreak;
+  const mutedFlame = !today?.active || displayStreak === 0;
   const helperText = today?.active
     ? "Today's line is complete."
     : canKeepStreak
@@ -28,7 +30,7 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
         className={`inline-flex items-center justify-center gap-1.5 rounded-2xl border border-stone-700/45 bg-stone-900 text-white transition-colors hover:bg-stone-800 cursor-pointer ${
           compact ? 'h-10 px-3 text-base' : 'h-[68px] px-4 text-lg'
         }`}
-        title={`${streak} day streak`}
+        title={`${displayStreak} day streak`}
         aria-expanded={open}
       >
         <Flame
@@ -36,7 +38,7 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
           className={mutedFlame ? 'text-stone-500' : 'text-amber-400'}
           fill={mutedFlame ? 'none' : 'currentColor'}
         />
-        <span className="font-black">{streak}</span>
+        <span className={`font-black ${mutedFlame ? 'text-stone-400' : 'text-white'}`}>{displayStreak}</span>
       </button>
 
       {open && (
@@ -44,7 +46,7 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-xl font-black text-white">
-                {streak} day streak
+                {displayStreak} day streak
               </div>
               <div className="mt-1 text-sm font-semibold text-stone-300">
                 {helperText}

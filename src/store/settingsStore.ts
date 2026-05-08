@@ -5,6 +5,9 @@ export const LICHESS_SPEED_OPTIONS = ['bullet', 'blitz', 'rapid', 'classical', '
 export const LICHESS_RATING_OPTIONS = [1600, 1800, 2000, 2200, 2500] as const;
 export const DEFAULT_LICHESS_SPEEDS = ['blitz', 'rapid', 'classical'] as const;
 export const DEFAULT_LICHESS_RATINGS = [1600, 1800, 2000, 2200, 2500] as const;
+export const PIECE_STYLE_OPTIONS = ['classic', 'modern'] as const;
+
+export type PieceStyle = (typeof PIECE_STYLE_OPTIONS)[number];
 
 interface SettingsState {
   restartFrom: 'start' | 'setup';
@@ -14,6 +17,7 @@ interface SettingsState {
   lichessVariant: 'standard';
   enableSRReminders: boolean;
   showEvalBar: boolean;
+  pieceStyle: PieceStyle;
 }
 
 interface SettingsActions {
@@ -23,6 +27,7 @@ interface SettingsActions {
   toggleLichessRating(v: (typeof LICHESS_RATING_OPTIONS)[number]): void;
   setEnableSRReminders(v: boolean): void;
   setShowEvalBar(v: boolean): void;
+  setPieceStyle(v: PieceStyle): void;
 }
 
 interface PersistedSettingsState {
@@ -33,6 +38,7 @@ interface PersistedSettingsState {
   lichessVariant?: unknown;
   enableSRReminders?: unknown;
   showEvalBar?: unknown;
+  pieceStyle?: unknown;
 }
 
 function asNumber(value: unknown, fallback: number) {
@@ -66,6 +72,7 @@ function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
     lichessVariant: state?.lichessVariant === 'standard' ? 'standard' : 'standard',
     enableSRReminders: asBoolean(state?.enableSRReminders, true),
     showEvalBar: asBoolean(state?.showEvalBar, true),
+    pieceStyle: state?.pieceStyle === 'modern' ? 'modern' : 'classic',
   };
 }
 
@@ -79,6 +86,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       lichessVariant: 'standard',
       enableSRReminders: true,
       showEvalBar: true,
+      pieceStyle: 'classic',
       setRestartFrom: (v) => set({ restartFrom: v }),
       setLichessTopMoves: (v) => set({ lichessTopMoves: Math.max(1, Math.min(10, Math.floor(v))) }),
       toggleLichessSpeed: (value) => set((state) => {
@@ -101,6 +109,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       }),
       setEnableSRReminders: (v) => set({ enableSRReminders: v }),
       setShowEvalBar: (v) => set({ showEvalBar: v }),
+      setPieceStyle: (v) => set({ pieceStyle: v }),
     }),
     {
       name: 'openingslab-settings-v1',

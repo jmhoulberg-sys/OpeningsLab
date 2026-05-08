@@ -159,6 +159,26 @@ export function getCurrentStreak(daily: Record<string, DailyProgress>) {
   return streak;
 }
 
+export function getCarriedStreak(daily: Record<string, DailyProgress>) {
+  const safeDaily = sanitiseDailyRecord(daily);
+  const today = new Date();
+
+  if (hasDailyTraining(safeDaily[toDateKey(today)])) {
+    return getCurrentStreak(safeDaily);
+  }
+
+  const cursor = new Date(today);
+  cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+
+  while (hasDailyTraining(safeDaily[toDateKey(cursor)])) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
 export function getRecentStreakDays(daily: Record<string, DailyProgress>, count = 7) {
   const safeDaily = sanitiseDailyRecord(daily);
   const today = new Date();

@@ -167,6 +167,9 @@ export default function HomePage({
       </div>
 
       <div className="mx-auto w-full max-w-[1500px]">
+        {isLoggedIn && (
+          <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
+        )}
 
         {!isLoggedIn ? (
           <>
@@ -215,12 +218,6 @@ export default function HomePage({
               onOpenOpening={onSelectOpening}
               onStartLine={onStartOpeningLine}
             />
-          </div>
-        )}
-
-        {isLoggedIn && (
-          <div className="mt-8">
-            <QuestStrip isLoggedIn={isLoggedIn} quests={quests} />
           </div>
         )}
 
