@@ -5,7 +5,10 @@ import type { PieceStyle } from '../../store/settingsStore';
 const MODERN_PIECE_SHEET = '/pieces/modern-pieces.png';
 const PIECE_ORDER = ['K', 'Q', 'B', 'N', 'R', 'P'] as const;
 const PIECE_INDEX = Object.fromEntries(PIECE_ORDER.map((piece, index) => [piece, index])) as Record<string, number>;
-const PIECE_SCALE = 0.78;
+const SHEET_WIDTH = 822;
+const SHEET_HEIGHT = 304;
+const CELL_WIDTH = SHEET_WIDTH / PIECE_ORDER.length;
+const PIECE_HEIGHT_SCALE = 0.62;
 
 function getPieceFilter(isWhite: boolean, withOutline: boolean) {
   const base = isWhite ? 'invert(1)' : '';
@@ -28,7 +31,11 @@ function createModernPieces(withOutline: boolean): CustomPieces {
     ({ squareWidth }: { squareWidth: number }): ReactElement => {
       const isWhite = piece[0] === 'w';
       const spriteIndex = PIECE_INDEX[piece[1]];
-      const pieceSize = squareWidth * PIECE_SCALE;
+      const spriteScale = (squareWidth * PIECE_HEIGHT_SCALE) / SHEET_HEIGHT;
+      const viewportWidth = CELL_WIDTH * spriteScale;
+      const viewportHeight = SHEET_HEIGHT * spriteScale;
+      const backgroundWidth = SHEET_WIDTH * spriteScale;
+      const backgroundHeight = SHEET_HEIGHT * spriteScale;
 
       return (
         <div
@@ -45,12 +52,12 @@ function createModernPieces(withOutline: boolean): CustomPieces {
           <div
             style={{
               backgroundImage: `url(${MODERN_PIECE_SHEET})`,
-              backgroundPosition: `${spriteIndex * 20}% 50%`,
+              backgroundPosition: `${-spriteIndex * viewportWidth}px 0`,
               backgroundRepeat: 'no-repeat',
-              backgroundSize: '600% auto',
+              backgroundSize: `${backgroundWidth}px ${backgroundHeight}px`,
               filter: getPieceFilter(isWhite, withOutline),
-              height: pieceSize,
-              width: pieceSize,
+              height: viewportHeight,
+              width: viewportWidth,
             }}
           />
         </div>
