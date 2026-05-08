@@ -5,33 +5,66 @@ import type { PieceStyle } from '../../store/settingsStore';
 const MODERN_PIECE_SHEET = '/pieces/modern-pieces.png';
 const PIECE_ORDER = ['K', 'Q', 'B', 'N', 'R', 'P'] as const;
 const PIECE_INDEX = Object.fromEntries(PIECE_ORDER.map((piece, index) => [piece, index])) as Record<string, number>;
+const PIECE_SCALE = 0.78;
 
-const MODERN_PIECES: CustomPieces = Object.fromEntries(
+function getPieceFilter(isWhite: boolean, withOutline: boolean) {
+  const base = isWhite ? 'invert(1)' : '';
+  if (!withOutline) return base || undefined;
+
+  const outlineColor = isWhite ? '#111111' : '#ffffff';
+  const outline = [
+    `drop-shadow(1px 0 0 ${outlineColor})`,
+    `drop-shadow(-1px 0 0 ${outlineColor})`,
+    `drop-shadow(0 1px 0 ${outlineColor})`,
+    `drop-shadow(0 -1px 0 ${outlineColor})`,
+  ].join(' ');
+  return [base, outline].filter(Boolean).join(' ');
+}
+
+function createModernPieces(withOutline: boolean): CustomPieces {
+  return Object.fromEntries(
   (['wK', 'wQ', 'wR', 'wB', 'wN', 'wP', 'bK', 'bQ', 'bR', 'bB', 'bN', 'bP'] as Piece[]).map((piece) => [
     piece,
     ({ squareWidth }: { squareWidth: number }): ReactElement => {
       const isWhite = piece[0] === 'w';
       const spriteIndex = PIECE_INDEX[piece[1]];
+      const pieceSize = squareWidth * PIECE_SCALE;
 
       return (
         <div
           aria-hidden="true"
           style={{
-            backgroundImage: `url(${MODERN_PIECE_SHEET})`,
-            backgroundPosition: `${spriteIndex * 20}% 50%`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '600% auto',
-            filter: isWhite ? 'invert(1)' : undefined,
+            alignItems: 'center',
+            display: 'flex',
             height: squareWidth,
             pointerEvents: 'none',
+            justifyContent: 'center',
             width: squareWidth,
           }}
-        />
+        >
+          <div
+            style={{
+              backgroundImage: `url(${MODERN_PIECE_SHEET})`,
+              backgroundPosition: `${spriteIndex * 20}% 50%`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '600% auto',
+              filter: getPieceFilter(isWhite, withOutline),
+              height: pieceSize,
+              width: pieceSize,
+            }}
+          />
+        </div>
       );
     },
   ]),
 ) as CustomPieces;
+}
+
+const MODERN_PIECES = createModernPieces(false);
+const MODERN_OUTLINE_PIECES = createModernPieces(true);
 
 export function getCustomPieces(pieceStyle: PieceStyle): CustomPieces | undefined {
-  return pieceStyle === 'modern' ? MODERN_PIECES : undefined;
+  if (pieceStyle === 'modern') return MODERN_PIECES;
+  if (pieceStyle === 'modern-outline') return MODERN_OUTLINE_PIECES;
+  return undefined;
 }

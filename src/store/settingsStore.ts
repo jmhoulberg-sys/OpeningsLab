@@ -5,7 +5,7 @@ export const LICHESS_SPEED_OPTIONS = ['bullet', 'blitz', 'rapid', 'classical', '
 export const LICHESS_RATING_OPTIONS = [1600, 1800, 2000, 2200, 2500] as const;
 export const DEFAULT_LICHESS_SPEEDS = ['blitz', 'rapid', 'classical'] as const;
 export const DEFAULT_LICHESS_RATINGS = [1600, 1800, 2000, 2200, 2500] as const;
-export const PIECE_STYLE_OPTIONS = ['classic', 'modern'] as const;
+export const PIECE_STYLE_OPTIONS = ['classic', 'modern', 'modern-outline'] as const;
 
 export type PieceStyle = (typeof PIECE_STYLE_OPTIONS)[number];
 
@@ -72,7 +72,9 @@ function sanitiseSettingsState(state?: PersistedSettingsState): SettingsState {
     lichessVariant: state?.lichessVariant === 'standard' ? 'standard' : 'standard',
     enableSRReminders: asBoolean(state?.enableSRReminders, true),
     showEvalBar: asBoolean(state?.showEvalBar, true),
-    pieceStyle: state?.pieceStyle === 'modern' ? 'modern' : 'classic',
+    pieceStyle: state?.pieceStyle === 'modern' || state?.pieceStyle === 'modern-outline'
+      ? state.pieceStyle
+      : 'classic',
   };
 }
 

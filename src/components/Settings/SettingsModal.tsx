@@ -260,7 +260,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
               {PIECE_STYLE_OPTIONS.map((style) => {
                 const active = pieceStyle === style;
-                const label = style === 'classic' ? 'Classic' : 'Modern';
+                const label = {
+                  classic: 'Classic',
+                  modern: 'Modern',
+                  'modern-outline': 'Modern outline',
+                }[style];
                 return (
                   <button
                     key={style}
