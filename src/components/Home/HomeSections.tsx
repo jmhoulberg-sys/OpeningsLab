@@ -2,17 +2,21 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowRight,
   CalendarClock,
+  Check,
   Crown,
+  Filter,
   Play,
   Route,
   Sparkles,
   Trophy,
+  X,
 } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Opening, OpeningLine } from '../../types';
 import { fenAfterMoves } from '../../engine/chessEngine';
 import { useSettingsStore } from '../../store/settingsStore';
 import { getCustomPieces } from '../Board/pieceThemes';
+import { TwoPawnsLogo, type LogoVariant } from '../Brand/BrandMark';
 
 const WOOD_LIGHT = '#e6d0a9';
 const WOOD_DARK = '#9b6a3c';
@@ -127,13 +131,19 @@ interface OpeningLibrarySectionProps {
 }
 
 type OpeningFilter = 'all' | 'white' | 'black' | 'gambits' | 'refutations';
+type OpeningSort = 'progress' | 'az' | 'lines';
 
-const OPENING_FILTERS: Array<{ id: OpeningFilter; label: string }> = [
-  { id: 'all', label: 'All' },
+const OPENING_FILTERS: Array<{ id: Exclude<OpeningFilter, 'all'>; label: string }> = [
   { id: 'white', label: 'White' },
   { id: 'black', label: 'Black' },
   { id: 'gambits', label: 'Gambits' },
   { id: 'refutations', label: 'Refutations' },
+];
+
+const OPENING_SORTS: Array<{ id: OpeningSort; label: string }> = [
+  { id: 'progress', label: 'Progress' },
+  { id: 'az', label: 'A-Z' },
+  { id: 'lines', label: 'Line count' },
 ];
 
 export function HeroSection({
@@ -330,12 +340,12 @@ export function QuestStrip({ isLoggedIn, quests }: QuestStripProps) {
 
 export function HowItWorksStrip({ steps }: HowItWorksStripProps) {
   return (
-    <section className="rounded-[24px] bg-stone-900/45 p-3 sm:p-4">
+    <section className="rounded-xl bg-stone-800/45 p-2.5 sm:p-3">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="flex min-h-[108px] items-center gap-4 rounded-[18px] bg-stone-800/55 p-4"
+            className="flex min-h-[92px] items-center gap-4 rounded-xl bg-stone-900/45 p-4"
           >
             <div className="shrink-0 text-5xl font-extrabold leading-none text-sky-400">
               {index + 1}
@@ -385,57 +395,176 @@ export function OpeningLibrarySection({
   onOpenFinder,
   onStartLine,
 }: OpeningLibrarySectionProps) {
-  const [activeFilter, setActiveFilter] = useState<OpeningFilter>('all');
-  const rankedOpenings = [...openings].sort((a, b) => {
-    const aMatch = openingMatchesFilter(a.opening, activeFilter);
-    const bMatch = openingMatchesFilter(b.opening, activeFilter);
-    if (aMatch !== bMatch) return aMatch ? -1 : 1;
-    return compareOpeningProgress(a, b);
-  });
+  const [activeFilters, setActiveFilters] = useState<Array<Exclude<OpeningFilter, 'all'>>>([]);
+  const [sortMode, setSortMode] = useState<OpeningSort>('progress');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const rankedOpenings = [...openings]
+    .filter((summary) => openingMatchesFilters(summary.opening, activeFilters))
+    .sort((a, b) => compareOpenings(a, b, sortMode));
 
   return (
     <section className="space-y-3" id="opening-library">
       <SectionHeading
         eyebrow="Library"
         title="All openings"
-        description="Sorted by your progress, with filters for color and themes."
+        description={activeFilters.length > 0 ? `${rankedOpenings.length} openings match your filters.` : 'Sorted by your progress.'}
         action={(
-          <button
-            onClick={onOpenFinder}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
-          >
-            <Route size={17} />
-            Openings explorer
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={() => setFilterOpen((value) => !value)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm font-semibold text-stone-100 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+              >
+                <Filter size={16} />
+                Filters
+                {activeFilters.length > 0 && (
+                  <span className="rounded-full bg-sky-400 px-1.5 py-0.5 text-[10px] font-black text-slate-950">
+                    {activeFilters.length}
+                  </span>
+                )}
+              </button>
+              {filterOpen && (
+                <div className="absolute right-0 top-12 z-30 w-72 rounded-xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+                  <div className="flex items-center justify-between px-2 py-1.5">
+                    <div className="text-xs font-black uppercase tracking-[0.18em] text-stone-500">Filters</div>
+                    <button
+                      onClick={() => setFilterOpen(false)}
+                      className="rounded-lg p-1 text-stone-500 hover:bg-stone-800 hover:text-white"
+                      aria-label="Close filters"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {OPENING_FILTERS.map((filter) => {
+                      const active = activeFilters.includes(filter.id);
+                      return (
+                        <button
+                          key={filter.id}
+                          onClick={() => {
+                            setActiveFilters((current) =>
+                              current.includes(filter.id)
+                                ? current.filter((id) => id !== filter.id)
+                                : [...current, filter.id],
+                            );
+                          }}
+                          className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-800 cursor-pointer"
+                        >
+                          {filter.label}
+                          <span className={`flex h-5 w-5 items-center justify-center rounded border ${active ? 'border-sky-300 bg-sky-400 text-slate-950' : 'border-stone-600 text-transparent'}`}>
+                            <Check size={13} />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="my-2 h-px bg-stone-800" />
+                  <div className="px-2 py-1 text-xs font-black uppercase tracking-[0.18em] text-stone-500">Sort</div>
+                  <div className="space-y-1">
+                    {OPENING_SORTS.map((sort) => (
+                      <button
+                        key={sort.id}
+                        onClick={() => setSortMode(sort.id)}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm font-semibold transition-colors cursor-pointer ${
+                          sortMode === sort.id ? 'bg-sky-400 text-slate-950' : 'text-stone-200 hover:bg-stone-800'
+                        }`}
+                      >
+                        {sort.label}
+                        {sortMode === sort.id && <Check size={14} />}
+                      </button>
+                    ))}
+                  </div>
+                  {(activeFilters.length > 0 || sortMode !== 'progress') && (
+                    <button
+                      onClick={() => {
+                        setActiveFilters([]);
+                        setSortMode('progress');
+                      }}
+                      className="mt-2 w-full rounded-lg border border-stone-700/60 px-3 py-2 text-sm font-semibold text-stone-300 hover:bg-stone-800 hover:text-white"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onOpenFinder}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            >
+              <Route size={16} />
+              Explorer
+            </button>
+          </div>
         )}
       />
-      <div className="flex flex-wrap gap-2">
-        {OPENING_FILTERS.map((filter) => {
-          const active = activeFilter === filter.id;
-          return (
-            <button
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id)}
-              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                active
-                  ? 'border-stone-300/45 bg-stone-200 text-stone-950'
-                  : 'border-stone-700/45 bg-stone-900 text-stone-300 hover:bg-stone-800 hover:text-white'
-              }`}
-            >
-              {filter.label}
-            </button>
-          );
-        })}
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeFilters.map((filterId) => {
+            const label = OPENING_FILTERS.find((filter) => filter.id === filterId)?.label ?? filterId;
+            return (
+              <button
+                key={filterId}
+                onClick={() => setActiveFilters((current) => current.filter((id) => id !== filterId))}
+                className="inline-flex items-center gap-1.5 rounded-full bg-stone-800 px-2.5 py-1 text-xs font-semibold text-stone-200 hover:bg-stone-700"
+              >
+                {label}
+                <X size={12} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {rankedOpenings.map((summary) => (
           <OpeningCard
             key={summary.opening.id}
             summary={summary}
             compact
-            muted={activeFilter !== 'all' && !openingMatchesFilter(summary.opening, activeFilter)}
             onStartLine={onStartLine}
           />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function LogoOptionsSection() {
+  const options: Array<{ id: LogoVariant; label: string; description: string }> = [
+    { id: 'side-by-side', label: 'Side-by-side pawns', description: 'Simple pair, strongest small-size read.' },
+    { id: 'light-dark', label: 'White + black pawns', description: 'Clear chess signal with color contrast.' },
+    { id: 'diagonal-2', label: 'Diagonal 2', description: 'Offset pieces hint at the number 2.' },
+    { id: 'boxed-pair', label: 'Boxed pair', description: 'Best match for the current app header.' },
+    { id: 'wordmark', label: 'Text-first mark', description: 'Small icon supports the 2pawns name.' },
+    { id: 'minimal', label: 'Minimal icon', description: 'Clean favicon or compact app icon.' },
+  ];
+
+  return (
+    <section className="space-y-3">
+      <SectionHeading
+        eyebrow="Brand"
+        title="2pawns logo options"
+        description="Six directions using the same two-pawn idea."
+      />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {options.map((option) => (
+          <div key={option.id} className="rounded-xl border border-stone-800/60 bg-stone-900/55 p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-stone-800/70">
+                <TwoPawnsLogo variant={option.id} size={44} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-black text-white">
+                  {option.id === 'wordmark' ? (
+                    <span>2<span className="text-sky-300">pawns</span></span>
+                  ) : (
+                    option.label
+                  )}
+                </div>
+                <div className="mt-1 text-sm leading-snug text-stone-400">{option.description}</div>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </section>
@@ -534,7 +663,7 @@ function OpeningCard({
       onClick={() => {
         if (firstLine) onStartLine(opening, firstLine);
       }}
-      className={`group flex h-full flex-col rounded-[24px] border border-stone-800/55 bg-stone-900/60 p-3 transition-colors duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-700/55' : ''}`}
+      className={`group flex h-full flex-col rounded-xl border border-stone-800/55 bg-stone-900/62 p-2.5 transition-colors duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-800/85' : ''}`}
       aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -547,27 +676,27 @@ function OpeningCard({
       }}
     >
       <div
-        className={`overflow-hidden rounded-[20px] text-left ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer'}`}
+        className={`overflow-hidden rounded-lg text-left ${isComingSoon ? 'cursor-default opacity-85' : 'cursor-pointer'}`}
       >
         <BoardPreview opening={opening} fen={setupFen} isClickable={isClickable} />
       </div>
 
-      <div className={`mt-3 grid items-start gap-2 ${compact ? '' : ''}`} style={{ gridTemplateColumns: '1fr auto' }}>
+      <div className="mt-3 grid items-start gap-2" style={{ gridTemplateColumns: '1fr auto' }}>
         <div className={`min-w-0 ${cardTitleHeight}`}>
-          <h3 className="line-clamp-2 text-[1.55rem] font-bold leading-[1.02] text-white md:text-[1.7rem]">
+          <h3 className="line-clamp-2 text-xl font-bold leading-tight text-white md:text-[1.35rem]">
             {opening.name}
           </h3>
-          <div className="mt-2 text-sm text-stone-400">{isComingSoon ? 'Coming soon' : `${totalLines} lines`}</div>
+          <div className="mt-1 text-sm text-stone-400">{isComingSoon ? 'Coming soon' : `${totalLines} lines`}</div>
         </div>
-        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isMastered ? 'bg-emerald-500/12 text-emerald-300' : 'bg-stone-800 text-stone-200'}`}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${isMastered ? 'bg-emerald-500/12 text-emerald-300' : 'bg-stone-800 text-stone-200'}`}>
           {isMastered && <Trophy size={12} />}
           {statusLabel}
         </span>
       </div>
 
-      <div className="mt-2 h-2 rounded-full bg-stone-800">
+      <div className="mt-1.5 h-1.5 rounded-full bg-stone-800">
         <div
-          className="h-2 rounded-full bg-emerald-400 transition-all duration-500"
+          className="h-1.5 rounded-full bg-emerald-400 transition-all duration-500"
           style={{ width: `${masteryPct}%` }}
         />
       </div>
@@ -597,7 +726,17 @@ function openingMatchesFilter(opening: Opening, filter: OpeningFilter) {
   return true;
 }
 
-function compareOpeningProgress(a: OpeningSummary, b: OpeningSummary) {
+function openingMatchesFilters(opening: Opening, filters: Array<Exclude<OpeningFilter, 'all'>>) {
+  if (filters.length === 0) return true;
+  return filters.every((filter) => openingMatchesFilter(opening, filter));
+}
+
+function compareOpenings(a: OpeningSummary, b: OpeningSummary, sort: OpeningSort) {
+  if (sort === 'az') return a.opening.name.localeCompare(b.opening.name);
+  if (sort === 'lines') {
+    if (b.totalLines !== a.totalLines) return b.totalLines - a.totalLines;
+    return a.opening.name.localeCompare(b.opening.name);
+  }
   if (b.masteryPct !== a.masteryPct) return b.masteryPct - a.masteryPct;
   if (b.completedLines !== a.completedLines) return b.completedLines - a.completedLines;
   if (b.totalLines !== a.totalLines) return b.totalLines - a.totalLines;
@@ -661,7 +800,7 @@ function BoardPreview({
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-square w-full overflow-hidden rounded-[20px] ${isClickable ? 'cursor-pointer ring-1 ring-transparent transition-colors duration-200 group-hover:ring-sky-400/35 board-preview-clickable' : ''}`}
+      className={`relative aspect-square w-full overflow-hidden rounded-lg ${isClickable ? 'cursor-pointer ring-1 ring-transparent transition-colors duration-200 group-hover:ring-sky-400/35 board-preview-clickable' : ''}`}
     >
       <Chessboard
         position={fen}
@@ -669,7 +808,7 @@ function BoardPreview({
         boardOrientation={opening.playerColor}
         arePiecesDraggable={false}
         customBoardStyle={{
-          borderRadius: '20px',
+          borderRadius: '8px',
           backgroundColor: 'transparent',
           boxShadow: 'none',
         }}
@@ -681,7 +820,7 @@ function BoardPreview({
       {isClickable && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-white/10 via-white/5 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-          <div className="pointer-events-none absolute inset-0 rounded-[20px] border border-sky-300/0 transition-colors duration-200 group-hover:border-sky-300/25" />
+          <div className="pointer-events-none absolute inset-0 rounded-lg border border-sky-300/0 transition-colors duration-200 group-hover:border-sky-300/25" />
         </>
       )}
     </div>

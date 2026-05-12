@@ -9,6 +9,7 @@ import {
   Lock,
   RotateCcw,
   Route,
+  Settings,
   Sparkles,
   Target,
 } from 'lucide-react';
@@ -21,7 +22,6 @@ import CompletionModal from './components/Modals/CompletionModal';
 import FreePlayEndModal from './components/Modals/FreePlayEndModal';
 import TrainingSetupModal from './components/Modals/TrainingSetupModal';
 import SettingsModal from './components/Settings/SettingsModal';
-import TimerDisplay from './components/Timer/TimerDisplay';
 import OpeningFinder from './components/Finder/OpeningFinder';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -255,33 +255,25 @@ export default function App() {
       />
 
       <main ref={mainRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <div className={`mx-auto grid h-full w-full max-w-[1720px] gap-3 p-2 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[360px_minmax(0,1fr)_390px]'}`}>
-          {!isSmallScreen && opening && (
-            <section className="min-h-0 overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
-              <TrainingLeftPanel
-                opening={opening}
-                mode={mode}
-                isLineUnlocked={isLineUnlocked}
-                onHomeClick={handleGoHome}
-              />
-            </section>
-          )}
-
+        <div className={`mx-auto grid h-full w-full max-w-[1720px] gap-3 p-2 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_400px]'}`}>
           <section
             ref={boardContainerRef}
-            className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-[22px] bg-stone-950/35 p-1"
+            className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-xl bg-stone-900/30 p-1"
           >
             <ChessBoardPanel boardSize={boardSize} />
           </section>
 
           {!isSmallScreen && opening && (
-            <section className="min-h-0 overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/86 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+            <section className="min-h-0 overflow-hidden rounded-xl border border-stone-800/65 bg-stone-900/85 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
               <TrainingRightPanel
                 opening={opening}
+                mode={mode}
                 postLine={postLine}
                 postLineError={postLineError}
                 postLineOutOfBook={postLineOutOfBook}
                 isLineUnlocked={isLineUnlocked}
+                onHomeClick={handleGoHome}
+                onSettingsClick={() => setShowSettings(true)}
               />
             </section>
           )}
@@ -326,6 +318,7 @@ export default function App() {
                 postLineOutOfBook={postLineOutOfBook}
                 isLineUnlocked={isLineUnlocked}
                 onHomeClick={handleGoHome}
+                onSettingsClick={() => setShowSettings(true)}
               />
             </div>
           </aside>
@@ -348,6 +341,7 @@ function TrainingPanelContent({
   postLineOutOfBook,
   isLineUnlocked,
   onHomeClick,
+  onSettingsClick,
 }: {
   opening: Opening;
   mode: string;
@@ -356,73 +350,62 @@ function TrainingPanelContent({
   postLineOutOfBook: boolean;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
   onHomeClick: () => void;
+  onSettingsClick: () => void;
 }) {
   return (
-      <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
-      <TrainingLeftPanel
+    <div className="h-full">
+      <TrainingRightPanel
         opening={opening}
         mode={mode}
+        postLine={postLine}
+        postLineError={postLineError}
+        postLineOutOfBook={postLineOutOfBook}
         isLineUnlocked={isLineUnlocked}
         onHomeClick={onHomeClick}
+        onSettingsClick={onSettingsClick}
       />
-      <div className="mt-3">
-        <TrainingRightPanel
-          opening={opening}
-          postLine={postLine}
-          postLineError={postLineError}
-          postLineOutOfBook={postLineOutOfBook}
-          isLineUnlocked={isLineUnlocked}
-        />
-      </div>
-    </div>
-  );
-}
-
-function TrainingLeftPanel({
-  opening,
-  mode,
-  isLineUnlocked,
-  onHomeClick,
-}: {
-  opening: Opening;
-  mode: string;
-  isLineUnlocked: (openingId: string, lineId: string) => boolean;
-  onHomeClick: () => void;
-}) {
-  return (
-    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
-      <CoachCard />
-      {mode === 'time-trial' && (
-        <div className="mt-3">
-          <TimerDisplay />
-        </div>
-      )}
-      <div className="mt-auto space-y-3 pt-3">
-        <ModeSelector opening={opening} isLineUnlocked={isLineUnlocked} />
-        <CompactActions onHomeClick={onHomeClick} />
-      </div>
     </div>
   );
 }
 
 function TrainingRightPanel({
   opening,
+  mode,
   postLine,
   postLineError,
   postLineOutOfBook,
   isLineUnlocked,
+  onHomeClick,
+  onSettingsClick,
 }: {
   opening: Opening;
+  mode: string;
   postLine: boolean;
   postLineError: string | null;
   postLineOutOfBook: boolean;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
+  onHomeClick: () => void;
+  onSettingsClick: () => void;
 }) {
   return (
-    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-4 pb-4 pt-3">
-      <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
+    <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 pb-3 pt-3">
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
+        <button
+          onClick={onSettingsClick}
+          className="flex h-full min-h-[64px] w-12 items-center justify-center rounded-xl border border-stone-800/65 bg-stone-950/60 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+          title="Settings"
+          aria-label="Open settings"
+        >
+          <Settings size={18} />
+        </button>
+      </div>
 
-      <section className="mt-3 min-h-[180px] rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+      <div className="mt-3">
+        <CoachCard />
+      </div>
+
+      <section className="mt-3 min-h-[150px] rounded-xl border border-stone-800/55 bg-stone-950/45 p-3">
         <MoveList />
       </section>
 
@@ -440,8 +423,14 @@ function TrainingRightPanel({
       )}
 
       {postLine && <AnalysisPanel />}
-        <div className="mt-3 rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+        <div className="mt-3">
+          <ModeSelector opening={opening} modeLabel={mode} isLineUnlocked={isLineUnlocked} />
+        </div>
+        <div className="mt-3 rounded-xl border border-stone-800/55 bg-stone-950/45 p-3">
           <BoardNavRow />
+        </div>
+        <div className="mt-2">
+          <CompactActions onHomeClick={onHomeClick} />
         </div>
       </div>
     </div>
@@ -485,7 +474,7 @@ function CoachCard() {
   });
 
   return (
-    <section className="min-h-[148px] rounded-[20px] border border-stone-800/55 bg-stone-950/70 p-4">
+    <section className="rounded-xl border border-stone-800/55 bg-stone-950/55 p-3">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-black text-white">
           <BookOpen size={17} className="text-sky-300" />
@@ -495,7 +484,7 @@ function CoachCard() {
           {selectedLine?.name ?? ''}
         </span>
       </div>
-      <div className="min-h-[76px] rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_14px_30px_rgba(0,0,0,0.25)]">
+      <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-stone-950 shadow-[0_12px_24px_rgba(0,0,0,0.2)]">
         {message.text}
       </div>
       {message.action && (
@@ -584,14 +573,24 @@ function getCoachMessage({
   return { text: 'Stay calm, read the position, and make the move that fits the opening plan.' };
 }
 
+function formatModeLabel(mode: string) {
+  if (mode === 'step-by-step') return 'Practice';
+  if (mode === 'full-line') return 'Full line';
+  if (mode === 'time-trial') return 'Speed';
+  return mode.replace(/-/g, ' ');
+}
+
 function ModeSelector({
   opening,
+  modeLabel,
   isLineUnlocked,
 }: {
   opening: Opening;
+  modeLabel: string;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
 }) {
   const { phase, selectedLine, mode, setMode, openLineSelectModal, startDrill } = useTrainingStore();
+  const [open, setOpen] = useState(false);
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
   const totalLines = opening.lines.length;
@@ -622,9 +621,19 @@ function ModeSelector({
   ];
 
   return (
-    <section className="rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
-      <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Mode</div>
-      <div className="grid gap-2">
+    <section className="relative rounded-xl border border-stone-800/55 bg-stone-950/45 p-2">
+      <button
+        onClick={() => setOpen((value) => !value)}
+        className="flex h-11 w-full items-center justify-between gap-3 rounded-lg bg-stone-900/80 px-3 text-sm font-black text-white hover:bg-stone-800 cursor-pointer"
+      >
+        <span className="inline-flex items-center gap-2">
+          <Target size={16} className="text-sky-300" />
+          Mode
+        </span>
+        <span className="text-xs font-semibold capitalize text-stone-400">{formatModeLabel(modeLabel)}</span>
+      </button>
+      {open && (
+      <div className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 z-30 grid gap-2 rounded-xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/50">
         {modes.map((item) => {
           const active = item.value === 'step-by-step'
             ? mode === 'step-by-step' || mode === 'full-line' || mode === 'drill'
@@ -634,6 +643,7 @@ function ModeSelector({
               key={item.value}
               onClick={() => {
                 if (!item.unlocked) return;
+                setOpen(false);
                 if (phase === 'line-select') {
                   openLineSelectModal(item.value);
                 } else {
@@ -641,7 +651,7 @@ function ModeSelector({
                 }
               }}
               disabled={!item.unlocked}
-              className={`min-h-[58px] rounded-2xl border px-3 py-2 text-left transition-colors ${
+              className={`min-h-[54px] rounded-lg border px-3 py-2 text-left transition-colors ${
                 active
                   ? 'border-sky-300/45 bg-sky-500/16 text-white'
                   : item.unlocked
@@ -665,7 +675,7 @@ function ModeSelector({
           );
         })}
         {selectedLine && phase === 'training' && (mode === 'step-by-step' || mode === 'full-line') && (
-          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-stone-800/70 bg-stone-900/80 p-1">
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-stone-800/70 bg-stone-900/80 p-1">
             {[
               ['step-by-step', 'Step'],
               ['full-line', 'Full'],
@@ -673,7 +683,7 @@ function ModeSelector({
               <button
                 key={value}
                 onClick={() => setMode(value as TrainingMode)}
-                className={`h-9 rounded-xl text-xs font-black transition-colors ${
+                className={`h-9 rounded-md text-xs font-black transition-colors ${
                   mode === value
                     ? 'bg-sky-400 text-slate-950'
                     : 'text-stone-400 hover:bg-stone-800 hover:text-white'
@@ -693,7 +703,7 @@ function ModeSelector({
               }
             }}
             disabled={!drillUnlocked}
-            className={`min-h-[58px] rounded-2xl border px-3 py-2 text-left transition-colors ${
+            className={`min-h-[54px] rounded-lg border px-3 py-2 text-left transition-colors ${
               drillUnlocked
                 ? mode === 'drill'
                   ? 'border-emerald-300/45 bg-emerald-400/14 text-white'
@@ -714,7 +724,7 @@ function ModeSelector({
           ].map(([label, lockLabel]) => (
             <div
               key={label}
-              className="min-h-[58px] rounded-2xl border border-stone-800/45 bg-stone-900/35 px-3 py-2 text-left text-stone-600"
+              className="min-h-[54px] rounded-lg border border-stone-800/45 bg-stone-900/35 px-3 py-2 text-left text-stone-600"
             >
               <div className="flex items-center gap-2 text-sm font-black">
                 <Lock size={15} />
@@ -725,6 +735,7 @@ function ModeSelector({
           ))}
         </div>
       </div>
+      )}
     </section>
   );
 }

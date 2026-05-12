@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, LogIn, LogOut, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, LogIn, LogOut, UserCircle2 } from 'lucide-react';
 import { useProgressStore } from '../../store/progressStore';
 import {
   DEFAULT_LICHESS_RATINGS,
@@ -45,6 +45,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   } = useProfileStore();
 
   const [confirmReset, setConfirmReset] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   if (!isOpen) {
     return null;
@@ -80,7 +81,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
       <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Account</div>
             <div>
               <div className="flex items-start justify-between gap-3">
@@ -134,7 +135,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
             <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
               Restart line from
             </label>
@@ -160,12 +161,75 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4 lg:col-span-2">
-            <label className="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-              Lichess response settings
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+              Board
             </label>
+            <div className="grid gap-3">
+              <div>
+                <div className="mb-2 text-sm font-semibold text-white">Evaluation Bar</div>
+                <ToggleButton active={showEvalBar} onClick={() => setShowEvalBar(!showEvalBar)}>
+                  {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
+                </ToggleButton>
+              </div>
+              <div>
+                <div className="mb-2 text-sm font-semibold text-white">Piece Style</div>
+                <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
+                  {PIECE_STYLE_OPTIONS.map((style) => {
+                    const active = pieceStyle === style;
+                    const label = {
+                      classic: 'Classic',
+                      'set-1': '1',
+                      'set-2': '2',
+                      'set-3': '3',
+                      'set-4': '4',
+                      'set-5': '5',
+                    }[style];
+                    return (
+                      <button
+                        key={style}
+                        onClick={() => setPieceStyle(style)}
+                        className={`flex-1 py-2 text-sm font-semibold transition-colors cursor-pointer ${
+                          active
+                            ? 'bg-sky-500 text-slate-950'
+                            : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
 
-            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
+            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+              Spaced Repetition
+            </label>
+            <ToggleButton active={enableSRReminders} onClick={() => setEnableSRReminders(!enableSRReminders)}>
+              {enableSRReminders ? 'Reminders On' : 'Reminders Off'}
+            </ToggleButton>
+          </section>
+
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4 lg:col-span-2">
+            <button
+              onClick={() => setAdvancedOpen((value) => !value)}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <span>
+                <span className="block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
+                  Advanced
+                </span>
+                <span className="mt-1 block text-sm font-semibold text-white">Lichess response settings</span>
+              </span>
+              <ChevronDown size={18} className={`text-stone-400 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {advancedOpen && (
+            <div className="mt-4">
+            <div className="rounded-xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-white">Top moves used</div>
@@ -186,7 +250,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               />
             </div>
 
-            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
+            <div className="mt-3 rounded-xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Speeds</div>
               <div className="mt-1 text-xs text-stone-400">
                 Current default: {DEFAULT_LICHESS_SPEEDS.join(', ')}
@@ -211,7 +275,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
+            <div className="mt-3 rounded-xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Ratings</div>
               <div className="mt-1 text-xs text-stone-400">
                 Current default: {DEFAULT_LICHESS_RATINGS.join(', ')}
@@ -236,65 +300,17 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-stone-800/70 bg-stone-950/50 p-4">
+            <div className="mt-3 rounded-xl border border-stone-800/70 bg-stone-950/50 p-4">
               <div className="text-sm font-semibold text-white">Variant</div>
               <div className="mt-1 text-xs text-stone-400">
                 {lichessVariant}
               </div>
             </div>
-          </section>
-
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
-            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-              Evaluation Bar
-            </label>
-            <ToggleButton active={showEvalBar} onClick={() => setShowEvalBar(!showEvalBar)}>
-              {showEvalBar ? 'Eval Bar On' : 'Eval Bar Off'}
-            </ToggleButton>
-          </section>
-
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
-            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-              Piece Style
-            </label>
-            <div className="flex overflow-hidden rounded-xl border border-stone-700/45">
-              {PIECE_STYLE_OPTIONS.map((style) => {
-                const active = pieceStyle === style;
-                const label = {
-                  classic: 'Classic',
-                  'set-1': '1',
-                  'set-2': '2',
-                  'set-3': '3',
-                  'set-4': '4',
-                  'set-5': '5',
-                }[style];
-                return (
-                  <button
-                    key={style}
-                    onClick={() => setPieceStyle(style)}
-                    className={`flex-1 py-2 text-sm font-semibold transition-colors cursor-pointer ${
-                      active
-                        ? 'bg-sky-500 text-slate-950'
-                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
             </div>
+            )}
           </section>
 
-          <section className="rounded-[20px] border border-stone-800/70 bg-stone-900/55 p-4">
-            <label className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-              Spaced Repetition
-            </label>
-            <ToggleButton active={enableSRReminders} onClick={() => setEnableSRReminders(!enableSRReminders)}>
-              {enableSRReminders ? 'Reminders On' : 'Reminders Off'}
-            </ToggleButton>
-          </section>
-
-          <section className="rounded-[20px] border border-rose-400/15 bg-rose-400/5 p-4 lg:col-span-2">
+          <section className="rounded-xl border border-rose-400/15 bg-rose-400/5 p-4 lg:col-span-2">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-rose-200/80">Reset profile</div>
             {!confirmReset ? (
               <button

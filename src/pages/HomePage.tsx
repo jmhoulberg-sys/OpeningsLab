@@ -13,16 +13,14 @@ import {
 } from '../store/progressionStore';
 import {
   FeaturedOpeningsSection,
-  HeroSection,
   HowItWorksStrip,
+  LogoOptionsSection,
   OpeningLibrarySection,
   QuestStrip,
-  type ContinueTrainingSummary,
   type OpeningSummary,
 } from '../components/Home/HomeSections';
 import {
   FEATURED_OPENING_IDS,
-  HOME_HERO,
   HOW_IT_WORKS_STEPS,
 } from '../components/Home/homeContent';
 import BrandMark from '../components/Brand/BrandMark';
@@ -48,7 +46,6 @@ export default function HomePage({
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
   const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
-  const featuredRef = useRef<HTMLDivElement | null>(null);
   const libraryRef = useRef<HTMLDivElement | null>(null);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
     ? displayName.trim()
@@ -98,24 +95,6 @@ export default function HomePage({
     .filter((summary) => summary.firstLine && summary.totalLines > 0 && summary.completedLines === summary.totalLines)
     .sort((a, b) => a.opening.name.localeCompare(b.opening.name));
 
-  const continueSummary = getContinueTrainingSummary(openingSummaries, openingProgress);
-
-  const heroPrimaryLabel = continueSummary ? 'Continue Training' : HOME_HERO.primaryCta;
-
-  function scrollToLibrary() {
-    libraryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function handlePrimaryAction() {
-    if (continueSummary) {
-      onStartOpeningLine(continueSummary.opening, continueSummary.line);
-      return;
-    }
-
-    const defaultOpening = defaultFeaturedOpenings[0]?.opening ?? OPENINGS.find((opening) => opening.lines.length > 0);
-    if (defaultOpening) onSelectOpening(defaultOpening);
-  }
-
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
       <div className="sticky top-0 z-40 -mx-4 mb-5 border-b border-stone-800/80 bg-stone-950 shadow-[0_14px_40px_rgba(0,0,0,0.24)] sm:-mx-5">
@@ -134,7 +113,7 @@ export default function HomePage({
             ) : (
               <button
                 onClick={() => openAuthModal('login')}
-                className="hidden h-[68px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-900 px-4 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white sm:flex cursor-pointer"
+                className="hidden h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white sm:flex cursor-pointer"
                 title="Log in to see streak"
               >
                 <Flame size={18} className="text-stone-500" />
@@ -144,7 +123,7 @@ export default function HomePage({
             {isLoggedIn ? (
               <button
                 onClick={onProfileClick}
-                className="hidden h-[68px] min-w-[172px] items-center gap-2 rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
+                className="hidden h-10 min-w-[132px] items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
                 title="My Profile"
               >
                 <UserCircle2 size={18} className="text-stone-300" />
@@ -152,9 +131,9 @@ export default function HomePage({
                   <div className="max-w-[120px] truncate text-left font-semibold text-white">
                     {accountLabel}
                   </div>
-                  <div className="mt-1 h-1.5 w-[120px] rounded-full bg-stone-700">
+                  <div className="mt-1 h-1 w-[92px] rounded-full bg-stone-700">
                     <div
-                      className="h-1.5 rounded-full bg-emerald-400"
+                      className="h-1 rounded-full bg-emerald-400"
                       style={{ width: `${levelInfo.progressPct}%` }}
                     />
                   </div>
@@ -163,7 +142,7 @@ export default function HomePage({
             ) : (
               <button
                 onClick={() => openAuthModal('signup')}
-                className="hidden h-[68px] min-w-[172px] items-center justify-center gap-2 rounded-2xl bg-sky-500 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
+                className="hidden h-10 min-w-[104px] items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
               >
                 <LogIn size={18} />
                 Sign in
@@ -172,7 +151,7 @@ export default function HomePage({
             <button
               onClick={onSettingsClick}
               title="Settings"
-              className="h-[68px] rounded-2xl border border-stone-700/45 bg-stone-800 px-4 text-slate-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+              className="h-10 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-slate-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
               aria-label="Open settings"
             >
               <Settings size={20} />
@@ -187,30 +166,11 @@ export default function HomePage({
         )}
 
         {!isLoggedIn ? (
-          <>
-            <HeroSection
-              headline={HOME_HERO.headline}
-              subheadline={HOME_HERO.subheadline}
-              primaryLabel={heroPrimaryLabel}
-              secondaryLabel={HOME_HERO.secondaryCta}
-              onPrimaryClick={handlePrimaryAction}
-              onSecondaryClick={scrollToLibrary}
-              continueSummary={continueSummary}
-              onContinueClick={
-                continueSummary
-                  ? () => onStartOpeningLine(continueSummary.opening, continueSummary.line)
-                  : undefined
-              }
-            />
-
-            <div className="mt-5">
-              <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
-            </div>
-          </>
+          <HowItWorksStrip steps={HOW_IT_WORKS_STEPS} />
         ) : null}
 
         {showFeaturedOpenings && (
-          <div className="mt-5" ref={featuredRef}>
+          <div className="mt-5">
             <FeaturedOpeningsSection
               openings={featuredOpenings}
               eyebrow={isLoggedIn && learningOpenings.length > 0 ? 'Continue courses' : undefined}
@@ -244,6 +204,10 @@ export default function HomePage({
             onStartLine={onStartOpeningLine}
           />
         </div>
+
+        <div className="mt-8">
+          <LogoOptionsSection />
+        </div>
       </div>
     </div>
   );
@@ -264,50 +228,4 @@ function getOpeningStatusLabel(setupComplete: boolean, completedLines: number, t
   if (completedLines >= Math.max(2, Math.ceil(totalLines / 2))) return 'Practice ready';
   if (setupComplete || completedLines > 0) return 'Learning';
   return 'New';
-}
-
-function getContinueTrainingSummary(
-  summaries: OpeningSummary[],
-  progressState: ReturnType<typeof useProgressStore.getState>['openings'],
-): ContinueTrainingSummary | undefined {
-  const ranked = summaries
-    .map((summary) => {
-      const progress = progressState[summary.opening.id];
-      const lineAttempts = Object.values(progress?.lines ?? {}).reduce(
-        (total, lineProgress) => total + lineProgress.attempts,
-        0,
-      );
-      const started = summary.setupComplete || lineAttempts > 0 || summary.completedLines > 0;
-
-      return {
-        summary,
-        lineAttempts,
-        started,
-      };
-    })
-    .filter((item) => item.started)
-    .sort((a, b) => {
-      if (b.lineAttempts !== a.lineAttempts) return b.lineAttempts - a.lineAttempts;
-      if (b.summary.completedLines !== a.summary.completedLines) {
-        return b.summary.completedLines - a.summary.completedLines;
-      }
-      return Number(b.summary.setupComplete) - Number(a.summary.setupComplete);
-    });
-
-  const next = ranked[0]?.summary;
-  if (!next) return undefined;
-
-  const openingProgress = progressState[next.opening.id];
-  const continueLine =
-    next.opening.lines.find((line) => openingProgress?.lines[line.id]?.unlocked) ??
-    next.firstLine;
-  if (!continueLine) return undefined;
-
-  return {
-    opening: next.opening,
-    line: continueLine,
-    completedLines: next.completedLines,
-    totalLines: next.totalLines,
-    setupComplete: next.setupComplete,
-  };
 }

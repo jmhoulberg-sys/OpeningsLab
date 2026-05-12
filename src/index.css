@@ -16,7 +16,9 @@
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background: linear-gradient(180deg, #2b2724 0%, #24211e 100%);
+    background:
+      radial-gradient(circle at top, rgba(94, 84, 72, 0.26), transparent 38%),
+      linear-gradient(180deg, #36312c 0%, #2d2925 100%);
     color: #e2e8f0;
   }
 
