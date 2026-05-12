@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -41,6 +43,11 @@
 }
 
 @layer utilities {
+  .font-brand-serif {
+    font-family: 'Merriweather', Georgia, serif;
+    letter-spacing: 0;
+  }
+
   .board-transition {
     transition: transform 0.2s ease;
   }

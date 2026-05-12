@@ -8,7 +8,7 @@ export default function BrandMark({ size = 'normal' }: { size?: 'normal' | 'larg
     <div className="flex items-center gap-3">
       <TwoPawnsLogo variant="boxed-pair" size={iconSize} />
       <div className="leading-none">
-        <div className={`${textSize} font-black text-white`}>
+        <div className={`${textSize} font-brand-serif font-black text-white`}>
           2<span className="text-sky-300">pawns</span>
         </div>
       </div>

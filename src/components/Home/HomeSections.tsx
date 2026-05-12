@@ -160,7 +160,7 @@ export function HeroSection({
     <section className="relative overflow-hidden rounded-[24px] border border-stone-800/55 bg-stone-900 px-5 py-5 sm:px-6">
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h1 className="font-brand-serif max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             {headline}
           </h1>
           <p className="mt-1.5 text-base text-stone-300">
@@ -756,7 +756,7 @@ function SectionHeading({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-xl">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
+        <h2 className="font-brand-serif text-2xl font-bold text-white sm:text-3xl">{title}</h2>
         {description && (
           <p className="mt-1.5 text-sm text-stone-400 sm:text-base">
             {description}

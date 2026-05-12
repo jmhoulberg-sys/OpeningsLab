@@ -43,7 +43,7 @@ export default function Header({
           {showCenterCopy ? (
             <div className="hidden min-w-0 text-center md:block">
               {titleOverride && (
-                <div className="truncate text-base font-black text-white">
+                <div className="font-brand-serif truncate text-base font-black text-white">
                   {titleOverride}
                 </div>
               )}
