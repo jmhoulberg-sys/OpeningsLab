@@ -399,11 +399,27 @@ function TrainingRightPanel({
   onSettingsClick: () => void;
   onOpenOpening: (opening: Opening) => void;
 }) {
+  const [openPicker, setOpenPicker] = useState<'opening' | 'line' | null>(null);
+
   return (
     <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 pb-3 pt-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <OpeningCourseDropdown opening={opening} onSelectOpening={onOpenOpening} />
-        <LineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
+        <OpeningCourseDropdown
+          opening={opening}
+          onSelectOpening={(selectedOpening) => {
+            setOpenPicker(null);
+            onOpenOpening(selectedOpening);
+          }}
+          open={openPicker === 'opening'}
+          onToggle={() => setOpenPicker((value) => (value === 'opening' ? null : 'opening'))}
+        />
+        <LineDropdown
+          opening={opening}
+          isLineUnlocked={isLineUnlocked}
+          open={openPicker === 'line'}
+          onToggle={() => setOpenPicker((value) => (value === 'line' ? null : 'line'))}
+          onClose={() => setOpenPicker(null)}
+        />
       </div>
 
       <div className="mt-3">
@@ -582,7 +598,8 @@ function formatModeLabel(mode: string) {
   if (mode === 'step-by-step') return 'Practice';
   if (mode === 'full-line') return 'Full line';
   if (mode === 'time-trial') return 'Speed';
-  return mode.replace(/-/g, ' ');
+  const normalized = mode.replace(/-/g, ' ');
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 function ModeSelector({
@@ -633,9 +650,9 @@ function ModeSelector({
       >
         <span className="inline-flex items-center gap-2">
           <Target size={16} className="text-sky-300" />
-          Mode
+          {formatModeLabel(modeLabel)}
         </span>
-        <span className="text-xs font-semibold capitalize text-stone-400">{formatModeLabel(modeLabel)}</span>
+        <span className="text-xs font-semibold capitalize text-stone-400">Mode</span>
       </button>
       {open && (
       <div className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 z-30 grid gap-2 rounded-xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/50">
@@ -748,12 +765,15 @@ function ModeSelector({
 function OpeningCourseDropdown({
   opening,
   onSelectOpening,
+  open,
+  onToggle,
 }: {
   opening: Opening;
   onSelectOpening: (opening: Opening) => void;
+  open: boolean;
+  onToggle: () => void;
 }) {
   const openingProgress = useProgressStore((state) => state.openings);
-  const [open, setOpen] = useState(false);
   const summaries = [...OPENINGS]
     .filter((item) => item.lines.length > 0)
     .map((item) => {
@@ -774,7 +794,7 @@ function OpeningCourseDropdown({
   return (
     <section className="relative rounded-[20px] border border-stone-700/65 bg-stone-800/72 p-3">
       <button
-        onClick={() => setOpen((value) => !value)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
       >
         <div className="min-w-0">
@@ -784,7 +804,7 @@ function OpeningCourseDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-[calc(100%-0.5rem)] z-20 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+        <div className="absolute left-0 top-full z-20 mt-1 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
           {summaries.map((item) => {
             const active = item.opening.id === opening.id;
             return (
@@ -792,20 +812,18 @@ function OpeningCourseDropdown({
                 key={item.opening.id}
                 onClick={() => {
                   onSelectOpening(item.opening);
-                  setOpen(false);
                 }}
                 className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                   active
-                    ? 'bg-sky-500/16 text-sky-100'
+                    ? 'bg-sky-500/24 text-white ring-1 ring-inset ring-sky-300/45'
                     : 'text-stone-200 hover:bg-stone-800 cursor-pointer'
                 }`}
               >
                 <div className="min-w-0">
                   <div className="font-semibold leading-snug">{item.opening.name}</div>
-                  <div className="mt-0.5 text-xs text-stone-400">{item.completed}/{item.total} complete</div>
                 </div>
-                <span className="shrink-0 rounded-full bg-stone-800 px-2 py-0.5 text-[11px] font-black text-stone-300">
-                  {item.total} lines
+                <span className={`shrink-0 text-xs font-black tabular-nums ${active ? 'text-sky-100' : 'text-stone-400'}`}>
+                  {item.completed}/{item.total}
                 </span>
               </button>
             );
@@ -819,14 +837,19 @@ function OpeningCourseDropdown({
 function LineDropdown({
   opening,
   isLineUnlocked,
+  open,
+  onToggle,
+  onClose,
 }: {
   opening: Opening;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
 }) {
   const { selectedLine, selectLine } = useTrainingStore();
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
-  const [open, setOpen] = useState(false);
   const [lineFrequencies, setLineFrequencies] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -860,7 +883,7 @@ function LineDropdown({
   return (
     <section className="relative rounded-[20px] border border-stone-700/65 bg-stone-800/72 p-3">
       <button
-        onClick={() => setOpen((value) => !value)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
       >
         <div className="min-w-0">
@@ -870,7 +893,7 @@ function LineDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%-0.5rem)] z-20 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+        <div className="absolute right-0 top-full z-20 mt-1 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
           <div className="mb-1 flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-500">
             <span>{completedLines}/{opening.lines.length} mastered</span>
             <span>{setupDone ? 'Ready' : 'Setup first'}</span>
@@ -889,12 +912,12 @@ function LineDropdown({
                 onClick={() => {
                   if (!available) return;
                   selectLine(line);
-                  setOpen(false);
+                  onClose();
                 }}
                 disabled={!available}
                 className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                   active
-                    ? 'bg-sky-500/16 text-sky-100'
+                    ? 'bg-sky-500/24 text-white ring-1 ring-inset ring-sky-300/45'
                     : available
                       ? 'text-stone-200 hover:bg-stone-800 cursor-pointer'
                       : 'text-stone-600 cursor-not-allowed'
