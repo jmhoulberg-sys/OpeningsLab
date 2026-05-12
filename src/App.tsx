@@ -256,7 +256,7 @@ export default function App() {
       />
 
       <main ref={mainRef} className="relative min-h-0 flex-1 overflow-hidden">
-        <div className={`mx-auto grid h-full w-full max-w-[1720px] gap-3 p-2 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_400px]'}`}>
+        <div className={`mx-auto grid h-full w-full max-w-[1760px] gap-3 p-2 ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_480px]'}`}>
           <section
             ref={boardContainerRef}
             className="flex min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-xl bg-stone-900/30 p-1"
@@ -401,7 +401,7 @@ function TrainingRightPanel({
 }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 pb-3 pt-3">
-      <div className="space-y-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <OpeningCourseDropdown opening={opening} onSelectOpening={onOpenOpening} />
         <LineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
       </div>
@@ -778,9 +778,7 @@ function OpeningCourseDropdown({
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
       >
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Opening</div>
           <div className="mt-1 truncate text-sm font-black text-white">{opening.name}</div>
-          <div className="mt-0.5 truncate text-xs text-stone-400">{opening.lines.length} lines</div>
         </div>
         <ChevronDown size={18} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -825,7 +823,7 @@ function LineDropdown({
   opening: Opening;
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
 }) {
-  const { selectedLine, selectLine, phase } = useTrainingStore();
+  const { selectedLine, selectLine } = useTrainingStore();
   const setupDone = useProgressStore((state) => state.isSetupComplete(opening.id));
   const completedLines = opening.lines.filter((line) => isLineUnlocked(opening.id, line.id)).length;
   const [open, setOpen] = useState(false);
@@ -866,11 +864,7 @@ function LineDropdown({
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
       >
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Line</div>
           <div className="mt-1 truncate text-sm font-black text-white">{selectedLine?.name ?? 'Choose a line'}</div>
-          <div className="mt-0.5 truncate text-xs text-stone-400">
-            {phase === 'setup' ? 'Setup position' : opening.name}
-          </div>
         </div>
         <ChevronDown size={18} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -968,7 +962,7 @@ function IconAction({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="flex h-10 items-center justify-center rounded-xl bg-stone-700 text-stone-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:bg-stone-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+      className="flex h-10 items-center justify-center rounded-xl bg-stone-600 text-stone-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-colors hover:bg-stone-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
     >
       {children}
     </button>

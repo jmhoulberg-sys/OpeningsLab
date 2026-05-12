@@ -36,9 +36,9 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           <div />
         </div>
 
-        <div className="flex items-center gap-1.5 justify-self-end sm:gap-2.5">
+        <div className="flex items-center gap-2 justify-self-end sm:gap-2.5">
           {isLoggedIn ? (
-            <div className="relative z-[90] scale-90 sm:scale-100">
+            <div className="relative z-[90]">
               <StreakBadge size="medium" />
             </div>
           ) : (
@@ -80,7 +80,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           )}
           <button
             onClick={onSettingsClick}
-            className="hidden h-10 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-700/45 bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
             title="Settings"
             aria-label="Open settings"
           >

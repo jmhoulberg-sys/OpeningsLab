@@ -630,7 +630,7 @@ export function BoardNavRow() {
       </div>
 
         <div className="order-3 flex min-w-0 items-center justify-end">
-        <div className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-stone-700 px-3 text-sm font-semibold text-white">
+        <div className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-stone-600 px-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           Mistakes: {mistakes}
         </div>
       </div>
@@ -654,7 +654,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:bg-stone-600 hover:text-sky-50 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-600 text-stone-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-colors hover:bg-stone-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
     >
       {children}
     </button>

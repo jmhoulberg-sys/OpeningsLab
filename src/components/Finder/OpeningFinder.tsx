@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, RotateCcw, Sparkles, Star, X } from 'lucide-react';
 import { Chessboard } from 'react-chessboard';
 import type { Square } from 'react-chessboard/dist/chessboard/types';
 import { Chess } from 'chess.js';
@@ -472,6 +472,7 @@ export default function OpeningFinder({ onBack, onSettingsClick, onProfileClick,
   const [previewSan, setPreviewSan] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState(readFavoriteIds);
   const [confirmOpening, setConfirmOpening] = useState<Opening | null>(null);
+  const [railTab, setRailTab] = useState<'openings' | 'moves' | 'train'>('openings');
   const boardRef = useRef<HTMLDivElement>(null);
   const activePath = path.slice(0, cursor);
   const currentFen = pathToFen(activePath);
@@ -655,140 +656,9 @@ export default function OpeningFinder({ onBack, onSettingsClick, onProfileClick,
         </div>
       </div>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-[1660px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[320px_minmax(0,1fr)_360px] lg:overflow-hidden">
-        <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:order-1 lg:max-h-none lg:min-h-0">
-          <PanelHeading title="Possible openings" />
-          <div className="mt-2 space-y-2">
-            {featuredCourseOpening && (
-              <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
-                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
-                  Course found
-                </div>
-                <div className="mt-1 text-base font-black text-white">{featuredCourseOpening.name}</div>
-                <button
-                  onClick={() => onOpenOpening(featuredCourseOpening)}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
-                >
-                  <Play size={15} />
-                  Train {featuredCourseOpening.name}
-                </button>
-              </div>
-            )}
+      <main className="mx-auto grid min-h-0 w-full max-w-[1660px] flex-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[minmax(0,1fr)_380px] lg:overflow-hidden">
 
-            {catalogBranches.map((branch) => {
-              const active = pathsEqual(branch.path, activePath);
-              const nextSan = getBranchNextMove(activePath, branch);
-              const favoriteId = `catalog:${branch.id}`;
-              const favorite = favoriteIds.has(favoriteId);
-              const frequency = getCatalogBranchFrequency(branch, playerColor);
-              return (
-                <button
-                  key={branch.id}
-                  onClick={() => jumpToBranch(branch.path)}
-                  onMouseEnter={() => setPreviewSan(nextSan)}
-                  onFocus={() => setPreviewSan(nextSan)}
-                  onMouseLeave={() => setPreviewSan(null)}
-                  onBlur={() => setPreviewSan(null)}
-                  className={`w-full rounded-xl border p-2.5 text-left transition-colors cursor-pointer ${
-                    active
-                      ? 'border-sky-300/35 bg-sky-500/14'
-                      : 'border-stone-800/70 bg-stone-900/65 hover:bg-stone-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 truncate text-sm font-black text-white">{branch.name}</div>
-                    <div className="flex items-center gap-2">
-                      <ColorPill color={branch.color} />
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label={favorite ? `Unfavorite ${branch.name}` : `Favorite ${branch.name}`}
-                        title={favorite ? 'Remove favorite' : 'Favorite opening'}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          toggleFavorite(favoriteId);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            toggleFavorite(favoriteId);
-                          }
-                        }}
-                        className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-colors ${
-                          favorite
-                            ? 'border-amber-300/45 bg-amber-300/14 text-amber-300'
-                            : 'border-stone-700/55 bg-stone-900 text-stone-500 hover:text-stone-200'
-                        }`}
-                      >
-                        <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-3 text-[11px] font-semibold text-stone-400">
-                    <span className="min-w-0 flex-1 truncate">{branch.path.join(' ')}</span>
-                    <span className="shrink-0 tabular-nums text-stone-300">{frequency} lines</span>
-                  </div>
-                </button>
-              );
-            })}
-
-            {showLineCards && localMatches.slice(0, 7).map((match) => {
-              const playable = match.opening.playerColor === playerColor;
-              const favoriteId = `opening:${match.opening.id}`;
-              const favorite = favoriteIds.has(favoriteId);
-              return (
-                <div
-                  key={`${match.opening.id}-${match.line.id}`}
-                  onMouseEnter={() => setPreviewSan(match.nextSan)}
-                  onFocus={() => setPreviewSan(match.nextSan)}
-                  onMouseLeave={() => setPreviewSan(null)}
-                  onBlur={() => setPreviewSan(null)}
-                  className={`rounded-2xl border p-3 ${
-                    playable
-                      ? 'border-emerald-300/18 bg-emerald-400/8'
-                      : 'border-stone-800/60 bg-stone-900/40 opacity-55'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <BookOpen size={15} className={playable ? 'mt-0.5 text-emerald-300' : 'mt-0.5 text-stone-500'} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-black text-white">{match.line.name}</div>
-                      <div className="mt-0.5 truncate text-xs text-stone-400">{match.opening.name}</div>
-                    </div>
-                    <button
-                      onClick={() => toggleFavorite(favoriteId)}
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-colors cursor-pointer ${
-                        favorite
-                          ? 'border-amber-300/45 bg-amber-300/14 text-amber-300'
-                          : 'border-stone-700/55 bg-stone-900 text-stone-500 hover:text-stone-200'
-                      }`}
-                      title={favorite ? 'Remove favorite' : 'Favorite opening'}
-                      aria-label={favorite ? `Unfavorite ${match.opening.name}` : `Favorite ${match.opening.name}`}
-                    >
-                      <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
-                    </button>
-                  </div>
-                  <div className="mt-2 text-xs text-stone-500">
-                    {playable ? 'Available to practice' : `Built for ${match.opening.playerColor}`}
-                    {match.nextSan ? ` · next ${match.nextSan}` : ''}
-                  </div>
-                  {playable && (
-                    <button
-                      onClick={() => onStartPractice(match.opening, match.line)}
-                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
-                    >
-                      <Sparkles size={15} />
-                      Practice this line
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </aside>
-
-        <section className="order-1 flex min-h-[360px] flex-col overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/50 lg:order-2 lg:min-h-0">
+        <section className="order-1 flex min-h-[360px] flex-col overflow-hidden rounded-[22px] border border-stone-800/65 bg-stone-950/50 lg:min-h-0">
           <div className="border-b border-stone-800/60 p-3">
             <RouteBar path={activePath} cursor={cursor} total={path.length} onBack={() => setCursor(Math.max(0, cursor - 1))} onForward={() => setCursor(Math.min(path.length, cursor + 1))} />
           </div>
@@ -814,41 +684,167 @@ export default function OpeningFinder({ onBack, onSettingsClick, onProfileClick,
           </div>
         </section>
 
-        <aside className="order-3 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
-          <PanelHeading title={rightTitle} />
-          <div className="mt-2 space-y-2">
-            {featuredCourseOpening && (
-              <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
-                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
-                  Ready to train
-                </div>
-                <div className="mt-1 text-sm font-black text-white">{featuredCourseOpening.name}</div>
-                <div className="mt-1 text-xs leading-relaxed text-stone-400">
-                  Continue from here by training the full {featuredCourseOpening.name} course.
-                </div>
-                <button
-                  onClick={() => setConfirmOpening(featuredCourseOpening)}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
-                >
-                  <Play size={15} />
-                  Train {featuredCourseOpening.name}
-                </button>
-              </div>
+        <aside className="order-2 max-h-[55vh] overflow-y-auto rounded-[18px] border border-stone-800/65 bg-stone-950/72 p-2.5 lg:max-h-none lg:min-h-0">
+          <div className="grid grid-cols-3 gap-1 rounded-xl border border-stone-800/70 bg-stone-900/80 p-1">
+            {[
+              ['openings', 'Openings'],
+              ['moves', 'Moves'],
+              ['train', 'Train'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setRailTab(value as 'openings' | 'moves' | 'train')}
+                className={`h-9 rounded-lg text-xs font-black transition-colors ${
+                  railTab === value ? 'bg-sky-400 text-slate-950' : 'text-stone-400 hover:bg-stone-800 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 space-y-2">
+            {railTab === 'openings' && (
+              <>
+                <PanelHeading title="Possible openings" />
+                {featuredCourseOpening && (
+                  <div className="rounded-xl border border-emerald-300/35 bg-emerald-400/10 p-3">
+                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                      Course found
+                    </div>
+                    <div className="mt-1 text-base font-black text-white">{featuredCourseOpening.name}</div>
+                    <button
+                      onClick={() => onOpenOpening(featuredCourseOpening)}
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+                    >
+                      <Play size={15} />
+                      Train {featuredCourseOpening.name}
+                    </button>
+                  </div>
+                )}
+                {catalogBranches.map((branch) => {
+                  const active = pathsEqual(branch.path, activePath);
+                  const nextSan = getBranchNextMove(activePath, branch);
+                  const favoriteId = `catalog:${branch.id}`;
+                  const favorite = favoriteIds.has(favoriteId);
+                  const frequency = getCatalogBranchFrequency(branch, playerColor);
+                  return (
+                    <button
+                      key={branch.id}
+                      onClick={() => jumpToBranch(branch.path)}
+                      onMouseEnter={() => setPreviewSan(nextSan)}
+                      onFocus={() => setPreviewSan(nextSan)}
+                      onMouseLeave={() => setPreviewSan(null)}
+                      onBlur={() => setPreviewSan(null)}
+                      className={`w-full rounded-xl border p-2.5 text-left transition-colors cursor-pointer ${
+                        active ? 'border-sky-300/35 bg-sky-500/14' : 'border-stone-800/70 bg-stone-900/65 hover:bg-stone-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 truncate text-sm font-black text-white">{branch.name}</div>
+                        <div className="flex items-center gap-2">
+                          <ColorPill color={branch.color} />
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            aria-label={favorite ? `Unfavorite ${branch.name}` : `Favorite ${branch.name}`}
+                            title={favorite ? 'Remove favorite' : 'Favorite opening'}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleFavorite(favoriteId);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                toggleFavorite(favoriteId);
+                              }
+                            }}
+                            className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-colors ${
+                              favorite ? 'border-amber-300/45 bg-amber-300/14 text-amber-300' : 'border-stone-700/55 bg-stone-900 text-stone-500 hover:text-stone-200'
+                            }`}
+                          >
+                            <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-3 text-[11px] font-semibold text-stone-400">
+                        <span className="min-w-0 flex-1 truncate">{branch.path.join(' ')}</span>
+                        <span className="shrink-0 tabular-nums text-stone-300">{frequency} lines</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </>
             )}
 
-            {branchFrequencyNodes.length === 0 && (
-              <RailNotice text="No local tree moves from this position yet. Step back or choose another route." />
+            {railTab === 'moves' && (
+              <>
+                <PanelHeading title={rightTitle} />
+                {branchFrequencyNodes.length === 0 && (
+                  <RailNotice text="No local tree moves from this position yet. Step back or choose another route." />
+                )}
+                {branchFrequencyNodes.map((node) => (
+                  <TreeMoveButton
+                    key={node.san}
+                    node={node}
+                    path={activePath}
+                    onChoose={() => chooseMove(node.san)}
+                    onPreview={() => setPreviewSan(node.san)}
+                    onClearPreview={() => setPreviewSan(null)}
+                  />
+                ))}
+              </>
             )}
-            {branchFrequencyNodes.map((node) => (
-              <TreeMoveButton
-                key={node.san}
-                node={node}
-                path={activePath}
-                onChoose={() => chooseMove(node.san)}
-                onPreview={() => setPreviewSan(node.san)}
-                onClearPreview={() => setPreviewSan(null)}
-              />
-            ))}
+
+            {railTab === 'train' && (
+              <>
+                <PanelHeading title="Train" />
+                {featuredCourseOpening ? (
+                  <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/9 p-3">
+                    <div className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                      Ready to train
+                    </div>
+                    <div className="mt-1 text-sm font-black text-white">{featuredCourseOpening.name}</div>
+                    <div className="mt-1 text-xs leading-relaxed text-stone-400">
+                      Continue from here by training the full {featuredCourseOpening.name} course.
+                    </div>
+                    <button
+                      onClick={() => setConfirmOpening(featuredCourseOpening)}
+                      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+                    >
+                      <Play size={15} />
+                      Train {featuredCourseOpening.name}
+                    </button>
+                  </div>
+                ) : (
+                  <RailNotice text="Pick a route on the board first, then train the matching opening from here." />
+                )}
+                {showLineCards && localMatches.slice(0, 6).map((match) => {
+                  const playable = match.opening.playerColor === playerColor;
+                  return (
+                    <div
+                      key={`${match.opening.id}-${match.line.id}`}
+                      className={`rounded-2xl border p-3 ${
+                        playable ? 'border-emerald-300/18 bg-emerald-400/8' : 'border-stone-800/60 bg-stone-900/40 opacity-55'
+                      }`}
+                    >
+                      <div className="truncate text-sm font-black text-white">{match.line.name}</div>
+                      <div className="mt-0.5 truncate text-xs text-stone-400">{match.opening.name}</div>
+                      {playable && (
+                        <button
+                          onClick={() => onStartPractice(match.opening, match.line)}
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-300 cursor-pointer"
+                        >
+                          <Sparkles size={15} />
+                          Practice this line
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </aside>
       </main>

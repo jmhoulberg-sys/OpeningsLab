@@ -37,7 +37,7 @@ export default function StreakBadge({ size = 'large' }: StreakBadgeProps) {
   const buttonSize = size === 'small'
     ? 'h-10 min-w-[72px] px-3 text-base'
     : size === 'medium'
-      ? 'h-10 min-w-[84px] px-4 text-base'
+      ? 'h-10 min-w-[76px] px-3.5 text-base'
       : 'h-[68px] px-4 text-lg';
   const flameSize = size === 'large' ? 22 : 18;
 
