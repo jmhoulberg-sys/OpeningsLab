@@ -10,10 +10,10 @@ import {
 } from '../../store/progressionStore';
 
 interface StreakBadgeProps {
-  compact?: boolean;
+  size?: 'small' | 'medium' | 'large';
 }
 
-export default function StreakBadge({ compact = false }: StreakBadgeProps) {
+export default function StreakBadge({ size = 'large' }: StreakBadgeProps) {
   const { isLoggedIn, displayName } = useProfileStore();
   const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
   const daily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
@@ -34,19 +34,23 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
     : canKeepStreak
       ? 'Complete a line to keep your streak going.'
       : 'Complete a line to start a streak.';
+  const buttonSize = size === 'small'
+    ? 'h-10 min-w-[72px] px-3 text-base'
+    : size === 'medium'
+      ? 'h-10 min-w-[84px] px-4 text-base'
+      : 'h-[68px] px-4 text-lg';
+  const flameSize = size === 'large' ? 22 : 18;
 
   return (
     <div className="relative">
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-stone-700/55 bg-stone-800 text-white transition-colors hover:bg-stone-700 cursor-pointer ${
-          compact ? 'h-10 min-w-[76px] px-3 text-base' : 'h-[68px] px-4 text-lg'
-        }`}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-stone-700/55 bg-stone-800 text-white transition-colors hover:bg-stone-700 cursor-pointer ${buttonSize}`}
         title={`${displayStreak} day streak`}
         aria-expanded={open}
       >
         <Flame
-          size={compact ? 18 : 22}
+          size={flameSize}
           className={mutedFlame ? 'text-stone-400' : 'text-amber-400'}
           fill={mutedFlame ? 'none' : 'currentColor'}
         />

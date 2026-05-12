@@ -39,7 +39,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
         <div className="flex items-center gap-1.5 justify-self-end sm:gap-2.5">
           {isLoggedIn ? (
             <div className="relative z-[90] scale-90 sm:scale-100">
-              <StreakBadge compact />
+              <StreakBadge size="medium" />
             </div>
           ) : (
             <button

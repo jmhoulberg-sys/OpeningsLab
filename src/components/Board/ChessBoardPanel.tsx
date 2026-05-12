@@ -569,7 +569,7 @@ export function BoardNavRow() {
       <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(92px,1fr)] items-center gap-2">
         <div className="order-1 flex min-w-0 items-center justify-start">
           {isGuidedLearn && (
-            <div className="inline-flex h-10 min-w-0 max-w-full items-center justify-center gap-2 rounded-xl border border-sky-300/30 bg-sky-500/18 px-3 text-sm font-bold text-sky-100">
+            <div className="inline-flex h-10 min-w-0 max-w-full items-center justify-center gap-2 rounded-xl bg-sky-600/25 px-3 text-sm font-bold text-sky-50">
               <Sparkles size={15} />
               <span className="truncate">Answer shown</span>
             </div>
@@ -582,7 +582,7 @@ export function BoardNavRow() {
               className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold transition-colors ${
                 hintDisabled
                   ? 'cursor-not-allowed border-emerald-200/10 bg-emerald-400/35 text-slate-950/70'
-                  : 'cursor-pointer border-emerald-200/30 bg-emerald-400 text-slate-950 shadow-[0_8px_18px_rgba(16,185,129,0.18)] hover:bg-emerald-300'
+                  : 'cursor-pointer bg-emerald-400 text-slate-950 shadow-[0_8px_18px_rgba(16,185,129,0.18)] hover:bg-emerald-300'
               }`}
           >
             <Lightbulb size={15} />
@@ -597,7 +597,7 @@ export function BoardNavRow() {
             className={`inline-flex h-10 min-w-[102px] items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold transition-colors ${
               answerDisabled
                 ? 'cursor-not-allowed border-stone-700/45 bg-stone-800/90 text-stone-400'
-                : 'cursor-pointer border-sky-200/30 bg-sky-500 text-slate-950 shadow-[0_8px_18px_rgba(14,165,233,0.18)] hover:bg-sky-400'
+                : 'cursor-pointer bg-sky-500 text-slate-950 shadow-[0_8px_18px_rgba(14,165,233,0.18)] hover:bg-sky-400'
             }`}
           >
             <Sparkles size={15} />
@@ -622,7 +622,7 @@ export function BoardNavRow() {
             onClick={() => navigateToMove(null)}
             title="Return to live position"
             aria-label="Return to live position"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-300/30 bg-sky-500/20 text-sky-100 transition-colors hover:bg-sky-500/28 hover:text-white cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600/25 text-sky-50 transition-colors hover:bg-sky-500/32 hover:text-white cursor-pointer"
           >
             <ChevronsRight size={18} />
           </button>
@@ -630,7 +630,7 @@ export function BoardNavRow() {
       </div>
 
         <div className="order-3 flex min-w-0 items-center justify-end">
-        <div className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl border border-stone-600/60 bg-stone-800 px-3 text-sm font-semibold text-white">
+        <div className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-stone-700 px-3 text-sm font-semibold text-white">
           Mistakes: {mistakes}
         </div>
       </div>
@@ -654,7 +654,7 @@ function NavButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-500/85 bg-stone-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:border-sky-300/45 hover:bg-stone-600 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+      className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:bg-stone-600 hover:text-sky-50 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
     >
       {children}
     </button>

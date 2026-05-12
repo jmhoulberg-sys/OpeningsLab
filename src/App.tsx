@@ -28,6 +28,7 @@ import ProfilePage from './pages/ProfilePage';
 import { useTrainingStore } from './store/trainingStore';
 import { useProgressStore } from './store/progressStore';
 import { getCoachingNote } from './data/coachingNotes';
+import { OPENINGS } from './data/openings';
 import { getSetupFen } from './engine/chessEngine';
 import { fetchLichessBookPosition } from './services/lichessBookService';
 import type { Opening, OpeningLine, TrainingMode } from './types';
@@ -274,6 +275,7 @@ export default function App() {
                 isLineUnlocked={isLineUnlocked}
                 onHomeClick={handleGoHome}
                 onSettingsClick={() => setShowSettings(true)}
+                onOpenOpening={handleSelectOpening}
               />
             </section>
           )}
@@ -319,6 +321,7 @@ export default function App() {
                 isLineUnlocked={isLineUnlocked}
                 onHomeClick={handleGoHome}
                 onSettingsClick={() => setShowSettings(true)}
+                onOpenOpening={handleSelectOpening}
               />
             </div>
           </aside>
@@ -346,6 +349,7 @@ function TrainingPanelContent({
   isLineUnlocked,
   onHomeClick,
   onSettingsClick,
+  onOpenOpening,
 }: {
   opening: Opening;
   mode: string;
@@ -355,6 +359,7 @@ function TrainingPanelContent({
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
   onHomeClick: () => void;
   onSettingsClick: () => void;
+  onOpenOpening: (opening: Opening) => void;
 }) {
   return (
     <div className="h-full">
@@ -367,6 +372,7 @@ function TrainingPanelContent({
         isLineUnlocked={isLineUnlocked}
         onHomeClick={onHomeClick}
         onSettingsClick={onSettingsClick}
+        onOpenOpening={onOpenOpening}
       />
     </div>
   );
@@ -381,6 +387,7 @@ function TrainingRightPanel({
   isLineUnlocked,
   onHomeClick,
   onSettingsClick,
+  onOpenOpening,
 }: {
   opening: Opening;
   mode: string;
@@ -390,19 +397,13 @@ function TrainingRightPanel({
   isLineUnlocked: (openingId: string, lineId: string) => boolean;
   onHomeClick: () => void;
   onSettingsClick: () => void;
+  onOpenOpening: (opening: Opening) => void;
 }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 pb-3 pt-3">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
-        <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
-        <button
-          onClick={onSettingsClick}
-          className="flex h-full min-h-[64px] w-12 items-center justify-center rounded-xl border border-stone-700/65 bg-stone-800 text-stone-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
-          title="Settings"
-          aria-label="Open settings"
-        >
-          <Settings size={18} />
-        </button>
+      <div className="space-y-2">
+        <OpeningCourseDropdown opening={opening} onSelectOpening={onOpenOpening} />
+        <LineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
       </div>
 
       <div className="mt-3">
@@ -434,7 +435,7 @@ function TrainingRightPanel({
           <BoardNavRow />
         </div>
         <div className="mt-2">
-          <CompactActions onHomeClick={onHomeClick} />
+          <CompactActions onHomeClick={onHomeClick} onSettingsClick={onSettingsClick} />
         </div>
       </div>
     </div>
@@ -744,7 +745,80 @@ function ModeSelector({
   );
 }
 
-function OpeningLineDropdown({
+function OpeningCourseDropdown({
+  opening,
+  onSelectOpening,
+}: {
+  opening: Opening;
+  onSelectOpening: (opening: Opening) => void;
+}) {
+  const openingProgress = useProgressStore((state) => state.openings);
+  const [open, setOpen] = useState(false);
+  const summaries = [...OPENINGS]
+    .filter((item) => item.lines.length > 0)
+    .map((item) => {
+      const completed = item.lines.filter((line) => openingProgress[item.id]?.lines[line.id]?.unlocked).length;
+      return {
+        opening: item,
+        completed,
+        total: item.lines.length,
+      };
+    })
+    .sort((a, b) => {
+      if (a.opening.id === opening.id) return -1;
+      if (b.opening.id === opening.id) return 1;
+      if (b.completed !== a.completed) return b.completed - a.completed;
+      return a.opening.name.localeCompare(b.opening.name);
+    });
+
+  return (
+    <section className="relative rounded-[20px] border border-stone-700/65 bg-stone-800/72 p-3">
+      <button
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
+      >
+        <div className="min-w-0">
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Opening</div>
+          <div className="mt-1 truncate text-sm font-black text-white">{opening.name}</div>
+          <div className="mt-0.5 truncate text-xs text-stone-400">{opening.lines.length} lines</div>
+        </div>
+        <ChevronDown size={18} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+          {summaries.map((item) => {
+            const active = item.opening.id === opening.id;
+            return (
+              <button
+                key={item.opening.id}
+                onClick={() => {
+                  onSelectOpening(item.opening);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                  active
+                    ? 'bg-sky-500/16 text-sky-100'
+                    : 'text-stone-200 hover:bg-stone-800 cursor-pointer'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{item.opening.name}</div>
+                  <div className="mt-0.5 text-xs text-stone-400">{item.completed}/{item.total} complete</div>
+                </div>
+                <span className="shrink-0 rounded-full bg-stone-800 px-2 py-0.5 text-[11px] font-black text-stone-300">
+                  {item.total} lines
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LineDropdown({
   opening,
   isLineUnlocked,
 }: {
@@ -792,10 +866,10 @@ function OpeningLineDropdown({
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
       >
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Opening</div>
-          <div className="mt-1 truncate text-sm font-black text-white">{opening.name}</div>
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Line</div>
+          <div className="mt-1 truncate text-sm font-black text-white">{selectedLine?.name ?? 'Choose a line'}</div>
           <div className="mt-0.5 truncate text-xs text-stone-400">
-            {selectedLine?.name ?? (phase === 'setup' ? 'Setup position' : 'Choose a line')}
+            {phase === 'setup' ? 'Setup position' : opening.name}
           </div>
         </div>
         <ChevronDown size={18} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -848,13 +922,19 @@ function OpeningLineDropdown({
   );
 }
 
-function CompactActions({ onHomeClick }: { onHomeClick: () => void }) {
+function CompactActions({
+  onHomeClick,
+  onSettingsClick,
+}: {
+  onHomeClick: () => void;
+  onSettingsClick: () => void;
+}) {
   const { phase, selectedLine, restart, backToLineSelect } = useTrainingStore();
   const canRestart = !!selectedLine || phase === 'training' || phase === 'completed';
   const canGoBack = phase === 'training' || phase === 'completed';
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-4 gap-2">
       <IconAction onClick={backToLineSelect} disabled={!canGoBack} title="Choose line">
         <ArrowLeft size={16} />
       </IconAction>
@@ -863,6 +943,9 @@ function CompactActions({ onHomeClick }: { onHomeClick: () => void }) {
       </IconAction>
       <IconAction onClick={onHomeClick} title="Front page">
         <House size={16} />
+      </IconAction>
+      <IconAction onClick={onSettingsClick} title="Settings">
+        <Settings size={16} />
       </IconAction>
     </div>
   );
@@ -885,7 +968,7 @@ function IconAction({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="flex h-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:border-sky-300/35 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+      className="flex h-10 items-center justify-center rounded-xl bg-stone-700 text-stone-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:bg-stone-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
     >
       {children}
     </button>
