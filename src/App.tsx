@@ -784,7 +784,7 @@ function OpeningCourseDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+        <div className="absolute left-0 top-[calc(100%-0.5rem)] z-20 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
           {summaries.map((item) => {
             const active = item.opening.id === opening.id;
             return (
@@ -801,7 +801,7 @@ function OpeningCourseDropdown({
                 }`}
               >
                 <div className="min-w-0">
-                  <div className="truncate font-semibold">{item.opening.name}</div>
+                  <div className="font-semibold leading-snug">{item.opening.name}</div>
                   <div className="mt-0.5 text-xs text-stone-400">{item.completed}/{item.total} complete</div>
                 </div>
                 <span className="shrink-0 rounded-full bg-stone-800 px-2 py-0.5 text-[11px] font-black text-stone-300">
@@ -870,7 +870,7 @@ function LineDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+        <div className="absolute right-0 top-[calc(100%-0.5rem)] z-20 w-[min(28rem,calc(100vw-2rem))] max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
           <div className="mb-1 flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-500">
             <span>{completedLines}/{opening.lines.length} mastered</span>
             <span>{setupDone ? 'Ready' : 'Setup first'}</span>
@@ -901,7 +901,7 @@ function LineDropdown({
                 }`}
               >
                 {mastered ? <Sparkles size={14} className="text-emerald-300" /> : <Lock size={14} />}
-                <span className="min-w-0 flex-1 truncate font-semibold">{line.name}</span>
+                <span className="min-w-0 flex-1 font-semibold leading-snug">{line.name}</span>
                 {setupDone && (
                   <span className="shrink-0 rounded-full bg-stone-800 px-2 py-0.5 text-[11px] font-black text-stone-300">
                     {lineFrequencies[line.id] != null ? `${lineFrequencies[line.id]}%` : '--'}

@@ -12,17 +12,24 @@ interface HeaderProps {
   subtitleOverride?: string;
 }
 
-export default function Header({ onSettingsClick, onHomeClick, onProfileClick }: HeaderProps) {
+export default function Header({
+  onSettingsClick,
+  onHomeClick,
+  onProfileClick,
+  titleOverride,
+  subtitleOverride,
+}: HeaderProps) {
   const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
   const xpTotal = useProgressionStore((state) => state.xpTotal);
   const accountLabel = typeof displayName === 'string' && displayName.trim()
     ? displayName.trim()
     : 'Opening Player';
   const levelInfo = getLevelInfo(xpTotal);
+  const showCenterCopy = !!titleOverride || !!subtitleOverride;
 
   return (
     <header className="relative z-[80] border-b border-stone-800/80 bg-stone-950">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-3 sm:px-6">
         <button
           onClick={onHomeClick}
           className="group flex items-center gap-3 justify-self-start cursor-pointer"
@@ -32,8 +39,23 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           </div>
         </button>
 
-        <div className="hidden min-w-0 justify-self-center lg:block">
-          <div />
+        <div className="min-w-0 px-2">
+          {showCenterCopy ? (
+            <div className="hidden min-w-0 text-center md:block">
+              {titleOverride && (
+                <div className="truncate text-base font-black text-white">
+                  {titleOverride}
+                </div>
+              )}
+              {subtitleOverride && (
+                <div className="mt-0.5 truncate text-sm text-stone-400">
+                  {subtitleOverride}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden h-10 md:block" />
+          )}
         </div>
 
         <div className="flex items-center gap-2 justify-self-end sm:gap-2.5">

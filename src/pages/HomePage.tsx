@@ -1,11 +1,9 @@
 import { useRef } from 'react';
-import { Flame, LogIn, Settings, UserCircle2 } from 'lucide-react';
 import type { Opening, OpeningLine } from '../types';
 import { OPENINGS } from '../data/openings';
 import { useProgressStore } from '../store/progressStore';
 import { useProfileStore } from '../store/profileStore';
 import {
-  getLevelInfo,
   getAccountDailyProgress,
   getQuestProgress,
   getTodayProgress,
@@ -23,8 +21,7 @@ import {
   FEATURED_OPENING_IDS,
   HOW_IT_WORKS_STEPS,
 } from '../components/Home/homeContent';
-import BrandMark from '../components/Brand/BrandMark';
-import StreakBadge from '../components/Streak/StreakBadge';
+import Header from '../components/Header/Header';
 
 interface HomePageProps {
   onSelectOpening: (opening: Opening) => void;
@@ -43,14 +40,9 @@ export default function HomePage({
 }: HomePageProps) {
   const openingProgress = useProgressStore((state) => state.openings);
   const isDue = useProgressStore((state) => state.isDue);
-  const xpTotal = useProgressionStore((state) => state.xpTotal);
   const dailyByProfile = useProgressionStore((state) => state.dailyByProfile);
-  const { isLoggedIn, displayName, openAuthModal } = useProfileStore();
+  const { isLoggedIn, displayName } = useProfileStore();
   const libraryRef = useRef<HTMLDivElement | null>(null);
-  const accountLabel = typeof displayName === 'string' && displayName.trim()
-    ? displayName.trim()
-    : 'Opening Player';
-  const levelInfo = getLevelInfo(xpTotal);
   const accountDaily = getAccountDailyProgress(dailyByProfile, displayName, isLoggedIn);
   const todayProgress = getTodayProgress(accountDaily);
   const quests = getQuestProgress(todayProgress);
@@ -97,67 +89,14 @@ export default function HomePage({
 
   return (
     <div className="min-h-screen bg-brand-bg px-4 py-6 sm:px-5 sm:py-8">
-      <div className="sticky top-0 z-40 -mx-4 mb-5 border-b border-stone-800/80 bg-stone-950 shadow-[0_14px_40px_rgba(0,0,0,0.24)] sm:-mx-5">
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6">
-          <div className="justify-self-start">
-            <BrandMark />
-          </div>
-
-          <div />
-
-          <div className="flex items-center gap-2.5 justify-self-end">
-            {isLoggedIn ? (
-              <div className="relative z-[90]">
-                <StreakBadge />
-              </div>
-            ) : (
-              <button
-                onClick={() => openAuthModal('login')}
-                className="hidden h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white sm:flex cursor-pointer"
-                title="Log in to see streak"
-              >
-                <Flame size={18} className="text-stone-500" />
-                Log in to see streak
-              </button>
-            )}
-            {isLoggedIn ? (
-              <button
-                onClick={onProfileClick}
-                className="hidden h-10 min-w-[132px] items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-sm text-slate-200 transition-colors hover:bg-stone-700 hover:text-white sm:flex cursor-pointer"
-                title="My Profile"
-              >
-                <UserCircle2 size={18} className="text-stone-300" />
-                <div className="min-w-0">
-                  <div className="max-w-[120px] truncate text-left font-semibold text-white">
-                    {accountLabel}
-                  </div>
-                  <div className="mt-1 h-1 w-[92px] rounded-full bg-stone-700">
-                    <div
-                      className="h-1 rounded-full bg-emerald-400"
-                      style={{ width: `${levelInfo.progressPct}%` }}
-                    />
-                  </div>
-                </div>
-              </button>
-            ) : (
-              <button
-                onClick={() => openAuthModal('signup')}
-                className="hidden h-10 min-w-[104px] items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400 sm:flex cursor-pointer"
-              >
-                <LogIn size={18} />
-                Sign in
-              </button>
-            )}
-            <button
-              onClick={onSettingsClick}
-              title="Settings"
-              className="h-10 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-slate-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
-              aria-label="Open settings"
-            >
-              <Settings size={20} />
-            </button>
-          </div>
-        </div>
+      <div className="sticky top-0 z-40 -mx-4 mb-5 shadow-[0_14px_40px_rgba(0,0,0,0.24)] sm:-mx-5">
+        <Header
+          onHomeClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onSettingsClick={onSettingsClick}
+          onProfileClick={onProfileClick}
+          titleOverride="Your repertoire"
+          subtitleOverride="Courses you are building, reviewing, and exploring."
+        />
       </div>
 
       <div className="mx-auto w-full max-w-[1500px]">
