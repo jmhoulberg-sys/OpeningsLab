@@ -663,7 +663,7 @@ function OpeningCard({
       onClick={() => {
         if (firstLine) onStartLine(opening, firstLine);
       }}
-      className={`group flex h-full flex-col rounded-xl border border-stone-800/55 bg-stone-900/62 p-2.5 transition-colors duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-800/85' : ''}`}
+      className={`group flex h-full flex-col rounded-xl border border-stone-700/65 bg-stone-800/82 p-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.12)] transition-colors duration-200 ${muted ? 'opacity-45 grayscale-[0.25]' : 'opacity-100'} ${isClickable ? 'cursor-pointer hover:border-stone-500/80 hover:bg-stone-800/95' : ''}`}
       aria-label={isComingSoon ? `${opening.name} coming soon` : `Start ${opening.name}`}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}

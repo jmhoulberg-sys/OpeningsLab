@@ -39,18 +39,18 @@ export default function StreakBadge({ compact = false }: StreakBadgeProps) {
     <div className="relative">
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`inline-flex items-center justify-center gap-1.5 rounded-2xl border border-stone-700/45 bg-stone-900 text-white transition-colors hover:bg-stone-800 cursor-pointer ${
-          compact ? 'h-10 px-3 text-base' : 'h-[68px] px-4 text-lg'
+        className={`inline-flex items-center justify-center gap-2 rounded-xl border border-stone-700/55 bg-stone-800 text-white transition-colors hover:bg-stone-700 cursor-pointer ${
+          compact ? 'h-10 min-w-[76px] px-3 text-base' : 'h-[68px] px-4 text-lg'
         }`}
         title={`${displayStreak} day streak`}
         aria-expanded={open}
       >
         <Flame
           size={compact ? 18 : 22}
-          className={mutedFlame ? 'text-stone-500' : 'text-amber-400'}
+          className={mutedFlame ? 'text-stone-400' : 'text-amber-400'}
           fill={mutedFlame ? 'none' : 'currentColor'}
         />
-        <span className={`font-black ${mutedFlame ? 'text-stone-400' : 'text-white'}`}>{displayStreak}</span>
+        <span className={`font-black ${mutedFlame ? 'text-stone-300' : 'text-white'}`}>{displayStreak}</span>
       </button>
 
       {open && (

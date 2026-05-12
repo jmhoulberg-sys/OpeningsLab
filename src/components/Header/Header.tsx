@@ -39,7 +39,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
         <div className="flex items-center gap-1.5 justify-self-end sm:gap-2.5">
           {isLoggedIn ? (
             <div className="relative z-[90] scale-90 sm:scale-100">
-              <StreakBadge />
+              <StreakBadge compact />
             </div>
           ) : (
             <button
@@ -80,7 +80,7 @@ export default function Header({ onSettingsClick, onHomeClick, onProfileClick }:
           )}
           <button
             onClick={onSettingsClick}
-            className="h-10 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
+            className="hidden h-10 rounded-xl border border-stone-700/45 bg-stone-800 px-3 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
             title="Settings"
             aria-label="Open settings"
           >

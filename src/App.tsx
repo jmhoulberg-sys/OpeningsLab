@@ -195,22 +195,14 @@ export default function App() {
     startOpening(selectedOpening);
   }
 
-  if (showSettings) {
-    return (
-      <>
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-        />
-        <AuthModal />
-      </>
-    );
-  }
-
   if (showProfile) {
     return (
       <>
         <ProfilePage onBack={() => window.history.back()} />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
         <AuthModal />
       </>
     );
@@ -226,6 +218,10 @@ export default function App() {
           onOpenOpening={handleStartFinderOpening}
           onStartPractice={handleStartFinderLine}
         />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
         <AuthModal />
       </>
     );
@@ -240,6 +236,10 @@ export default function App() {
           onSettingsClick={() => setShowSettings(true)}
           onProfileClick={handleProfileClick}
           onOpenFinder={handleOpenFinder}
+        />
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
         />
         <AuthModal />
       </>
@@ -328,6 +328,10 @@ export default function App() {
       <TrainingSetupModal key={`setup-modal-${phase}`} />
       <CompletionModal />
       <FreePlayEndModal />
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
       <AuthModal />
     </div>
   );
@@ -393,7 +397,7 @@ function TrainingRightPanel({
         <OpeningLineDropdown opening={opening} isLineUnlocked={isLineUnlocked} />
         <button
           onClick={onSettingsClick}
-          className="flex h-full min-h-[64px] w-12 items-center justify-center rounded-xl border border-stone-800/65 bg-stone-950/60 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+          className="flex h-full min-h-[64px] w-12 items-center justify-center rounded-xl border border-stone-700/65 bg-stone-800 text-stone-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors hover:bg-stone-700 hover:text-white cursor-pointer"
           title="Settings"
           aria-label="Open settings"
         >
@@ -426,7 +430,7 @@ function TrainingRightPanel({
         <div className="mt-3">
           <ModeSelector opening={opening} modeLabel={mode} isLineUnlocked={isLineUnlocked} />
         </div>
-        <div className="mt-3 rounded-xl border border-stone-800/55 bg-stone-950/45 p-3">
+        <div className="mt-3 rounded-xl border border-stone-700/65 bg-stone-800/80 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
           <BoardNavRow />
         </div>
         <div className="mt-2">
@@ -621,7 +625,7 @@ function ModeSelector({
   ];
 
   return (
-    <section className="relative rounded-xl border border-stone-800/55 bg-stone-950/45 p-2">
+    <section className="relative rounded-xl border border-stone-700/65 bg-stone-800/70 p-2">
       <button
         onClick={() => setOpen((value) => !value)}
         className="flex h-11 w-full items-center justify-between gap-3 rounded-lg bg-stone-900/80 px-3 text-sm font-black text-white hover:bg-stone-800 cursor-pointer"
@@ -782,7 +786,7 @@ function OpeningLineDropdown({
   }, [open, opening, setupDone]);
 
   return (
-    <section className="relative rounded-[20px] border border-stone-800/55 bg-stone-950/55 p-3">
+    <section className="relative rounded-[20px] border border-stone-700/65 bg-stone-800/72 p-3">
       <button
         onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center justify-between gap-3 rounded-2xl bg-stone-900/90 px-3 py-3 text-left transition-colors hover:bg-stone-800 cursor-pointer"
@@ -798,7 +802,7 @@ function OpeningLineDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-80 overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
+        <div className="absolute left-3 right-3 top-[calc(100%-0.5rem)] z-20 max-h-[min(36rem,calc(100vh-10rem))] overflow-y-auto rounded-2xl border border-stone-700/70 bg-stone-950 p-2 shadow-2xl shadow-black/45">
           <div className="mb-1 flex items-center justify-between px-2 py-1 text-xs font-semibold text-stone-500">
             <span>{completedLines}/{opening.lines.length} mastered</span>
             <span>{setupDone ? 'Ready' : 'Setup first'}</span>
@@ -881,7 +885,7 @@ function IconAction({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="flex h-10 items-center justify-center rounded-2xl border border-stone-800/70 bg-stone-900/80 text-stone-300 transition-colors hover:bg-stone-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
+      className="flex h-10 items-center justify-center rounded-xl border border-stone-600/75 bg-stone-800 text-stone-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors hover:border-sky-300/35 hover:bg-stone-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer"
     >
       {children}
     </button>

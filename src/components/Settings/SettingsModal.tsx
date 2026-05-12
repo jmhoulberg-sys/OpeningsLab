@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ChevronDown, LogIn, LogOut, UserCircle2 } from 'lucide-react';
+import { ChevronDown, LogIn, LogOut, UserCircle2, X } from 'lucide-react';
 import { useProgressStore } from '../../store/progressStore';
 import {
   DEFAULT_LICHESS_RATINGS,
@@ -65,22 +65,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-brand-bg text-slate-100">
-      <header className="border-b border-stone-800/80 bg-stone-950">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4 sm:px-6">
+    <div className="fixed inset-0 z-[140] bg-black/45" onClick={handleClose}>
+      <div className="absolute right-3 top-3 bottom-3 w-[min(32rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-stone-700/70 bg-stone-950 text-slate-100 shadow-2xl shadow-black/60" onClick={(event) => event.stopPropagation()}>
+        <header className="flex items-center justify-between border-b border-stone-800/80 px-4 py-3">
+          <h1 className="text-lg font-bold text-white">Settings</h1>
           <button
             onClick={handleClose}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-stone-700/45 bg-stone-900 px-3 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-stone-700/45 bg-stone-900 text-sm font-semibold text-stone-300 transition-colors hover:bg-stone-800 hover:text-white cursor-pointer"
+            aria-label="Close settings"
           >
-            <ArrowLeft size={16} />
-            Back
+            <X size={16} />
           </button>
-          <h1 className="text-lg font-bold text-white">Settings</h1>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-        <div className="grid gap-4 lg:grid-cols-2">
+        <main className="h-[calc(100%-4.25rem)] overflow-y-auto px-4 py-4">
+        <div className="grid gap-4">
           <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Account</div>
             <div>
@@ -213,7 +212,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </ToggleButton>
           </section>
 
-          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4 lg:col-span-2">
+          <section className="rounded-xl border border-stone-800/70 bg-stone-900/55 p-4">
             <button
               onClick={() => setAdvancedOpen((value) => !value)}
               className="flex w-full items-center justify-between gap-3 text-left"
@@ -310,7 +309,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </section>
 
-          <section className="rounded-xl border border-rose-400/15 bg-rose-400/5 p-4 lg:col-span-2">
+          <section className="rounded-xl border border-rose-400/15 bg-rose-400/5 p-4">
             <div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-rose-200/80">Reset profile</div>
             {!confirmReset ? (
               <button
@@ -342,7 +341,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </section>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
